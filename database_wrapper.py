@@ -1,12 +1,9 @@
-from Log import Log
-
 class DBWrapper():
 
 	def __init__(self):
-		Log.d("DBWrapper.__init__")
-
+		return;
+		
 	# The APIs for TileGenerator
-
 	def set_raw_data(self, doc):
 		return;
 

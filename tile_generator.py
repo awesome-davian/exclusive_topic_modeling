@@ -1,12 +1,14 @@
-from Log import Log
 import database_wrapper as DBWrapper
 import nmf_core as NMFCore
+import logging, logging.config
+
+
 
 class TileGenerator():
 
 	def __init__(self, DB):
-		Log.d("TileGenerator.__init__")
 		self.db = DB
+		return;
 
 	def load_raw_data(self):
 		return "";
@@ -34,8 +36,6 @@ class TileGenerator():
 
 	def make_default_tiles(self):
 
-		Log.d("make_default_tiles() - IN")
-
 		self.load_raw_data()
 
 		self.store_raw_data()
@@ -56,7 +56,7 @@ class TileGenerator():
 
 	def run_topic_modeling(self, topic_modeling_module, num_clusters, num_keywords, exclusiveness):
 
-		Log.d("run_topic_modeling() - IN")
+		logging.debug('run_topic_modeling')
 
 		# for every zoom level
 		for level in range(7, 13):

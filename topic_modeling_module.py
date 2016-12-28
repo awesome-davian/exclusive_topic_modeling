@@ -1,9 +1,7 @@
-from Log import Log
 
 class TopicModelingModule():
 
 	def __init__(self, DB):
-		Log.d("TopicModelingModule.__init__()")
 		
 		import nmf_core
 
@@ -12,17 +10,11 @@ class TopicModelingModule():
 		self.MAX_NUM_KEYWORDS = 10
 		self.db = DB
 
-		
-
 	def make_sub_term_doc_matrix(self, term_doc_mtx, doc_ids, include_word_list, exclude_word_list, time_range):
-
-		Log.d("make_sub_term_doc_matrix() - IN")
 
 		return "sub_term_doc_mtx";
 
 	def get_topics(self, zoom_level, tile_id, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range, need_remake):
-
-		Log.d("get_topics - IN")
 
 		#if include_word_list == "" && exclude_word_list == "" && exclusiveness == 0 && time_range.start == "" && time_range.end == "":
 		if include_word_list == "" and exclude_word_list == "" and exclusiveness == 0 and need_remake == 0:
@@ -41,9 +33,7 @@ class TopicModelingModule():
 		return nmf_result;
 
 	def get_word_ref_count(self, zoom_level, tile_id, word):
-		Log.d("get_word_ref_count() - IN")
 		return 0;
 
 	def get_word_info(self, zoom_level, tile_id, word):
-		Log.d("get_word_info() - IN")
 		return "word_info";
