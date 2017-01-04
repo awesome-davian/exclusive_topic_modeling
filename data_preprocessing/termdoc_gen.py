@@ -1,11 +1,25 @@
-import operator
-import sys
-import os
+# -*- coding: utf-8 -*-
+import io, sys, os
 import collections
+import operator
+import pymongo
+import time
+from nltk import PorterStemmer
+import logging, logging.config
+
+logging.config.fileConfig('logging.conf')
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+porter_stemmer=PorterStemmer();
 
 do_stemming = False
-input_file = sys.argv[1]
-output_file = sys.argv[1]
+
+conn = pymongo.MongoClient("localhost", 27017)
+
+dbname = sys.argv[1]
+db = conn[dbname]
 
 def truncate_word(word):
 	start = 0
@@ -60,87 +74,136 @@ def read_txt(text):
 				bag_words[truncated] = 1
 	return bag_words
 
+def stem_read_txt(text):
+	bag_words = collections.OrderedDict()
+	for word in tokenization(text):
+		truncated = truncate_word(word)
+		truncated = porter_stemmer.stem(truncated)
+		if truncated != '':
+			try:
+				bag_words[truncated] += 1
+			except KeyError:
+				bag_words[truncated] = 1
+	return bag_words
+
+def get_next_sequence_value(sequence_name):
+
+	db.counters.find_and_modify(
+		{'_id':sequence_name}, 
+		{'$inc':{'seq':1}}, upsert=True, new=True
+	);
+
+	return db.counters.find_one({'_id':sequence_name})['seq']
+
+def clean_up_data():
+	if 'vocabulary' in db.collection_names():
+		db.drop_collection('vocabulary')
+	if 'vocabulary_hashmap' in db.collection_names():
+		db.drop_collection('vocabulary_hashmap')
+
+	for col in db.collection_names():
+		if col.endswith('_mtx') == True:
+			db.drop_collection(col)
+
+	for item in db.counters.find():
+		name = item['_id']
+		if name.endswith('_mtx') == True:
+			db.counters.delete_one({'_id':name})
+		if name.startswith('vocabulary') == True:
+			db.counters.delete_one({'_id':name})
+
+
 
 stop_list = set()
-f_stop = open('english.stop')
+f_stop = io.open('english.stop')
 for line in f_stop:
 	stop_list.add(line[0:-1])
 f_stop.close()
 
-new_voc= open('tmp2/vocabulary.txt', 'r', encoding='UTF8')
-nv_bag_words=collections.OrderedDict()
-for line in new_voc:
-	text=line[0:-1].split()[0]
-	frec=line[0:-1].split()[1]
-	nv_bag_words[text]=int(frec)
-new_voc.close()
+stemmed_word_one=collections.OrderedDict()
+stem_bag_words=collections.OrderedDict()
 
+# clean up stored data
+clean_up_data()
 
+col_voca = db['vocabulary']
+col_voca_hash = db['vocabulary_hashmap']
 
-if os.path.isdir(input_file):
-	list_count=0
-	file_list=[]
-	for root, dirs, files in os.walk(input_file):
-		for file in files:
-			file_list.append(os.path.join(root,file))
-	for fname in file_list:
-		f_each=open(fname,'r',encoding='UTF8')
-		doc_count=0
-		for line in f_each:
-			text=line[0:-1]
-			bag_words_one=read_txt(text)
+for each in col_voca_hash.find():
+	stem = each['stem']
+	word = each['word']
+	count = each['count']
+
+	if stem not in stem_bag_words:
+		stem_bag_words[stem] = collections.OrderedDict()
+	stem_bag_words[stem][word] = int(count)
+
+# stemming
+start_time = time.time()
+for tile_name in db.collection_names():
+
+	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:
+		continue
+
+	tile = db[tile_name]
+	doc_count=0
+	for doc in tile.find():
+		text = doc['text']
+		bag_words_one=read_txt(text)
+		stemmed_word_one=stem_read_txt(text)
+		for s_word in stemmed_word_one:
+			if s_word not in stem_bag_words:
+				stem_bag_words[s_word]=collections.OrderedDict()
 			for word in bag_words_one:
-				try:
-					nv_bag_words[word]+=bag_words_one[word]
-				except:
-				    nv_bag_words[word]=bag_words_one[word]
-			doc_count+=1
-		print(doc_count)
-		f_each.close();
-	print(list_count)   	
+				if word not in stem_bag_words[s_word]:
+					stem_bag_words[s_word][word]=0
+				if s_word==porter_stemmer.stem(word):
+				    stem_bag_words[s_word][word]+=bag_words_one[word]
+		doc_count+=1
+	logging.debug('Tilename: %s, doc_count: %d', tile_name, tile.count())
+elapsed_time = time.time() - start_time
+logging.debug('Done: Stemming. Execution time: %.3fms', elapsed_time)
 
-
-voc_file = open('tmp2/vocabulary.txt', 'w', encoding='UTF8')
+# create the vocabulary collection
+start_time = time.time()
 word_map =collections.OrderedDict()
-count = 0
-for word in nv_bag_words:
-	if word in stop_list:
-		continue	
-	voc_file.write(word + '\t' + str(nv_bag_words[word]) + '\n')
-	word_map[word] = count
-	count += 1
-voc_file.close()
+count=0
+for stem in stem_bag_words:
+	if stem in stop_list:
+		continue
+	tot_num=0
+	for word in stem_bag_words[stem]:
+		if stem==porter_stemmer.stem(word):
+			tot_num+=stem_bag_words[stem][word]
+			col_voca_hash.insert({'_id': get_next_sequence_value('vocabulary_hashmap'), 'stem':stem, 'word':word, 'count':stem_bag_words[stem][word]});
+	col_voca.insert({'_id': get_next_sequence_value('vocabulary'), 'stem':stem, 'count':tot_num})
+	word_map[stem]=count
+	count +=1
+elapsed_time = time.time() - start_time
+logging.debug('Done: Creating the vocabulary collections. Execution time: %.3fms', elapsed_time)
 
+# creating term-document frequency matrix
+start_time = time.time()
+for tile_name in db.collection_names():
 
+	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:
+		continue
 
-mtxs=[]
+	tile = db[tile_name]
 
+	tile_mtx_name = tile_name+'_mtx'
+	tile_mtx = db[tile_mtx_name]
 
-for root, dirs, files in os.walk(input_file):
-	for file in files:
-		mtxs.append(os.path.join(root,file))
-
-for tiles in mtxs:
-	f_name=tiles.split('\\')[2]
-	f_mtx=open(os.path.join('tmp2',f_name+'.mtx'),'w',encoding='UTF8')
-	f_mtx.write('%%MatrixMarket matrix coordinate real general\n')
 	word_map_tot_len = len(word_map)
-	doc_count = 0
-	line_count = 0
 
-	f_tweets = open(tiles, encoding='UTF8')
-	for line in f_tweets:
-		text = line[0:-1]
+	for doc in tile.find():
+		text = doc['text']
 		bag_words_one = read_txt(text)
 		for word in bag_words_one:
-			try:
-				word_idx = word_map[word]
-				#print(word + '\t' + str(word_idx+1) + ' '+str(doc_count+1)+'\n')
-				f_mtx.write(str(word_idx+1) + ' ' + str(doc_count+1) + ' ' + str(bag_words_one[word]) + '\n')
-				line_count +=1
-			except KeyError:
-				continue
-		doc_count += 1
-	print(tiles)	
-	f_tweets.close()
-	f_mtx.close()
+			s_word=porter_stemmer.stem(word)
+			w = col_voca.find_one({'stem':s_word})
+			if w != None:
+				word_idx = w['_id']
+				tile_mtx.insert({'_id': get_next_sequence_value(tile_mtx_name), 'term_idx': word_idx, 'doc_idx': doc['_id'], 'freq': bag_words_one[word]})
+elapsed_time = time.time() - start_time
+logging.debug('Done: Creating the term-document frequency matrix. Execution time: %.3fms', elapsed_time)
