@@ -14,7 +14,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def initProject():
 
-
     logging.debug('initProject')
 
     return
@@ -32,55 +31,52 @@ def tile_generator_test():
 @app.route('/GET_TOPICS/<uuid>', methods=['POST'])
 def request_get_topics(uuid):
 
-    print "uuid: " + uuid
+    logging.debug('uuid: %s', uuid);
 
-    contents = request.get_json(silent=True)
+    contents = request.get_json(silent=True);
 
-    print contents
+    logging.debug('contents: %s', contents);
 
+    terms = contents['terms'];
+    include_keywords = terms['include'];
+    exclude_keywords = terms['exclude'];
 
+    tiles = contents['tiles'];
 
-    data = {
-        "tile": {"x": 5, "y": 4, "level": 12}, 
-        "topic": [{
-            "score": 4.315,
-            "words": [
-                {"score": 1.23, "word": "food"}, 
-                {"score": 0.9855, "word": "burger"}, 
-                {"score": 0.72735, "word": "fries"}, 
-                {"score": 0.71, "word": "drinks"}
-        ] }]
-    }
+    # logging the requested items
+    for word in include_keywords:
+        logging.debug('include keyword: %s', word);
+    for word in exclude_keywords:
+        logging.debug('exclude keyword: %s', word);
 
-    json_data = json.dumps(data)
+    for tile in tiles:
+        logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
+    
+    # run topic modeling for each tile
+    topics = [];
+    for tile in tiles:
+        zoom_level = tile['level'];
+        x = tile['x']
+        y = tile['y']
 
-    return json_data
+        # these parameters are set by another function such as a set_params. 
+        # we use the predefined value at this moment.
+        num_topics = 3;         
+        num_keywords = 3;
+        exclusiveness = 0;
+        time_range = {};
+        time_range['start_date'] = 0;
+        time_range['end_date'] = 0;
+        topic = TM.get_topics(zoom_level, x, y, num_topics, num_keywords, include_keywords, exclude_keywords, exclusiveness, time_range);
+        topics.append(topic);
 
-    # zoom_level = 9
-    # tile_id = 100
-    # num_clusters = 3
-    # num_keywords = 3
-    # include_word_list = ""
-    # exclude_word_list = ""
-    # exclusiveness = 0
-    # time_range = {}
-    # time_range['start']=0
-    # time_range['end']=0
+    # verify that the calculation is correct using log.
+    for topic in topics:
+        logging.debug('topic: %s', topic)
 
-    # sample parameters
-    # zoom_level = request.args.get('zoom_level')
-    # tile_id = request.args.get('tile_id')
-    # num_clusters = request.args.get('num_clusters')
-    # num_keywords = request.args.get('num_keywords')
-    # include_word_list = request.args.get('include_word_list')
-    # exclude_word_list = request.args.get('exclude_wor')
-    # exclusiveness = request.args.get('zoom_level')
-    # time_range = request.args.get('zoom_level')
-    # time_range['start']=request.args.get('zoom_level')
-    # time_range['end']=request.args.get('zoom_level')
+    json_data = json.dumps(topics);
 
-    # TM.get_topics(zoom_level, tile_id, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range, 0)
-    # return redirect('/web_client_test')
+    return json_data;
 
 @app.route('/GET_WORD_REF_COUNT', methods=['GET'])
 def request_get_word_ref_count():
