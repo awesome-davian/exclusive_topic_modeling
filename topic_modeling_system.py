@@ -5,6 +5,7 @@ import database_wrapper
 import os, sys
 import json
 import logging, logging.config
+import constants
 
 logging.config.fileConfig('logging.conf')
 
@@ -14,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def initProject():
 
-    logging.debug('initProject')
+    print '----- Topic Modeling System %s -----' % (constants.VERSION)
 
     return
 
@@ -61,9 +62,9 @@ def request_get_topics(uuid):
 
         # these parameters are set by another function such as a set_params. 
         # we use the predefined value at this moment.
-        num_topics = 3;         
-        num_keywords = 3;
-        exclusiveness = 0;
+        num_topics = constants.DEFAULT_NUM_TOPICS;         
+        num_keywords = constants.DEFAULT_NUM_WORDS_PER_TOPIC;
+        exclusiveness = constants.DEFAULT_EXCLUSIVENESS;
         time_range = {};
         time_range['start_date'] = 0;
         time_range['end_date'] = 0;

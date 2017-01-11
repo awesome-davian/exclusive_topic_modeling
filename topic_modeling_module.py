@@ -1,4 +1,7 @@
+import matlab.engine
 import logging
+import math
+
 
 class TopicModelingModule():
 
@@ -11,11 +14,40 @@ class TopicModelingModule():
 		self.MAX_NUM_KEYWORDS = 10
 		self.db = DB
 
-	def getTileId(self, x, y):
+	def get_tile_id(self, x, y):
 
 		tile_id = x + y;
 
 		return tile_id;
+
+
+	def lon_to_x(self, lon, level):
+
+		pow2 = 1 << level;
+		x = (lon + 180.0)/360.0 * pow2;
+		return x;
+
+	def lat_to_y(self, lat, level):
+
+		latR = math.radians(lat);
+		pow2 = 1 << level;
+		y = (1 - math.log(math.tan(latR) + 1/math.cos(latR))/math.pi)/2*pow2;
+		y = pow2 - y;
+		return y;
+
+	def x_to_lon(self, x, level):
+
+		pow2 = 1 << level;
+		lon = (x / pow2 * 360.0) - 180.0;
+		return lon;
+
+	def y_to_lat(self, y, level):
+
+		pow2 = 1 << level;
+		n = -math.pi + (2.0*math.pi*y)/pow2;
+		lat = math.degrees(math.atan(math.sinh(n)))
+
+		return lat;
 
 	def make_sub_term_doc_matrix(self, term_doc_mtx, doc_ids, include_word_list, exclude_word_list, time_range):
 
@@ -24,6 +56,9 @@ class TopicModelingModule():
 	def get_topics(self, zoom_level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
 
 		logging.debug('get_topics(%s, %s, %s)', zoom_level, x, y)
+		
+		# todo here.
+		# topics = eng.function_runme(A, V, nargout=0);
 
 		topic = {};
 		if x == 5 and y == 4:

@@ -20,7 +20,6 @@ class DBWrapper():
 		return;
 
 	# The APIs for Topic Modeling Module
-
 	def get_term_doc_matrix(self):
 		return "term_doc_matrix";
 

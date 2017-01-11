@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 import io, sys, os
+sys.path.insert(0, '../')
+import constants
 import collections
 import operator
 import pymongo
 import time
 from nltk import PorterStemmer
+#from imp import reload
 import logging, logging.config
 
 logging.config.fileConfig('logging.conf')
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+# reload(sys)
+# sys.setdefaultencoding()
 
 porter_stemmer=PorterStemmer();
 
@@ -18,7 +21,8 @@ do_stemming = False
 
 conn = pymongo.MongoClient("localhost", 27017)
 
-dbname = sys.argv[1]
+#dbname = sys.argv[1]
+dbname = constants.DB_NAME;
 db = conn[dbname]
 
 def truncate_word(word):
@@ -75,10 +79,14 @@ def read_txt(text):
 	return bag_words
 
 def stem_read_txt(text):
+	#print(text.encode('utf-8'))
 	bag_words = collections.OrderedDict()
 	for word in tokenization(text):
+		#print(word.encode('utf-8'))
 		truncated = truncate_word(word)
+		#print(truncated.encode('utf-8'))
 		truncated = porter_stemmer.stem(truncated)
+
 		if truncated != '':
 			try:
 				bag_words[truncated] += 1
@@ -140,9 +148,14 @@ for each in col_voca_hash.find():
 
 # stemming
 start_time = time.time()
-for tile_name in db.collection_names():
+logging.info('Stemming...')
 
+total_col_size = len(db.collection_names());
+idx = 0
+for tile_name in db.collection_names():
+	idx += 1;
 	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:
+		logging.info('%s(%d/%d), skip.', tile_name, idx, total_col_size)
 		continue
 
 	tile = db[tile_name]
@@ -160,12 +173,13 @@ for tile_name in db.collection_names():
 				if s_word==porter_stemmer.stem(word):
 				    stem_bag_words[s_word][word]+=bag_words_one[word]
 		doc_count+=1
-	logging.debug('Tilename: %s, doc_count: %d', tile_name, tile.count())
+	logging.info('%s(%d/%d), doc_count: %d, stemming complete.', tile_name, idx, total_col_size, tile.count())
 elapsed_time = time.time() - start_time
-logging.debug('Done: Stemming. Execution time: %.3fms', elapsed_time)
+logging.info('Done: Stemming. Execution time: %.3fms', elapsed_time)
 
 # create the vocabulary collection
 start_time = time.time()
+logging.info('Creating the vocabulary collection...')
 word_map =collections.OrderedDict()
 count=0
 for stem in stem_bag_words:
@@ -180,13 +194,17 @@ for stem in stem_bag_words:
 	word_map[stem]=count
 	count +=1
 elapsed_time = time.time() - start_time
-logging.debug('Done: Creating the vocabulary collections. Execution time: %.3fms', elapsed_time)
+logging.info('Done: Creating the vocabulary collections. Execution time: %.3fms', elapsed_time)
 
 # creating term-document frequency matrix
 start_time = time.time()
-for tile_name in db.collection_names():
+logging.info('Creating the term-document matrix...')
+idx = 0
+for tile_name in db.collection_names():d
 
+	idx += 1;
 	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:
+		logging.info('%s(%d/%d), skip', tile_name, idx, total_col_size)
 		continue
 
 	tile = db[tile_name]
@@ -205,5 +223,10 @@ for tile_name in db.collection_names():
 			if w != None:
 				word_idx = w['_id']
 				tile_mtx.insert({'_id': get_next_sequence_value(tile_mtx_name), 'term_idx': word_idx, 'doc_idx': doc['_id'], 'freq': bag_words_one[word]})
+
+	logging.info('%s(%d/%d), creating the term-document matrix complete.', tile_name, idx, total_col_size)		
 elapsed_time = time.time() - start_time
-logging.debug('Done: Creating the term-document frequency matrix. Execution time: %.3fms', elapsed_time)
+logging.info('Done: Creating the term-document frequency matrix. Execution time: %.3fms', elapsed_time)
+
+
+
