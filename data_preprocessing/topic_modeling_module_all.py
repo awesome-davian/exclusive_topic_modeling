@@ -16,7 +16,7 @@ eng.cd('../matlab/standard_nmf/');
 elapsed_time = time.time() - start_time;
 logging.info('matlab loading time: %.3f ms', elapsed_time);
 
-conn = pymongo.MongoClient("localhost", 27017);
+conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 
 dbname = constants.DB_NAME;
 db = conn[dbname];
@@ -31,9 +31,15 @@ def get_next_sequence_value(sequence_name):
 	return db.counters.find_one({'_id':sequence_name})['seq']
 
 def del_stored_topics():
+
 	for tile_name in db.collection_names():
 		if tile_name.endswith('_topics') == True:
 			db.drop_collection(tile_name);
+
+	for item in db.counters.find():
+		name = item['_id']
+		if name.endswith('_topics') == True:
+			db.counters.delete_one({'_id':name})
 
 logging.info('loading vocabulary...');
 start_time = time.time()
@@ -56,9 +62,12 @@ for tile_name in db.collection_names():
 	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == False:
 		continue;
 
+	if tile_name.find('_2014_') < 0:
+		continue;
+
 	logging.info(tile_name);
 
-	tile_mtx_db = db[tile_name];	
+	tile_mtx_db = db[tile_name];
 
 	tile_mtx = [];
 	for each in tile_mtx_db.find():
@@ -77,7 +86,7 @@ for tile_name in db.collection_names():
 
 	# store topics in DB
 	tile = db[tile_name]
-	tile_topic_name = tile_name+'_topics'
+	tile_topic_name = tile_name.replace('_mtx','')+'_topics'
 	tile_topic = db[tile_topic_name]
 
 	topic_id = 0;

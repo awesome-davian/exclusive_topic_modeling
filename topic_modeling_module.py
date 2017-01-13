@@ -9,14 +9,20 @@ class TopicModelingModule():
 		
 		import nmf_core
 
+		logging.debug('init');
+
 		self.nmf = nmf_core
 		self.MAX_NUM_CLUSTERS = 10
 		self.MAX_NUM_KEYWORDS = 10
 		self.db = DB
 
-	def get_tile_id(self, x, y):
+	def get_tile_id(self, level, lon, lat):
 
-		tile_id = x + y;
+		x = self.lon_to_x(lon, level);
+		y = self.lat_to_y(lat, level);
+
+		pow2 = 1 << level;
+		tile_id = x * pow2 + y;
 
 		return tile_id;
 
@@ -58,36 +64,64 @@ class TopicModelingModule():
 		logging.debug('get_topics(%s, %s, %s)', zoom_level, x, y)
 		
 		# todo here.
+		tile_id = self.get_tile_id(zoom_level, x, y);
+
+		result = {};
+		tile = {};
+		tile['x'] = x;
+		tile['y'] = y;
+		tile['level'] = zoom_level;
+
+		result['tile'] = tile;
+
+		topics = []
+		if exclusiveness == 0 :  # --> check if it needs a precomputed tile data.
+			# get default tile data
+			topics = self.db.get_topics(zoom_level, tile_id);
+
+			logging.debug(topics);
+
+		result['topic'] = topics;
+
+		print(result);
+
+		#else
+			# calculte on the fly.
+		
+
+		# return topics
+
+
 		# topics = eng.function_runme(A, V, nargout=0);
 
-		topic = {};
-		if x == 5 and y == 4:
-			topic = {
-				"tile": {"x": 5, "y": 4, "level": 12},
-				"topic": [{
-					"score": 4.315,
-					"words": [
-						{"score": 1.23, "word": "food"},
-						{"score": 0.9855, "word": "burger"},
-						{"score": 0.72735, "word": "fries"},
-						{"score": 0.71, "word": "drinks"}
-					] }]
-				};
+		# topic = {};
+		# if x == 5 and y == 4:
+		# 	topic = {
+		# 		"tile": {"x": 5, "y": 4, "level": 12},
+		# 		"topic": [{
+		# 			"score": 4.315,
+		# 			"words": [
+		# 				{"score": 1.23, "word": "food"},
+		# 				{"score": 0.9855, "word": "burger"},
+		# 				{"score": 0.72735, "word": "fries"},
+		# 				{"score": 0.71, "word": "drinks"}
+		# 			] }]
+		# 		};
 
-		elif x == 5 and y == 6:
-			topic = {
-				"tile": {"x": 5, "y": 6, "level": 12},
-				"topic": [{
-					"score": 5.385,
-					"words": [
-						{"score": 1.47, "word": "yankees"}, 
-						{"score": 0.2347, "word": "baseball"}, 
-						{"score": 0.742, "word": "beer"}, 
-						{"score": 0.92, "word": "pizza"}
-					] }]
-				};
+		# elif x == 5 and y == 6:
+		# 	topic = {
+		# 		"tile": {"x": 5, "y": 6, "level": 12},
+		# 		"topic": [{
+		# 			"score": 5.385,
+		# 			"words": [
+		# 				{"score": 1.47, "word": "yankees"}, 
+		# 				{"score": 0.2347, "word": "baseball"}, 
+		# 				{"score": 0.742, "word": "beer"}, 
+		# 				{"score": 0.92, "word": "pizza"}
+		# 			] }]
+		# 		};
 
-		return topic;
+		return result;
 
 		# tile_id = self.getTileId(x, y);
 

@@ -119,6 +119,8 @@ def clean_up_data():
 			db.counters.delete_one({'_id':name})
 		if name.startswith('vocabulary') == True:
 			db.counters.delete_one({'_id':name})
+		if name.startswith('vocabulary_hashmap') == True:
+			db.counters.delete_one({'_id':name})
 
 
 
@@ -200,7 +202,7 @@ logging.info('Done: Creating the vocabulary collections. Execution time: %.3fms'
 start_time = time.time()
 logging.info('Creating the term-document matrix...')
 idx = 0
-for tile_name in db.collection_names():d
+for tile_name in db.collection_names():
 
 	idx += 1;
 	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:

@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def initProject():
 
-    print '----- Topic Modeling System %s -----' % (constants.VERSION)
+    print('----- Topic Modeling System %s -----' % (constants.VERSION))
 
     return
 
@@ -63,7 +63,7 @@ def request_get_topics(uuid):
         # these parameters are set by another function such as a set_params. 
         # we use the predefined value at this moment.
         num_topics = constants.DEFAULT_NUM_TOPICS;         
-        num_keywords = constants.DEFAULT_NUM_WORDS_PER_TOPIC;
+        num_keywords = constants.DEFAULT_NUM_TOP_K;
         exclusiveness = constants.DEFAULT_EXCLUSIVENESS;
         time_range = {};
         time_range['start_date'] = 0;
@@ -120,6 +120,7 @@ if __name__ == '__main__':
     initProject()
 
     DB = database_wrapper.DBWrapper()
+    DB.connect("localhost", constants.DEFAULT_MONGODB_PORT)
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
