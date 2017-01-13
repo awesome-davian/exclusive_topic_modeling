@@ -1,4 +1,4 @@
-function topics, topic_score = function_runme(tdm, voca, k, topk)
+function topics = function_runme(tdm, voca, k, topk)
 
 % clear all;
 % close all;

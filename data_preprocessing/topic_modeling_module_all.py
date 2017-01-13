@@ -89,13 +89,19 @@ for tile_name in db.collection_names():
 	tile_topic_name = tile_name.replace('_mtx','')+'_topics'
 	tile_topic = db[tile_topic_name]
 
+	# todo: calculate topic score
+	topic_score = 1.11;
+	tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': 999, 'score': topic_score})
+
 	topic_id = 0;
 	for topic in topics:
 		topic_id += 1;
 		rank = 0;
 		for word in topic: 
 			rank += 1;
-			tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': topic_id, 'rank': rank, 'word': word});
+			# todo: calculate word score
+			word_score = 2.22;
+			tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': topic_id, 'rank': rank, 'word': word, 'score': word_score});
 
 logging.info('Done: NMF');
 

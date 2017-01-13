@@ -65,6 +65,7 @@ class TopicModelingModule():
 		
 		# todo here.
 		tile_id = self.get_tile_id(zoom_level, x, y);
+		tile_id = 642239
 
 		result = {};
 		tile = {};
@@ -77,9 +78,15 @@ class TopicModelingModule():
 		topics = []
 		if exclusiveness == 0 :  # --> check if it needs a precomputed tile data.
 			# get default tile data
-			topics = self.db.get_topics(zoom_level, tile_id);
+			topics = self.db.get_precomputed_topics(zoom_level, tile_id);
+			#logging.debug(topics);
+		#else
+			# todo: get term-doc matrix and vocabulary
+			# todo: call function_runme()
 
-			logging.debug(topics);
+			#A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
+			#topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
+
 
 		result['topic'] = topics;
 

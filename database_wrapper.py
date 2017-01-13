@@ -42,14 +42,13 @@ class DBWrapper():
 	def get_raw_data(self, doc_id):
 		return "raw_data";
 
-	def get_topics(self, zoom_level, tile_id):
+	def get_precomputed_topics(self, zoom_level, tile_id):
 
-		logging.debug('get_topics(%d, %d)', zoom_level, tile_id);
+		logging.debug('get_precomputed_topics(%d, %d)', zoom_level, tile_id);
 
 		topics = [];
 		for tile_name in self.db.collection_names():
 
-			# find out only the 
 			if tile_name.endswith('_topics') == True:
 				print(tile_name)
 
@@ -60,7 +59,7 @@ class DBWrapper():
 					for i in range(1,11):
 
 						topic = {};
-						topic["score"] = tile.find_one({'topic_id':999})['topic_score'];
+						topic['score'] = tile.find_one({'topic_id':999})['score'];
 
 						words = [];
 						
@@ -68,17 +67,19 @@ class DBWrapper():
 							# topic.append(each['word']);
 							
 							word = {};
-							word["word"] = each['word']
+							word['word'] = each['word']
+							word['score'] = each['score']
 							words.append(word)
-							
 
-						topic["words"] = words;
+						topic['words'] = words;
 
 						topics.append(topic);
 
 					break;
 
 		return topics;
+
+	
 
 	def db_to_file(self, ):
 		# raw_data;
