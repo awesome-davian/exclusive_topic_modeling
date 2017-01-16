@@ -7,13 +7,9 @@ import operator
 import pymongo
 import time
 from nltk import PorterStemmer
-#from imp import reload
 import logging, logging.config
 
 logging.config.fileConfig('logging.conf')
-
-# reload(sys)
-# sys.setdefaultencoding()
 
 porter_stemmer=PorterStemmer();
 
@@ -79,12 +75,9 @@ def read_txt(text):
 	return bag_words
 
 def stem_read_txt(text):
-	#print(text.encode('utf-8'))
 	bag_words = collections.OrderedDict()
 	for word in tokenization(text):
-		#print(word.encode('utf-8'))
 		truncated = truncate_word(word)
-		#print(truncated.encode('utf-8'))
 		truncated = porter_stemmer.stem(truncated)
 
 		if truncated != '':
@@ -122,8 +115,6 @@ def clean_up_data():
 		if name.startswith('vocabulary_hashmap') == True:
 			db.counters.delete_one({'_id':name})
 
-
-
 stop_list = set()
 f_stop = io.open('english.stop')
 for line in f_stop:
@@ -156,10 +147,11 @@ total_col_size = len(db.collection_names());
 idx = 0
 for tile_name in db.collection_names():
 	idx += 1;
-	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:
+	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True or tile_name.endswith('_topics') == True:
 		logging.info('%s(%d/%d), skip.', tile_name, idx, total_col_size)
-		continue
+		continue;
 
+	start_time_detail = time.time()
 	tile = db[tile_name]
 	doc_count=0
 	for doc in tile.find():
@@ -175,7 +167,9 @@ for tile_name in db.collection_names():
 				if s_word==porter_stemmer.stem(word):
 				    stem_bag_words[s_word][word]+=bag_words_one[word]
 		doc_count+=1
-	logging.info('%s(%d/%d), doc_count: %d, stemming complete.', tile_name, idx, total_col_size, tile.count())
+	elapsed_time_detail = time.time() - start_time_detail
+	logging.info('%s(%d/%d), doc_count: %d, stemming complete. elapsed: %.3fms', tile_name, idx, total_col_size, tile.count(), elapsed_time_detail)
+
 elapsed_time = time.time() - start_time
 logging.info('Done: Stemming. Execution time: %.3fms', elapsed_time)
 
@@ -205,7 +199,7 @@ idx = 0
 for tile_name in db.collection_names():
 
 	idx += 1;
-	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True:
+	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True or tile_name.endswith('_topics') == True:
 		logging.info('%s(%d/%d), skip', tile_name, idx, total_col_size)
 		continue
 
@@ -216,6 +210,7 @@ for tile_name in db.collection_names():
 
 	word_map_tot_len = len(word_map)
 
+	start_time_detail = time.time()
 	for doc in tile.find():
 		text = doc['text']
 		bag_words_one = read_txt(text)
@@ -226,7 +221,8 @@ for tile_name in db.collection_names():
 				word_idx = w['_id']
 				tile_mtx.insert({'_id': get_next_sequence_value(tile_mtx_name), 'term_idx': word_idx, 'doc_idx': doc['_id'], 'freq': bag_words_one[word]})
 
-	logging.info('%s(%d/%d), creating the term-document matrix complete.', tile_name, idx, total_col_size)		
+	elapsed_time_detail = time.time() - start_time_detail
+	logging.info('%s(%d/%d), creating the term-document matrix complete. elapsed: %.3fms', tile_name, idx, total_col_size, elapsed_time_detail)		
 elapsed_time = time.time() - start_time
 logging.info('Done: Creating the term-document frequency matrix. Execution time: %.3fms', elapsed_time)
 

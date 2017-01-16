@@ -225,7 +225,7 @@ public class TweetsToTiles {
                             }
 
                             String output_name = "level" + Integer.toString(level) + "_"
-                                    + interval + tweetTile.hashCode();
+                                    + interval + tweetTile.hashCode() + "_rawdata";
                             
                             System.out.println(output_name);
 

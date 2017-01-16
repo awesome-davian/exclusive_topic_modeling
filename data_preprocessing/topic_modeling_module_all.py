@@ -46,9 +46,6 @@ start_time = time.time()
 voca = []
 idx = 0;
 for each in db['vocabulary'].find():
-	# idx += 1;
-	# if idx > 100:
-	# 	break;
 	word = each['stem'];
 	voca.append(word);
 
@@ -58,6 +55,7 @@ logging.info('Done: loading vocabulary: %.3f ms', elapsed_time);
 del_stored_topics();
 
 logging.info('Run NMF for all tiles...');
+start_time = time.time()
 for tile_name in db.collection_names():
 	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == False:
 		continue;
@@ -65,7 +63,8 @@ for tile_name in db.collection_names():
 	if tile_name.find('_2014_') < 0:
 		continue;
 
-	logging.info(tile_name);
+	logging.info('Running NMF for %s...', tile_name);
+	start_time_detail = time.time()
 
 	tile_mtx_db = db[tile_name];
 
@@ -75,9 +74,13 @@ for tile_name in db.collection_names():
 		tile_mtx = np.append(tile_mtx, item, axis=0);
 		
 	tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(tile_mtx_db.count(), 3)
-	#print(tile_mtx)
+
+	elapsed_time_detail = time.time() - start_time_detail
+	logging.info('Done: Running NMF for %s, elapse: %.3fms', tile_name, elapsed_time_detail);
 
 	# run topic modeling
+	logging.info('Running the Topic Modeling for %s...', tile_name);
+	start_time_detail = time.time()
 	A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
 	topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
 
@@ -103,7 +106,11 @@ for tile_name in db.collection_names():
 			word_score = 2.22;
 			tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': topic_id, 'rank': rank, 'word': word, 'score': word_score});
 
-logging.info('Done: NMF');
+	elapsed_time_detail = time.time() - start_time_detail
+	logging.info('Done: Running the Topic Modeling for %s, elapse: %.3fms', tile_name, elapsed_time_detail);
+
+elapsed_time = time.time() - start_time;
+logging.info('Done: NMF, elapsed: %.3fms', elapsed_time);
 
 # eng = matlab.engine.start_matlab()
 # eng.cd(constants.MATLAB_DIR)

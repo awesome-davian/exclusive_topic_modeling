@@ -1,6 +1,7 @@
 import matlab.engine
 import logging
 import math
+import constants
 
 
 class TopicModelingModule():
@@ -12,9 +13,12 @@ class TopicModelingModule():
 		logging.debug('init');
 
 		self.nmf = nmf_core
-		self.MAX_NUM_CLUSTERS = 10
-		self.MAX_NUM_KEYWORDS = 10
 		self.db = DB
+
+		logging.info("loading Matlab module...");
+		# self.eng = matlab.engine.start_matlab();
+		# self.eng.cd('./matlab/discnmf_code/');
+		logging.info("Done: loading Matlab module");
 
 	def get_tile_id(self, level, lon, lat):
 
@@ -24,7 +28,7 @@ class TopicModelingModule():
 		pow2 = 1 << level;
 		tile_id = x * pow2 + y;
 
-		return tile_id;
+		return round(tile_id);
 
 
 	def lon_to_x(self, lon, level):
@@ -55,9 +59,39 @@ class TopicModelingModule():
 
 		return lat;
 
+	def get_neighbor_ids(self, level, lon, lat):
+
+		neighbor = [];
+		neighbor.append(self.get_tile_id(level, lon+1, lat+1));
+		neighbor.append(self.get_tile_id(level, lon+1, lat+0));
+		neighbor.append(self.get_tile_id(level, lon+1, lat-1));
+		neighbor.append(self.get_tile_id(level, lon+0, lat+1));
+		#neighbor.append(self.get_tile_id(level, lon+0, lat+0)); --> it's me.
+		neighbor.append(self.get_tile_id(level, lon+0, lat-1));
+		neighbor.append(self.get_tile_id(level, lon-1, lat+1));
+		neighbor.append(self.get_tile_id(level, lon-1, lat+0));
+		neighbor.append(self.get_tile_id(level, lon-1, lat-1));
+
+		return neighbor;
+
 	def make_sub_term_doc_matrix(self, term_doc_mtx, doc_ids, include_word_list, exclude_word_list, time_range):
 
 		return "sub_term_doc_mtx";
+
+	def run_topic_modeling(self, tile_id, neighbor_ids, exclusiveness):
+
+		logging.debug('run_topic_modeling(%s, %s, %.2f)', tile_id, neighbor_ids, exclusiveness);
+
+		tile_mtx = self.db.get_term_doc_matrix(tile_id);
+		neighbor_mtx = self.db.get_term_doc_matrices(neighbor_ids);
+
+		logging.debug(neighbor_mtx)
+
+		voca = self.db.get_vocabulary();
+
+		topics = self.eng.function_run_extm(tile_mtx, neighbor_mtx, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
+
+		return topics;
 
 	def get_topics(self, zoom_level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
 
@@ -65,7 +99,9 @@ class TopicModelingModule():
 		
 		# todo here.
 		tile_id = self.get_tile_id(zoom_level, x, y);
-		tile_id = 642239
+		tile_id = 642239;
+		zoom_level = 10;
+		exclusiveness = 1;
 
 		result = {};
 		tile = {};
@@ -77,12 +113,27 @@ class TopicModelingModule():
 
 		topics = []
 		if exclusiveness == 0 :  # --> check if it needs a precomputed tile data.
+			
 			# get default tile data
-			topics = self.db.get_precomputed_topics(zoom_level, tile_id);
-			#logging.debug(topics);
-		#else
-			# todo: get term-doc matrix and vocabulary
-			# todo: call function_runme()
+			topics = self.db.get_precomputed_topics(tile_id);
+
+		else :
+
+			# get neighbor tiles
+			neighbor_ids = self.get_neighbor_ids(zoom_level, x, y);
+			# neighbor_ids = []
+			# neighbor_ids.append(642238)
+			# neighbor_ids.append(642240)
+			# neighbor_ids.append(642241)
+			# neighbor_ids.append(642242)
+			# neighbor_ids.append(642243)
+			# neighbor_ids.append(643264)
+			# neighbor_ids.append(643265)
+			# neighbor_ids.append(643266)
+
+			logging.debug(neighbor_ids)
+
+			topics = self.run_topic_modeling(tile_id, neighbor_ids, exclusiveness);
 
 			#A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
 			#topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
@@ -129,24 +180,6 @@ class TopicModelingModule():
 		# 		};
 
 		return result;
-
-		# tile_id = self.getTileId(x, y);
-
-		# #if include_word_list == "" && exclude_word_list == "" && exclusiveness == 0 && time_range.start == "" && time_range.end == "":
-		# if include_word_list == "" and exclude_word_list == "" and exclusiveness == 0:
-		# 	# get precomputed topic modeling
-		# 	nmf_result = self.db.get_topic_modeling_result(zoom_level, tile_id)
-		# else:
-		# 	# calculate topic modeling on the fly
-		# 	term_doc_mtx = self.db.get_term_doc_matrix()
-
-		# 	doc_ids = self.db.get_documents_in_tile(zoom_level, tile_id)
-
-		# 	sub_term_doc_mtx = self.make_sub_term_doc_matrix(term_doc_mtx, doc_ids, include_word_list, exclude_word_list, time_range)
-
-		# 	nmf_result = self.nmf.runNMF(sub_term_doc_mtx, num_clusters, num_keywords, exclusiveness)
-
-		# return nmf_result;
 
 	def get_word_ref_count(self, zoom_level, x, y, word):
 		return 0;
