@@ -1,4 +1,4 @@
-function topics = function_runme(tdm, voca, k, topk)
+function [topics, wtopk_score, topic_score] = function_runme(tdm, voca, k, topk)
 
 % clear all;
 % close all;
@@ -24,9 +24,11 @@ target_A = A;     % replaced by below code (9/10) <- original
 [W,H]=nmf(target_A, k); % nmf() is matrix decomposition on A to get W,H (i.e. A=W*H); num of topic = k ; =
 
 % displaying top keywords for each topic
-[Wtopk,Htopk,DocTopk,Wtopk_idx] = parsenmf(W,H,dict,topk);
+[Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,TopicScore] = parsenmf(W,H,dict,topk);
 
 topics = Wtopk(:)';
+wtopk_score = Wtopk_score(:)';
+topic_score = TopicScore(:)';
 
 %Wtopk_idx
 

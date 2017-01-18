@@ -72,8 +72,8 @@ for tile_name in db.collection_names():
 		
 	tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(tile_mtx_db.count(), 3)
 
-	if tile_mtx.shape()[0] < constants.MIN_ROW_FOR_TOPIC_MODELING:
-		logging.debug('# of row is too small(%d). --> continue', tile_mtx.shape()[0])
+	if len(tile_mtx) < constants.MIN_ROW_FOR_TOPIC_MODELING:
+		logging.debug('# of row is too small(%d). --> continue', len(tile_mtx))
 		continue;
 
 	elapsed_time_detail = time.time() - start_time_detail
@@ -83,10 +83,15 @@ for tile_name in db.collection_names():
 	logging.info('Running the Topic Modeling for %s...', tile_name);
 	start_time_detail = time.time()
 	A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
-	topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
+	[topics_list, w_scores, t_scores] = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
 
 	topics = np.asarray(topics_list);
 	topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+
+	word_scores = np.asarray(w_scores);
+	word_scores = np.reshape(word_scores, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+
+	topic_scores = np.asarray(t_scores)[0];
 
 	# find original word and replace
 	for topic in topics:
@@ -102,26 +107,40 @@ for tile_name in db.collection_names():
 						temp_count=each['count']
 						temp_word=each['word']
 					s_count+=1	
-			logging.info('the result is %s   %s', word, temp_word)		
+			logging.debug('the result is %s   %s', word, temp_word)		
 			word=temp_word			
 
 	# store topics in DB
 	tile = db[tile_name]
 	tile_topic_name = tile_name.replace('_mtx','')+'_topics'
-	tile_topic = db[tile_topic_name]
+	tile_topic = db[tile_topic_name]	
 
-	# todo: calculate topic score
-	topic_score = 1.11;
-	tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': 999, 'score': topic_score})
+	print(word_scores)
+	# print(np.sum(word_scores[:,0]))
+	# print('a')
+	# print(np.sum(word_scores[0,:]))
+	print('a')
+	print(np.sum(topic_scores))
+
+	print(topic_scores)
 
 	topic_id = 0;
 	for topic in topics:
+
+		# print(topic_scores)
+		# print(topic_scores[topic_id])
+		
 		topic_id += 1;
 		rank = 0;
+
+		tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': (constants.TOPIC_ID_MARGIN_FOR_SCORE+topic_id), 'topic_score': topic_scores[topic_id-1]})
+
 		for word in topic: 
+
+			word_score = word_scores[topic_id-1, rank];
+
 			rank += 1;
-			# todo: calculate word score
-			word_score = 2.22;
+			
 			tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': topic_id, 'rank': rank, 'word': word, 'score': word_score});
 
 	elapsed_time_detail = time.time() - start_time_detail

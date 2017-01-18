@@ -1,55 +1,61 @@
 import pymongo
 import constants
+import numpy as np
 
 
 #import constants
-# import matlab.engine
-# eng = matlab.engine.start_matlab()
-# eng.cd(constants.MATLAB_DIR)
+import matlab.engine
+eng = matlab.engine.start_matlab()
+eng.cd(constants.MATLAB_DIR)
 
 #ret = eng.triarea(1.0,5.0)
 #------------------------------------------------------------------------------------------------
-# conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
+conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 
-# dbname = constants.DB_NAME;
-# db = conn[dbname];
+dbname = constants.DB_NAME;
+db = conn[dbname];
 
-# tile_id = 642237
-# print(str(tile_id))
+voca = []
+idx = 0;
+for each in db['vocabulary'].find():
+	word = each['stem'];
+	voca.append(word);
 
-# topics = [];
-# for tile_name in db.collection_names():
+print('Done: loading vocabulary');
 
-# 	# find out only the 
-# 	if tile_name.endswith('_topics') == True:
-# 		print(tile_name)
+tile_name = 'level11_2013_w52_2572676_mtx'
+tile_mtx_db = db[tile_name];
 
-# 		if tile_name.find(str(tile_id)) > 0:
-# 			print('found')
+tile_mtx = [];
+for each in tile_mtx_db.find():
+	item = np.array([each['term_idx'], each['doc_idx'], each['freq']], dtype=np.int32);
+	tile_mtx = np.append(tile_mtx, item, axis=0);
+	
+tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(tile_mtx_db.count(), 3)
 
-# 			tile = db[tile_name]
-# 			for i in range(1,11):
+if len(tile_mtx) < constants.MIN_ROW_FOR_TOPIC_MODELING:
+	print('# of row is too small(%d). --> continue', len(tile_mtx))
+	exit(1)
 
-# 				topic = {};
-# 				topic["score"] = tile.find_one({'topic_id':999})['topic_score'];
+print('Done: Running NMF for %s', tile_name);
 
-# 				words = [];
-				
-# 				for each in tile.find({'topic_id': i}).sort('rank',pymongo.ASCENDING):
-# 					# topic.append(each['word']);
-					
-# 					word = {};
-# 					word["word"] = each['word']
-# 					words.append(word)
-					
+# run topic modeling
+print('Running the Topic Modeling for %s...', tile_name);
+A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
+[topics_list, w_scores, t_scores] = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
 
-# 				topic["words"] = words;
+topics = np.asarray(topics_list);
+topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
 
-# 				topics.append(topic);
+word_scores = np.asarray(w_scores);
+word_scores = np.reshape(word_scores, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
 
-# 			break;
+topic_scores = np.asarray(t_scores);
 
-# print(topics);
+print(topics)
+print(word_scores)
+print(topic_scores)
+
 
 #------------------------------------------------------------------------------------------------
 # drop database
@@ -74,39 +80,33 @@ import constants
 #------------------------------------------------------------------------------------------------
 # collection name change
 
-conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
+# conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 
-dbname = constants.DB_NAME;
-db = conn[dbname];
+# dbname = constants.DB_NAME;
+# db = conn[dbname];
 
-topics = [];
-for tile_name in db.collection_names():
+# topics = [];
+# for tile_name in db.collection_names():
 
-	if tile_name.startswith('level') == False:
-		continue;
+# 	if tile_name.startswith('level') == False:
+# 		continue;
 
-	# find out only the 
-	if tile_name.endswith('_topics') == True:
-		db[tile_name].drop();
-		continue;
-	elif tile_name.endswith('_raw') == False:
-		db[tile_name].rename(tile_name + '_raw')
+# 	# find out only the 
+# 	if tile_name.endswith('_topics') == True:
+# 		db[tile_name].drop();
+# 		continue;
+# 	elif tile_name.endswith('_raw') == False:
+# 		db[tile_name].rename(tile_name + '_raw')
 
 #------------------------------------------------------------------------------------------------
 # recalculate the counter
 
-conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
+# conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 
-dbname = constants.DB_NAME;
-db = conn[dbname];
+# dbname = constants.DB_NAME;
+# db = conn[dbname];
 
-for each in db.counters.find():
-	print(each['_id'])
+# for each in db.counters.find():
+# 	print(each['_id'])
 
-	db.counters.update({'_id': each['_id']}, {'$set': {'_id': each['_id']+'_raw'}})
-
-
-	# if each['_id'].endswith('_topics'):
-	# 	db.counters.remove({'_id': each['_id'] })
-
-
+# 	db.counters.update({'_id': each['_id']}, {'$set': {'_id': each['_id']+'_raw'}})

@@ -59,7 +59,7 @@ class DBWrapper():
 	def get_vocabulary(self):
 		
 		voca = []
-		for each in db['vocabulary'].find():
+		for each in self.db['vocabulary'].find():
 			word = each['stem'];
 			voca.append(word);
 
