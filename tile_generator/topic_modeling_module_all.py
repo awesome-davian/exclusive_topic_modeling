@@ -103,7 +103,7 @@ for tile_name in db.collection_names():
 						temp_word=each['word']
 					s_count+=1	
 			logging.info('the result is %s   %s', word, temp_word)		
-			word=temp_word
+			word=temp_word			
 
 	# store topics in DB
 	tile = db[tile_name]
