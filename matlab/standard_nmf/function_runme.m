@@ -28,6 +28,6 @@ target_A = A;     % replaced by below code (9/10) <- original
 
 topics = Wtopk(:)';
 
-Wtopk_idx
+%Wtopk_idx
 
 end

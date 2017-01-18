@@ -4,9 +4,11 @@ VERSION = 'v0.1.0.1_170106'
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
 DEFAULT_MONGODB_PORT = 27017
-DB_NAME = 'tweets_tiles'
+#DB_NAME = 'tweets_tiles'
+DB_NAME = 'tweets_tiles131225'
 
 DEFAULT_NUM_TOPICS = 10
 DEFAULT_NUM_TOP_K = 10
 DEFAULT_EXCLUSIVENESS = 0
 
+MIN_ROW_FOR_TOPIC_MODELING = 30

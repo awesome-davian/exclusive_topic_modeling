@@ -67,7 +67,7 @@ public class TweetsToTiles {
 
     static DB getOutputDB(Options opts) throws UnknownHostException {
         MongoClient mongoClient = new MongoClient(opts.output_host, opts.output_port);
-        DB db = mongoClient.getDB(opts.col + "_tiles");
+        DB db = mongoClient.getDB(opts.col + "_tiles131225");
         return db;
 
     }
@@ -225,7 +225,7 @@ public class TweetsToTiles {
                             }
 
                             String output_name = "level" + Integer.toString(level) + "_"
-                                    + interval + tweetTile.hashCode() + "_rawdata";
+                                    + interval + tweetTile.hashCode() + "_raw";
                             
                             System.out.println(output_name);
 

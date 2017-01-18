@@ -147,7 +147,7 @@ total_col_size = len(db.collection_names());
 idx = 0
 for tile_name in db.collection_names():
 	idx += 1;
-	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True or tile_name.endswith('_topics') == True:
+	if tile_name.endswith('_raw') == False:
 		logging.info('%s(%d/%d), skip.', tile_name, idx, total_col_size)
 		continue;
 
@@ -199,19 +199,19 @@ idx = 0
 for tile_name in db.collection_names():
 
 	idx += 1;
-	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == True or tile_name.endswith('_topics') == True:
+	if tile_name.endswith('_raw') == False:
 		logging.info('%s(%d/%d), skip', tile_name, idx, total_col_size)
 		continue
 
 	tile = db[tile_name]
 
-	tile_mtx_name = tile_name+'_mtx'
+	tile_mtx_name = tile_name.replace('_raw', '')+'_mtx'
 	tile_mtx = db[tile_mtx_name]
 
 	word_map_tot_len = len(word_map)
 
 	start_time_detail = time.time()
-	for doc in tile.find():
+	for doc in tile.find({},no_cursor_timeout=True):
 		text = doc['text']
 		bag_words_one = read_txt(text)
 		for word in bag_words_one:

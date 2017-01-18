@@ -57,10 +57,7 @@ del_stored_topics();
 logging.info('Run NMF for all tiles...');
 start_time = time.time()
 for tile_name in db.collection_names():
-	if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == False:
-		continue;
-
-	if tile_name.find('_2014_') < 0:
+	if tile_name.endswith('_mtx') == False:
 		continue;
 
 	logging.info('Running NMF for %s...', tile_name);
@@ -75,6 +72,10 @@ for tile_name in db.collection_names():
 		
 	tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(tile_mtx_db.count(), 3)
 
+	if tile_mtx.shape()[0] < constants.MIN_ROW_FOR_TOPIC_MODELING:
+		logging.debug('# of row is too small(%d). --> continue', tile_mtx.shape()[0])
+		continue;
+
 	elapsed_time_detail = time.time() - start_time_detail
 	logging.info('Done: Running NMF for %s, elapse: %.3fms', tile_name, elapsed_time_detail);
 
@@ -86,6 +87,23 @@ for tile_name in db.collection_names():
 
 	topics = np.asarray(topics_list);
 	topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+
+	# find original word and replace
+	for topic in topics:
+		for word in topic:
+			s_count=0
+			for each in db['vocabulary_hashmap'].find():
+				if((word==each['stem']) and (s_count==0)):
+					temp_word=each['word']
+					temp_count=each['count']
+					#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
+				if(word==each['stem']):
+					if(each['count']>temp_count):
+						temp_count=each['count']
+						temp_word=each['word']
+					s_count+=1	
+			logging.info('the result is %s   %s', word, temp_word)		
+			word=temp_word
 
 	# store topics in DB
 	tile = db[tile_name]
