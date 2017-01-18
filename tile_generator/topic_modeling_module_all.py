@@ -115,20 +115,11 @@ for tile_name in db.collection_names():
 	tile_topic_name = tile_name.replace('_mtx','')+'_topics'
 	tile_topic = db[tile_topic_name]	
 
-	print(word_scores)
-	# print(np.sum(word_scores[:,0]))
-	# print('a')
-	# print(np.sum(word_scores[0,:]))
-	print('a')
-	print(np.sum(topic_scores))
-
-	print(topic_scores)
+	logging.debug(word_scores)
+	logging.debug(topic_scores)
 
 	topic_id = 0;
 	for topic in topics:
-
-		# print(topic_scores)
-		# print(topic_scores[topic_id])
 		
 		topic_id += 1;
 		rank = 0;
