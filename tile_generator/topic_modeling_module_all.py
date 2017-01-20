@@ -107,7 +107,7 @@ for tile_name in db.collection_names():
 						temp_count=each['count']
 						temp_word=each['word']
 					s_count+=1	
-			logging.debug('the result is %s   %s', word, temp_word)		
+			#logging.debug('the result is %s   %s', word, temp_word)		
 			word=temp_word			
 
 	# store topics in DB
