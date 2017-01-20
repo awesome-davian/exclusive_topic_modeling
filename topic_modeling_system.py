@@ -19,6 +19,30 @@ def initProject():
 
     return
 
+def checkInputValidation(method, contents):
+
+    # just print the information at this moment.
+
+    error_code = 200;
+
+    if method == 'GET_TOPICS':
+        # logging the requested items
+
+        terms = contents['terms'];
+        include_keywords = terms['include'];
+        exclude_keywords = terms['exclude'];
+
+        for word in include_keywords:
+            logging.debug('include keyword: %s', word);
+        for word in exclude_keywords:
+            logging.debug('exclude keyword: %s', word);
+
+        tiles = contents['tiles'];
+        for tile in tiles:
+            logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
+
+    return error_code;
+
 @app.route('/')
 @app.route('/index')
 @app.route('/web_client_test')
@@ -38,20 +62,15 @@ def request_get_topics(uuid):
 
     logging.debug('contents: %s', contents);
 
+    res = checkInputValidation('GET_TOPICS', contents);
+    if  res != 200:
+        return 'error'
+
     terms = contents['terms'];
     include_keywords = terms['include'];
     exclude_keywords = terms['exclude'];
 
     tiles = contents['tiles'];
-
-    # logging the requested items
-    for word in include_keywords:
-        logging.debug('include keyword: %s', word);
-    for word in exclude_keywords:
-        logging.debug('exclude keyword: %s', word);
-
-    for tile in tiles:
-        logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
     
     # run topic modeling for each tile
     topics = [];

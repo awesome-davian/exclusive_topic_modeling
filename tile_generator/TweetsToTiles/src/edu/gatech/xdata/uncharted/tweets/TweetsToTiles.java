@@ -169,14 +169,20 @@ public class TweetsToTiles {
                             case "coordinates":
                                 coordinatejson = (BasicDBObject) tweetJSON.get("coordinates");
                                 coordinates = (List<Double>) coordinatejson.get("coordinates");
-                                x = ((Number) coordinates.get(0)).doubleValue();
-                                y = ((Number) coordinates.get(1)).doubleValue();
+                                // x = ((Number) coordinates.get(0)).doubleValue();
+                                // y = ((Number) coordinates.get(1)).doubleValue();
+                                x = ((Number) coordinates.get(1)).doubleValue();
+                                y = ((Number) coordinates.get(0)).doubleValue();
+                                System.out.println("x: " + x + ", y: " + y);
                                 break;
                             case "geo":
                                 coordinatejson = (BasicDBObject) tweetJSON.get("geo");
                                 coordinates = (List<Double>) coordinatejson.get("coordinates");
-                                x = ((Number) coordinates.get(0)).doubleValue();
-                                y = ((Number) coordinates.get(1)).doubleValue();
+                                // x = ((Number) coordinates.get(0)).doubleValue();
+                                // y = ((Number) coordinates.get(1)).doubleValue();
+                                x = ((Number) coordinates.get(1)).doubleValue();
+                                y = ((Number) coordinates.get(0)).doubleValue();
+                                System.out.println("x: " + x + ", y: " + y);
                                 break;
                         }
                         assert (x != Double.NaN && y != Double.NaN);
@@ -224,8 +230,11 @@ public class TweetsToTiles {
                                 interval += "_";
                             }
 
-                            String output_name = "level" + Integer.toString(level) + "_"
-                                    + interval + tweetTile.hashCode() + "_raw";
+                            // String output_name = "tile" + Integer.toString(level) + "_"
+                            //         + interval + tweetTile.hashCode() + "_raw";
+
+                            String output_name = "tile_" + interval
+                                     + Integer.toString(level) + "_" + tweetTile.getX() + "_" + tweetTile.getY() + "_" + tweetTile.hashCode() + "_raw";
                             
                             System.out.println(output_name);
 

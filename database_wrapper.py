@@ -69,39 +69,49 @@ class DBWrapper():
 		# todo
 		return "raw_data";
 
-	def get_precomputed_topics(self, tile_id):
+	def get_precomputed_topics(self, level, x, y):
 
-		logging.debug('get_precomputed_topics(%d)', tile_id);
+		logging.debug('get_precomputed_topics(%d, %d, %d)', level, x, y);
 
 		topics = [];
 		for tile_name in self.db.collection_names():
 
-			if tile_name.endswith('_topics') == True:
-				logging.debug(tile_name)
+			if tile_name.endswith('_topics') == False:
+				continue;
 
-				if tile_name.find(str(tile_id)) > 0:
-					logging.debug('found')
+			#logging.debug(tile_name)
 
-					tile = self.db[tile_name]
-					for i in range(1,11):
+			tile_info = tile_name.split('_');
 
-						topic = {};
-						topic['score'] = tile.find_one({'topic_id':999})['score'];
+			tile_x = tile_info[constants.POS_X];
+			tile_y = tile_info[constants.POS_Y];
+			tile_level = tile_info[constants.POS_LEVEL];
 
-						words = [];
+
+			# if tile_name.find(str(tile_id)) > 0:
+			if int(tile_x) == x and int(tile_y) == y and int(tile_level) == level:
+				logging.debug('found, %s', tile_name);
+
+				tile = self.db[tile_name]
+				for i in range(1,11):
+
+					topic = {};
+					topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i})['topic_score'];
+
+					words = [];
+					
+					for each in tile.find({'topic_id': i}).sort('rank',pymongo.ASCENDING):
+						# topic.append(each['word']);
 						
-						for each in tile.find({'topic_id': i}).sort('rank',pymongo.ASCENDING):
-							# topic.append(each['word']);
-							
-							word = {};
-							word['word'] = each['word']
-							word['score'] = each['score']
-							words.append(word)
+						word = {};
+						word['word'] = each['word']
+						word['score'] = each['score']
+						words.append(word)
 
-						topic['words'] = words;
+					topic['words'] = words;
 
-						topics.append(topic);
+					topics.append(topic);
 
-					break;
+				break;
 
 		return topics;

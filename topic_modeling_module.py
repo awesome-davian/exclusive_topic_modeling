@@ -20,38 +20,47 @@ class TopicModelingModule():
 		# self.eng.cd('./matlab/discnmf_code/');
 		logging.info("Done: loading Matlab module");
 
-	def get_tile_id(self, level, lon, lat):
+	def get_tile_id(self, level, x, y):
 
-		x = self.lon_to_x(lon, level);
-		y = self.lat_to_y(lat, level);
+		# logging.debug('x: %d, y: %d', x, y)
+
+		# x = self.lon_to_x(level, lon);
+		# y = self.lat_to_y(level, lat);
+
+		# x = math.floor(x);
+		# y = math.floor(y);
 
 		pow2 = 1 << level;
 		tile_id = x * pow2 + y;
 
 		return round(tile_id);
 
-
-	def lon_to_x(self, lon, level):
+	def lon_to_x(self, level, lon):
 
 		pow2 = 1 << level;
 		x = (lon + 180.0)/360.0 * pow2;
 		return x;
 
-	def lat_to_y(self, lat, level):
+	def lat_to_y(self, level, lat):
 
 		latR = math.radians(lat);
 		pow2 = 1 << level;
-		y = (1 - math.log(math.tan(latR) + 1/math.cos(latR))/math.pi)/2*pow2;
+
+		# logging.debug('%f, %f, %f, %f', lat, level, latR, pow2);
+		# logging.debug('%f, %f', math.tan(latR), 1/math.cos(latR))
+		# logging.debug('%f', math.log(math.tan(latR) + 1/math.cos(latR)))
+
+		y = (1 - math.log(math.tan(latR) + 1 / math.cos(latR)) / math.pi) / 2 * pow2;
 		y = pow2 - y;
 		return y;
 
-	def x_to_lon(self, x, level):
+	def x_to_lon(self, level, x):
 
 		pow2 = 1 << level;
 		lon = (x / pow2 * 360.0) - 180.0;
 		return lon;
 
-	def y_to_lat(self, y, level):
+	def y_to_lat(self, level, y):
 
 		pow2 = 1 << level;
 		n = -math.pi + (2.0*math.pi*y)/pow2;
@@ -93,21 +102,21 @@ class TopicModelingModule():
 
 		return topics;
 
-	def get_topics(self, zoom_level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
+	def get_topics(self, level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
 
-		logging.debug('get_topics(%s, %s, %s)', zoom_level, x, y)
+		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		
 		# todo here.
-		tile_id = self.get_tile_id(zoom_level, x, y);
-		tile_id = 642239;
-		zoom_level = 10;
-		exclusiveness = 1;
+		tile_id = self.get_tile_id(level, x, y);
+		#tile_id = 2570625;
+		#zoom_level = 11;
+		exclusiveness = 0;
 
 		result = {};
 		tile = {};
 		tile['x'] = x;
 		tile['y'] = y;
-		tile['level'] = zoom_level;
+		tile['level'] = level;
 
 		result['tile'] = tile;
 
@@ -115,7 +124,7 @@ class TopicModelingModule():
 		if exclusiveness == 0 :  # --> check if it needs a precomputed tile data.
 			
 			# get default tile data
-			topics = self.db.get_precomputed_topics(tile_id);
+			topics = self.db.get_precomputed_topics(level, x, y);
 
 		else :
 
@@ -181,8 +190,8 @@ class TopicModelingModule():
 
 		return result;
 
-	def get_word_ref_count(self, zoom_level, x, y, word):
+	def get_word_ref_count(self, level, x, y, word):
 		return 0;
 
-	def get_word_info(self, zoom_level, x, y, word):
+	def get_word_info(self, level, x, y, word):
 		return "word_info";
