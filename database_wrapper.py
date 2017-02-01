@@ -21,7 +21,7 @@ class DBWrapper():
 		tile_mtx = [];
 		for tile_name in self.db.collection_names():
 
-			if tile_name.startswith('level') == False or tile_name.endswith('_mtx') == False:
+			if tile_name.endswith('_mtx') == False:
 				continue;
 
 			if tile_name.find(str(id)) < 0:
@@ -32,10 +32,10 @@ class DBWrapper():
 			tile_mtx_db = self.db[tile_name];
 			
 			for each in tile_mtx_db.find():
-				item = np.array([each['term_idx'], each['doc_idx'], each['freq']], dtype=np.int32);
+				item = np.array([each['term_idx'], each['doc_idx'], each['freq']], dtype=np.double);
 				tile_mtx = np.append(tile_mtx, item, axis=0);
 				
-			tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(tile_mtx_db.count(), 3)
+			tile_mtx = np.array(tile_mtx, dtype=np.double).reshape(tile_mtx_db.count(), 3)
 
 			break;
 

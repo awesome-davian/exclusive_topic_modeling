@@ -2,6 +2,7 @@ import matlab.engine
 import logging
 import math
 import constants
+import numpy as np
 
 
 class TopicModelingModule():
@@ -16,8 +17,8 @@ class TopicModelingModule():
 		self.db = DB
 
 		logging.info("loading Matlab module...");
-		# self.eng = matlab.engine.start_matlab();
-		# self.eng.cd('./matlab/discnmf_code/');
+		self.eng = matlab.engine.start_matlab();
+		self.eng.cd('./matlab/discnmf_code/');
 		logging.info("Done: loading Matlab module");
 
 	def get_tile_id(self, level, x, y):
@@ -68,18 +69,18 @@ class TopicModelingModule():
 
 		return lat;
 
-	def get_neighbor_ids(self, level, lon, lat):
+	def get_neighbor_ids(self, level, x, y):
 
 		neighbor = [];
-		neighbor.append(self.get_tile_id(level, lon+1, lat+1));
-		neighbor.append(self.get_tile_id(level, lon+1, lat+0));
-		neighbor.append(self.get_tile_id(level, lon+1, lat-1));
-		neighbor.append(self.get_tile_id(level, lon+0, lat+1));
-		#neighbor.append(self.get_tile_id(level, lon+0, lat+0)); --> it's me.
-		neighbor.append(self.get_tile_id(level, lon+0, lat-1));
-		neighbor.append(self.get_tile_id(level, lon-1, lat+1));
-		neighbor.append(self.get_tile_id(level, lon-1, lat+0));
-		neighbor.append(self.get_tile_id(level, lon-1, lat-1));
+		neighbor.append(self.get_tile_id(level, x+1, y+1));
+		neighbor.append(self.get_tile_id(level, x+1, y+0));
+		neighbor.append(self.get_tile_id(level, x+1, y-1));
+		neighbor.append(self.get_tile_id(level, x+0, y+1));
+		#neighbor.append(self.get_tile_id(level, x+0, y+0)); --> it's me.
+		neighbor.append(self.get_tile_id(level, x+0, y-1));
+		neighbor.append(self.get_tile_id(level, x-1, y+1));
+		neighbor.append(self.get_tile_id(level, x-1, y+0));
+		neighbor.append(self.get_tile_id(level, x-1, y-1));
 
 		return neighbor;
 
@@ -87,18 +88,48 @@ class TopicModelingModule():
 
 		return "sub_term_doc_mtx";
 
-	def run_topic_modeling(self, tile_id, neighbor_ids, exclusiveness):
+	def run_topic_modeling(self, level, x, y, exclusiveness):
+		
+		logging.debug('run_topic_modeling(%d, %d, %d, %.2f)', level, x, y, exclusiveness);
 
-		logging.debug('run_topic_modeling(%s, %s, %.2f)', tile_id, neighbor_ids, exclusiveness);
+		tile_id = self.get_tile_id(level, x, y);
+		neighbor_ids = self.get_neighbor_ids(level, x, y);
+
+		logging.debug(neighbor_ids)
 
 		tile_mtx = self.db.get_term_doc_matrix(tile_id);
 		neighbor_mtx = self.db.get_term_doc_matrices(neighbor_ids);
 
-		logging.debug(neighbor_mtx)
+		# print(type(neighbor_mtx));
+		# print(type(neighbor_mtx[0]));
+		# print(type(neighbor_mtx[3]));
+		# print(type(tile_mtx.tolist()));
+		
+		# logging.debug(neighbor_mtx);
+		# logging.debug(tile_mtx);
+
+		A = matlab.double(tile_mtx.tolist());
+
+		B = [];
+		idxa = 0;
+		for each in neighbor_mtx:
+			if each == []: 
+				print("found it, idx: " + str(idxa));
+				B.append(each);
+			else:
+				B.append(each.tolist());
+
+			idxa += 1;
+
+		# for each in B:
+		# 	print(type(each));
+
+		# print(type(neighbor_mtx));
+		# print(type(tile_mtx.tolist()));
 
 		voca = self.db.get_vocabulary();
 
-		topics = self.eng.function_run_extm(tile_mtx, neighbor_mtx, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
+		topics = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
 
 		return topics;
 
@@ -110,7 +141,7 @@ class TopicModelingModule():
 		tile_id = self.get_tile_id(level, x, y);
 		#tile_id = 2570625;
 		#zoom_level = 11;
-		exclusiveness = 0;
+		exclusiveness = 50;
 
 		result = {};
 		tile = {};
@@ -121,15 +152,16 @@ class TopicModelingModule():
 		result['tile'] = tile;
 
 		topics = []
-		if exclusiveness == 0 :  # --> check if it needs a precomputed tile data.
+		# check if it needs a precomputed tile data.
+		if exclusiveness == 0 :  
 			
-			# get default tile data
+			# get precomputed tile data
 			topics = self.db.get_precomputed_topics(level, x, y);
 
 		else :
 
 			# get neighbor tiles
-			neighbor_ids = self.get_neighbor_ids(zoom_level, x, y);
+			
 			# neighbor_ids = []
 			# neighbor_ids.append(642238)
 			# neighbor_ids.append(642240)
@@ -140,13 +172,10 @@ class TopicModelingModule():
 			# neighbor_ids.append(643265)
 			# neighbor_ids.append(643266)
 
-			logging.debug(neighbor_ids)
-
-			topics = self.run_topic_modeling(tile_id, neighbor_ids, exclusiveness);
+			topics = self.run_topic_modeling(level, x, y, exclusiveness);
 
 			#A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
 			#topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
-
 
 		result['topic'] = topics;
 
