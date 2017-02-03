@@ -21,15 +21,15 @@ for i=1:k
     end
 end
 
-sum_h=zeros(k:1);
+sum_A=zeros(k:1);
 TopicScore=zeros(k:1);
 for i=1:k
-	sum_h(i) = sum(H(i,:))*sum_w(i);
+	sum_A(i) = sum(H(i,:))*sum_w(i);
 end
 
-sum_topic = sum(sum_h(:));
+sum_topic = sum(sum_A(:));
 for i=1:k
-	TopicScore(i) = sum_h(i)/sum_topic;
+	TopicScore(i) = sum_A(i)/sum_topic;
 end
 
 %find top k topics for every document/tweet based on H
