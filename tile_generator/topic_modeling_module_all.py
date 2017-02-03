@@ -93,22 +93,22 @@ for tile_name in db.collection_names():
 
 	topic_scores = np.asarray(t_scores)[0];
 
-	# find original word and replace
-	for topic in topics:
-		for word in topic:
-			s_count=0
-			for each in db['vocabulary_hashmap'].find():
-				if((word==each['stem']) and (s_count==0)):
-					temp_word=each['word']
-					temp_count=each['count']
-					#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
-				if(word==each['stem']):
-					if(each['count']>temp_count):
-						temp_count=each['count']
-						temp_word=each['word']
-					s_count+=1	
-			#logging.debug('the result is %s   %s', word, temp_word)		
-			word=temp_word			
+	# # find original word and replace
+	# for topic in topics:
+	# 	for word in topic:
+	# 		s_count=0
+	# 		for each in db['vocabulary_hashmap'].find():
+	# 			if((word==each['stem']) and (s_count==0)):
+	# 				temp_word=each['word']
+	# 				temp_count=each['count']
+	# 				#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
+	# 			if((word==each['stem']) and (s_count!=0)):
+	# 				if(each['count']>temp_count):
+	# 					temp_count=each['count']
+	# 					temp_word=each['word']
+	# 				s_count+=1			
+	# 		logging.debug('the result is %s   %s', word, temp_word)		
+	# 		word=temp_word			
 
 	# store topics in DB
 	tile = db[tile_name]
@@ -125,15 +125,31 @@ for tile_name in db.collection_names():
 		rank = 0;
 
 		tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': (constants.TOPIC_ID_MARGIN_FOR_SCORE+topic_id), 'topic_score': topic_scores[topic_id-1]})
-
+        
 		for word in topic: 
 
 			word_score = word_scores[topic_id-1, rank];
 
 			rank += 1;
 			
+			s_count=0
+			for each in db['vocabulary_hashmap'].find():
+				if((word==each['stem']) and (s_count==0)):
+					temp_word=each['word']
+					temp_count=each['count']
+					#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
+				if((word==each['stem']) and (s_count!=0)):
+					if(each['count']>temp_count):
+						temp_count=each['count']
+						temp_word=each['word']
+					s_count+=1			
+			#logging.debug('the result is %s   %s', word, temp_word)	
+			word=temp_word	
+			
 			tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': topic_id, 'rank': rank, 'word': word, 'score': word_score});
-
+			
+			#logging.debug('the result is    %s', word)
+  
 	elapsed_time_detail = time.time() - start_time_detail
 	logging.info('Done: Running the Topic Modeling for %s, elapse: %.3fms', tile_name, elapsed_time_detail);
 
