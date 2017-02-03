@@ -40,14 +40,14 @@ function [WC,WN,HC,HN,par] =...
     iter = 20; %initial iteration = 20;
     
     for c3 = 1:iter
-        [HC,WC,WN,par] = xcl_c_itersolver(AC,HC,WC,WN,par)
+        [HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,par);
         for c4 = 1:par.n
-        [W(:,:,c4),HN{C4},par] = xcl_n_itersolver(Aj,HN{c4},WC,WN(:,:,c4),ALPHA(c4),BETA(c4),par) 
+        [W(:,:,c4),HN{C4},par] = xcl_n_itersolver(Aj,HN{c4},WC,WN(:,:,c4),ALPHA(c4),BETA(c4),par);
         end       
     end
 end
 
-function[HC,WC,WN,par] = xcl_c_itersolver(AC,HC,WC,WN,par)
+function[HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,par)
 
     epsilon = 1e-16;
     WCtAC = WC'*AC;
