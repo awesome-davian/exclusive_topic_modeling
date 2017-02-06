@@ -2,12 +2,16 @@ function [WC,WN,HC,HN,par] =...
     xcl_nmf(AC,AN,k,kd,iter,ALPHA,BETA) 
   
     params = inputParser;
-    params = addParamValue('k'          ,0,@(x) isscalar(x) & x>=0);
-    params = addParamValue('kd'          ,0,@(x) isscalar(x) & x>=0);
-    params = addParamValue('n'              ,0          ,@(x) isscalar(x) & x>=0 & x<=8);
-    params = addParamValue('ALPHA'          ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
-    params = addParamValue('BETA'          ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
-    params = addParamValue('N'             ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
+    params.addParamValue('k'          ,0,@(x) isscalar(x) & x>=0);
+    params.addParamValue('kd'          ,0,@(x) isscalar(x) & x>=0);
+    params.addParamValue('n'              ,0          ,@(x) isscalar(x) & x>=0 & x<=8);
+    params.addParamValue('ALPHA'          ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
+    params.addParamValue('BETA'          ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
+    
+% params.addParamValue('N'             ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
+
+    
+
     par = params.Results;
     
     par.k = k;
@@ -16,14 +20,14 @@ function [WC,WN,HC,HN,par] =...
     par.BETA = BETA;
     par.n = size(AN,2);
     
-    Wm = size(AC,1); 
+    Wm = size(AC,1);  
    
     for c1=1:par.n
         WN = rand(Wm,par.k,par.n);
     end
     
-    if(1<n+1)
-        par.N(1) = size(A1,2);
+    if(1<par.n+1)
+        par.N(1) = size(AC,2);
         HC = rand(par.k,par.N(1));
         WC = rand(Wm,par.k);
     end
@@ -37,17 +41,17 @@ function [WC,WN,HC,HN,par] =...
     
     %s the iteration process to go.
     
-    iter = 20; %initial iteration = 20;
+%    iter = 20; %initial iteration = 20;
     
     for c3 = 1:iter
-        [HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,par);
+        [HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,Wm,par);
         for c4 = 1:par.n
-        [W(:,:,c4),HN{C4},par] = xcl_n_itersolver(Aj,HN{c4},WC,WN(:,:,c4),ALPHA(c4),BETA(c4),par);
+        [W(:,:,c4),HN{c4},par] = xcl_n_itersolver(AN{c4},HN{c4},WC,WN(:,:,c4),ALPHA(c4),BETA(c4),par);
         end       
     end
 end
 
-function[HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,par)
+function[HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,Wm,par)
 
     epsilon = 1e-16;
     WCtAC = WC'*AC;
@@ -97,6 +101,8 @@ function[Wj,Hj,par] = xcl_n_itersolver(Aj,Hj,WC,WNi,alpha,beta,par)
     epsilon = 1e-16;
     Wj = WNi;
     WjtAj = Wj'*Aj;
+
+
 	WjtWj = Wj'*Wj;
     HjHjt = Hj *Hj';
     
@@ -114,11 +120,12 @@ function[Wj,Hj,par] = xcl_n_itersolver(Aj,Hj,WC,WNi,alpha,beta,par)
     end
     
     for i = par.kd+1:par.k
-		Wj(:,i) = max(Wj(:,i) * HjHjt(i,i)/(HjHjt+alpha) + ...
-            (AjHjt(:,i)+alpha*WC(:,i)-W1*HjHjt(:,i)) / (HjHjt(i,i)+alpha),epsilon);
+		Wj(:,i) = max(Wj(:,i) * HjHjt(i,i)/(HjHjt(i,i)+alpha) + ...
+            (AjHjt(:,i)+alpha*WC(:,i)-Wj*HjHjt(:,i)) / (HjHjt(i,i)+alpha),epsilon);
 		if sum(Wj(:,i))>0
 			Wj(:,i) = Wj(:,i)/norm(Wj(:,i));
 		end
     end
     
 end
+
