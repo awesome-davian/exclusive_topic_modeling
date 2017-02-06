@@ -14,12 +14,32 @@ function [Topics, Wtopk_score, Topic_score] = function_run_extm(Tdm, Ntdms, excl
 
     % 2. Sparsing
     dict = Voca;
+    ATDMs = cell(9,1);
+%    ATDMs{1} = Tdm;
+    [nrows, ncols] = cellfun(@size, Ntdms);
 
-    AC = sparse(Tdm(:,1),Tdm(:,2),Tdm(:,3),max(Tdm(:,1)),max(Tdm(:,2)));
-    clear tdm;
 
     % ncols --> The actual length of each neighbor tile
-    [nrows, ncols] = cellfun(@size, Ntdms);
+    ATDMs{1} = Tdm;
+    max_tdm_m = max(Tdm(:,1));
+    max_tdm_n = max(Tdm(:,2));
+     for i = 1:8
+
+            if ncols(i) == 0
+                continue
+            else
+
+            Tdm_cell = Ntdms{1, i};
+            Mtx = cell2mat( cellfun( @(x) cell2mat(x), Tdm_cell, 'UniformOutput', 0 ) );
+            Ntdm = reshape(Mtx, 3, [])';
+            num_tdm_m = max(Ntdm(:,1));
+            num_tdm_n = max(Ntdm(:,2));
+            max_tdm_m = max(max_tdm_m,num_tdm_m);
+            max_tdm_n = max(max_tdm_n,num_tdm_n);
+        end
+    end
+
+
     
     NB = cell(8,1);
     for i = 1:8
@@ -29,34 +49,42 @@ function [Topics, Wtopk_score, Topic_score] = function_run_extm(Tdm, Ntdms, excl
         else
 
         Tdm_cell = Ntdms{1, i};
-        Mtx = cell2mat( cellfun( @(x) cell2mat(x), Tdm_cell, 'UniformOutput', 0 ) );
-        Ntdm = reshape(Mtx, 3, [])';
+      %  Mtx = cell2mat( cellfun( @(x) cell2mat(x), Tdm_cell, 'UniformOutput', 0 ) );
+      %  Ntdm = reshape(Mtx, 3, [])';
+        NB{i} = sparse(Ntdm(:,1),Ntdm(:,2),Ntdm(:,3),max_tdm_m,max(Ntdm(:,2)) );
+        NB{i}(isnan(NB{i}))=0;
 
-        NB{i} = sparse(Ntdm(:,1),Ntdm(:,2),Ntdm(:,3),max(Ntdm(:,1)),max(Ntdm(:,2)));
         % end of sparsing. The end 
         end
     end
+
+   AC = sparse(Tdm(:,1),Tdm(:,2),Tdm(:,3),max_tdm_m,max(Tdm(:,2)) );
+   AC(isnan(AC))=0;
+ 
+    clear tdm;
+
     
     % 3. Normalisation (why?)
     NB_norm = cell(8,1);
-    AC_norm = bsxfun(@rdivide,AC,sqrt(sum(AC.^2)));
-    
+    AC_norm = bsxfun(@rdivide,AC,sqrt(sum(AC.^2))); %NaN Value going in. 
+    AC_norm(isnan(AC_norm))=0;
     for c = 1:8
         if (ncols(c) == 0)
             continue
         else
             NB_norm{c} = bsxfun(@rdivide,NB{i},sqrt(sum(NB{i}.^2)));
+            NB_norm{c}(isnan(NB_norm{c}))=0;
         end
     end
     
     % 4. NMF
     %   i) initialising
-    rp = 1; %regularisation parameter
+    rp = 7; %regularisation parameter
     xcl = exclusiveness; AL = ones(8,1); BE = ones(8,1);
-    AL = (rp*(1-xcl)).*AL; BE = (rp*xcl).*BE;
+    AL = (rp*(1-xcl))*AL; BE = (rp*xcl)*BE;
     
     %   ii) doing the initialisation
-    [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,20,AL,BE); %NB coming in cell format. 
+    [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,30,AL,BE); %NB coming in cell format. 
     
     % 5. Displaying the key words (parsing)
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {};
