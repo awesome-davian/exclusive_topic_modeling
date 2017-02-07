@@ -134,14 +134,14 @@ def request_get_word_ref_count():
 
     return json_data;
 
-@app.route('/GET_DOCS_INCLUDING_WORD', methods=['POST'])
+@app.route('/GET_RELEATED_DOC', methods=['POST'])
 def request_get_docs_including_word():
 
     contents = request.get_json(silent=True);
 
     logging.debug('contents: %s', contents);
 
-    res = checkInputValidation('GET_DOCS_INCLUDING_WORD', contents);
+    res = checkInputValidation('GET_RELEATED_DOCS', contents);
     if  res != 200:
         return 'error'
 
@@ -161,7 +161,7 @@ def request_get_docs_including_word():
         time_range['start_date'] = 0;
         time_range['end_date'] = 0;
 
-        docs_per_tile = TM.get_docs_including_word(level, x, y, word);
+        docs_per_tile = TM.get_releated_docs(level, x, y, word);
         docs.append(docs_per_tile);
 
     # verify that the calculation is correct using log.
@@ -176,7 +176,7 @@ def request_get_docs_including_word():
 def request_get_word_info():
 
     # TBD
-    
+
     return ;
 
 @app.route('/GENERATE_TILE', methods=['GET'])

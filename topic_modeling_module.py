@@ -156,12 +156,7 @@ class TopicModelingModule():
 
 		return result;
 
-	def get_word_ref_count(self, level, x, y, word):
-
-		# 단순 숫자가 아니고, json format으로 tile 정보와 함께 return 해야 함
-		return 'res';
-
-	def get_docs_including_word(self, level, x, y, word):
+	def get_releated_docs(self, level, x, y, word):
 		return 'res';
 
 	def get_word_info(self, level, x, y, word):
