@@ -28,7 +28,7 @@ def checkInputValidation(method, contents):
     if method == 'GET_TOPICS':
         # logging the requested items
 
-        terms = contents['terms'];
+        terms = contents['parameters'];
         include_keywords = terms['include'];
         exclude_keywords = terms['exclude'];
 
@@ -40,6 +40,12 @@ def checkInputValidation(method, contents):
         tiles = contents['tiles'];
         for tile in tiles:
             logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
+    
+    elif method=='GET_RELEATED_DOCS':
+        # logging the request 
+
+        terms=contents['parameters']
+        # todo 
 
     return error_code;
 
@@ -64,9 +70,13 @@ def request_get_topics(uuid):
     if  res != 200:
         return 'error'
 
-    terms = contents['terms'];
+    terms = contents['parameters'];
     include_keywords = terms['include'];
     exclude_keywords = terms['exclude'];
+    num_topics=terms['topic_count'];
+    num_keywords=terms['word_count'];
+    exclusiveness=terms['exclusiveness'];
+    time=terms['time'];
 
     tiles = contents['tiles'];
     
@@ -77,14 +87,10 @@ def request_get_topics(uuid):
         x = tile['x']
         y = tile['y']
 
-        # these parameters are set by another function such as a set_params. 
-        # we use the predefined value at this moment.
-        num_topics = constants.DEFAULT_NUM_TOPICS;         
-        num_keywords = constants.DEFAULT_NUM_TOP_K;
-        exclusiveness = constants.DEFAULT_EXCLUSIVENESS;
+        # change parameters form default set_params to json input. 
         time_range = {};
-        time_range['start_date'] = 0;
-        time_range['end_date'] = 0;
+        time_range['start_date'] = time['from'];
+        time_range['end_date'] = time['to'];
         topic = TM.get_topics(zoom_level, x, y, num_topics, num_keywords, include_keywords, exclude_keywords, exclusiveness, time_range);
         topics.append(topic);
 
@@ -134,7 +140,7 @@ def request_get_word_ref_count():
 
     return json_data;
 
-@app.route('/GET_RELEATED_DOC', methods=['POST'])
+@app.route('/GET_RELEATED_DOCS', methods=['POST'])
 def request_get_docs_including_word():
 
     contents = request.get_json(silent=True);

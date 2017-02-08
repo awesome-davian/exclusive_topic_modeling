@@ -106,6 +106,7 @@ class DBWrapper():
 						word = {};
 						word['word'] = each['word']
 						word['score'] = each['score']
+						word['count']=each['count']  # add count element 
 						words.append(word)
 
 					topic['words'] = words;

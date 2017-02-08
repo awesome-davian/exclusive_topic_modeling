@@ -163,6 +163,9 @@ class TopicModelingModule():
 		return result;
 
 	def get_releated_docs(self, level, x, y, word):
+
+		logging.debug('get_releated_docs(%s, %s, %s, %s)', level, x, y, word)
+		
 		return 'res';
 
 	def get_word_info(self, level, x, y, word):
