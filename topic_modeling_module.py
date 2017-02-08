@@ -3,7 +3,9 @@ import logging
 import math
 import constants
 import numpy as np
-
+import pymongo
+import sys
+sys.path.insert(0, '../')
 
 class TopicModelingModule():
 
@@ -84,9 +86,13 @@ class TopicModelingModule():
 
 		return neighbor;
 
+
+    #todo: JinHo 
 	def make_sub_term_doc_matrix(self, term_doc_mtx, doc_ids, include_word_list, exclude_word_list, time_range):
 
 		return "sub_term_doc_mtx";
+    
+
 
 	def run_topic_modeling(self, level, x, y, exclusiveness):
 		
