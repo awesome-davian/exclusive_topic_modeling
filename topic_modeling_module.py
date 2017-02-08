@@ -1,9 +1,20 @@
-import matlab.engine
-import logging
+mport matlab.engine
+#import logging
 import math
 import constants
 import numpy as np
+import sys
 
+import constants
+import pymongo
+import logging, logging.config
+import time
+
+sys.path.insert(0, '../')
+conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
+
+dbname = constants.DB_NAME;
+db = conn[dbname];
 
 class TopicModelingModule():
 
@@ -23,6 +34,14 @@ class TopicModelingModule():
 
 	def get_tile_id(self, level, x, y):
 
+		# logging.debug('x: %d, y: %d', x, y)
+
+		# x = self.lon_to_x(level, lon);
+		# y = self.lat_to_y(level, lat);
+
+		# x = math.floor(x);
+		# y = math.floor(y);
+
 		pow2 = 1 << level;
 		tile_id = x * pow2 + y;
 
@@ -38,6 +57,10 @@ class TopicModelingModule():
 
 		latR = math.radians(lat);
 		pow2 = 1 << level;
+
+		# logging.debug('%f, %f, %f, %f', lat, level, latR, pow2);
+		# logging.debug('%f, %f', math.tan(latR), 1/math.cos(latR))
+		# logging.debug('%f', math.log(math.tan(latR) + 1/math.cos(latR)))
 
 		y = (1 - math.log(math.tan(latR) + 1 / math.cos(latR)) / math.pi) / 2 * pow2;
 		y = pow2 - y;
@@ -117,18 +140,76 @@ class TopicModelingModule():
 
 		voca = self.db.get_vocabulary();
 
-		topics = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		#[topics_list] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		[topics_list, w_scores, t_scores] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		topics = np.asarray(topics_list);
+		topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
 
-		return topics;
+		word_scores = np.asarray(w_scores);
+		word_scores = np.reshape(word_scores, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+
+		topic_scores = np.asarray(t_scores);
+
+		# find original word and replace
+		for topic in topics:
+			for word in topic:
+				s_count=0
+				for each in db['vocabulary_hashmap'].find():
+					if((word==each['stem']) and (s_count==0)):
+						temp_word=each['word']
+						temp_count=each['count']
+						#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
+					if(word==each['stem']):
+						if(each['count']>temp_count):
+							temp_count=each['count']
+							temp_word=each['word']
+						s_count+=1	
+				#logging.debug('the result is %s   %s', word, temp_word)		
+				word=temp_word
+
+
+
+		# update at 8th February, 2017 - the formation starts here.
+
+	#	tile = self.db[tile_name]
+		rettopics = []
+		freq_k = constants.DEFAULT_NUM_TOP_K;
+		freq_tpk = constants.DEFAULT_NUM_TOPICS;
+		for i in range(0,freq_tpk):
+
+			tpc = {}
+			# topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i})['topic_score'];
+			tpc['score'] = topic_scores[i,0]
+			# 1. starting from topic_scores
+			
+			# 2. 
+			words = [];
+			for i1 in range(0,freq_k):
+				# topic.append(each['word']);
+						word = {};
+						word['word'] = topics[i,i1]
+						word['score'] = word_scores[i,i1]
+						words.append(word)
+
+					# topic['words'] = words;
+			tpc['words'] = words;
+
+			rettopics.append(tpc);
+
+
+		# end. 
+
+		return rettopics;
 
 	def get_topics(self, level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
 
 		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		
+		# todo here.
 		tile_id = self.get_tile_id(level, x, y);
-		
-		# for testing
-		exclusiveness = 50;
+		#tile_id = 2570625;
+		#zoom_level = 11;
+		exclusiveness = 0.9;
 
 		result = {};
 		tile = {};
@@ -141,24 +222,73 @@ class TopicModelingModule():
 		topics = []
 		# check if it needs a precomputed tile data.
 		if exclusiveness == 0 :  
-
+			
 			# get precomputed tile data
 			topics = self.db.get_precomputed_topics(level, x, y);
 
 		else :
 
+			# get neighbor tiles
+			
+			# neighbor_ids = []
+			# neighbor_ids.append(642238)
+			# neighbor_ids.append(642240)
+			# neighbor_ids.append(642241)
+			# neighbor_ids.append(642242)
+			# neighbor_ids.append(642243)
+			# neighbor_ids.append(643264)
+			# neighbor_ids.append(643265)
+			# neighbor_ids.append(643266)
+
 			topics = self.run_topic_modeling(level, x, y, exclusiveness);
 
+			#A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
+			#topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
 
 		result['topic'] = topics;
 
-		print(result);
+		# print(result);
+
+		#else
+			# calculte on the fly.
+		
+
+		# return topics
+
+
+		# topics = eng.function_runme(A, V, nargout=0);
+
+		# topic = {};
+		# if x == 5 and y == 4:
+		# 	topic = {
+		# 		"tile": {"x": 5, "y": 4, "level": 12},
+		# 		"topic": [{
+		# 			"score": 4.315,
+		# 			"words": [
+		# 				{"score": 1.23, "word": "food"},
+		# 				{"score": 0.9855, "word": "burger"},
+		# 				{"score": 0.72735, "word": "fries"},
+		# 				{"score": 0.71, "word": "drinks"}
+		# 			] }]
+		# 		};
+
+		# elif x == 5 and y == 6:
+		# 	topic = {
+		# 		"tile": {"x": 5, "y": 6, "level": 12},
+		# 		"topic": [{
+		# 			"score": 5.385,
+		# 			"words": [
+		# 				{"score": 1.47, "word": "yankees"}, 
+		# 				{"score": 0.2347, "word": "baseball"}, 
+		# 				{"score": 0.742, "word": "beer"}, 
+		# 				{"score": 0.92, "word": "pizza"}
+		# 			] }]
+		# 		};
 
 		return result;
 
-	def get_releated_docs(self, level, x, y, word):
-		return 'res';
+	def get_word_ref_count(self, level, x, y, word):
+		return 0;
 
 	def get_word_info(self, level, x, y, word):
-		# TBD
 		return "word_info";
