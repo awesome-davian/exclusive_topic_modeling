@@ -25,14 +25,6 @@ class TopicModelingModule():
 
 	def get_tile_id(self, level, x, y):
 
-		# logging.debug('x: %d, y: %d', x, y)
-
-		# x = self.lon_to_x(level, lon);
-		# y = self.lat_to_y(level, lat);
-
-		# x = math.floor(x);
-		# y = math.floor(y);
-
 		pow2 = 1 << level;
 		tile_id = x * pow2 + y;
 
@@ -48,10 +40,6 @@ class TopicModelingModule():
 
 		latR = math.radians(lat);
 		pow2 = 1 << level;
-
-		# logging.debug('%f, %f, %f, %f', lat, level, latR, pow2);
-		# logging.debug('%f, %f', math.tan(latR), 1/math.cos(latR))
-		# logging.debug('%f', math.log(math.tan(latR) + 1/math.cos(latR)))
 
 		y = (1 - math.log(math.tan(latR) + 1 / math.cos(latR)) / math.pi) / 2 * pow2;
 		y = pow2 - y;
@@ -143,10 +131,9 @@ class TopicModelingModule():
 
 		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		
-		# todo here.
 		tile_id = self.get_tile_id(level, x, y);
-		#tile_id = 2570625;
-		#zoom_level = 11;
+		
+		# for testing
 		exclusiveness = 50;
 
 		result = {};
@@ -160,73 +147,24 @@ class TopicModelingModule():
 		topics = []
 		# check if it needs a precomputed tile data.
 		if exclusiveness == 0 :  
-			
+
 			# get precomputed tile data
 			topics = self.db.get_precomputed_topics(level, x, y);
 
 		else :
 
-			# get neighbor tiles
-			
-			# neighbor_ids = []
-			# neighbor_ids.append(642238)
-			# neighbor_ids.append(642240)
-			# neighbor_ids.append(642241)
-			# neighbor_ids.append(642242)
-			# neighbor_ids.append(642243)
-			# neighbor_ids.append(643264)
-			# neighbor_ids.append(643265)
-			# neighbor_ids.append(643266)
-
 			topics = self.run_topic_modeling(level, x, y, exclusiveness);
 
-			#A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
-			#topics_list = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=1);
 
 		result['topic'] = topics;
 
 		print(result);
 
-		#else
-			# calculte on the fly.
-		
-
-		# return topics
-
-
-		# topics = eng.function_runme(A, V, nargout=0);
-
-		# topic = {};
-		# if x == 5 and y == 4:
-		# 	topic = {
-		# 		"tile": {"x": 5, "y": 4, "level": 12},
-		# 		"topic": [{
-		# 			"score": 4.315,
-		# 			"words": [
-		# 				{"score": 1.23, "word": "food"},
-		# 				{"score": 0.9855, "word": "burger"},
-		# 				{"score": 0.72735, "word": "fries"},
-		# 				{"score": 0.71, "word": "drinks"}
-		# 			] }]
-		# 		};
-
-		# elif x == 5 and y == 6:
-		# 	topic = {
-		# 		"tile": {"x": 5, "y": 6, "level": 12},
-		# 		"topic": [{
-		# 			"score": 5.385,
-		# 			"words": [
-		# 				{"score": 1.47, "word": "yankees"}, 
-		# 				{"score": 0.2347, "word": "baseball"}, 
-		# 				{"score": 0.742, "word": "beer"}, 
-		# 				{"score": 0.92, "word": "pizza"}
-		# 			] }]
-		# 		};
-
 		return result;
 
-	def get_word_ref_count(self, level, x, y, word):
-		return 0;
+	def get_releated_docs(self, level, x, y, word):
+		return 'res';
 
 	def get_word_info(self, level, x, y, word):
+		# TBD
 		return "word_info";

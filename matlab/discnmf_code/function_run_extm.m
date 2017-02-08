@@ -38,8 +38,6 @@ function [Topics, Wtopk_score, Topic_score] = function_run_extm(Tdm, Ntdms, excl
             max_tdm_n = max(max_tdm_n,num_tdm_n);
         end
     end
-
-
     
     NB = cell(8,1);
     for i = 1:8
@@ -52,14 +50,14 @@ function [Topics, Wtopk_score, Topic_score] = function_run_extm(Tdm, Ntdms, excl
       %  Mtx = cell2mat( cellfun( @(x) cell2mat(x), Tdm_cell, 'UniformOutput', 0 ) );
       %  Ntdm = reshape(Mtx, 3, [])';
         NB{i} = sparse(Ntdm(:,1),Ntdm(:,2),Ntdm(:,3),max_tdm_m,max(Ntdm(:,2)) );
-        NB{i}(isnan(NB{i}))=0;
+        NB{i}(isnan(NB{i}))=1e-16;
 
         % end of sparsing. The end 
         end
     end
 
    AC = sparse(Tdm(:,1),Tdm(:,2),Tdm(:,3),max_tdm_m,max(Tdm(:,2)) );
-   AC(isnan(AC))=0;
+   AC(isnan(AC))=1e-1;
  
     clear tdm;
 
@@ -67,25 +65,25 @@ function [Topics, Wtopk_score, Topic_score] = function_run_extm(Tdm, Ntdms, excl
     % 3. Normalisation (why?)
     NB_norm = cell(8,1);
     AC_norm = bsxfun(@rdivide,AC,sqrt(sum(AC.^2))); %NaN Value going in. 
-    AC_norm(isnan(AC_norm))=0;
+    AC_norm(isnan(AC_norm))=1e-16;
     for c = 1:8
         if (ncols(c) == 0)
             continue
         else
             NB_norm{c} = bsxfun(@rdivide,NB{i},sqrt(sum(NB{i}.^2)));
-            NB_norm{c}(isnan(NB_norm{c}))=0;
+            NB_norm{c}(isnan(NB_norm{c}))=1e-16;
         end
     end
     
     % 4. NMF
     %   i) initialising
-    rp = 7; %regularisation parameter
+    rp = 1; %regularisation parameter
     xcl = exclusiveness; AL = ones(8,1); BE = ones(8,1);
     AL = (rp*(1-xcl))*AL; BE = (rp*xcl)*BE;
     
     %   ii) doing the initialisation
-    [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,30,AL,BE); %NB coming in cell format. 
-    
+       [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,20,AL,BE); %NB coming in cell format. 
+    %[WC,WN,HC,HN] = xcl_nmf(AC,NB,k*2,k,30,AL,BE);
     % 5. Displaying the key words (parsing)
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {};
     [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score] = parsenmf(WC,HC,dict,topk);

@@ -56,8 +56,6 @@ def tile_generator_test():
 @app.route('/GET_TOPICS/<uuid>', methods=['POST'])
 def request_get_topics(uuid):
 
-    logging.debug('uuid: %s', uuid);
-
     contents = request.get_json(silent=True);
 
     logging.debug('contents: %s', contents);
@@ -98,25 +96,88 @@ def request_get_topics(uuid):
 
     return json_data;
 
-@app.route('/GET_WORD_REF_COUNT', methods=['GET'])
+@app.route('/GET_WORD_REF_COUNT', methods=['POST'])
 def request_get_word_ref_count():
 
-    zoom_level = 9;
-    tile_id = 100;
-    keyword = "sample_word"
+    contents = request.get_json(silent=True);
 
-    TM.get_word_ref_count(zoom_level, tile_id, keyword);
-    return redirect('/web_client_test')
+    logging.debug('contents: %s', contents);
 
-@app.route('/GET_WORD_INFO', methods=['GET'])
+    res = checkInputValidation('GET_WORD_REF_COUNT', contents);
+    if  res != 200:
+        return 'error'
+
+    word = contents['word'];
+    tiles = contents['tiles'];
+    
+    # run topic modeling for each tile
+    counts = [];
+    for tile in tiles:
+        level = tile['level'];
+        x = tile['x']
+        y = tile['y']
+
+        # these parameters are set by another function such as a set_params. 
+        # we use the predefined value at this moment.
+        time_range = {};
+        time_range['start_date'] = 0;
+        time_range['end_date'] = 0;
+
+        count = TM.get_word_ref_count(level, x, y, word);
+        counts.append(count);
+
+    # verify that the calculation is correct using log.
+    for count in counts:
+        logging.debug('count: %s', count)
+
+    json_data = json.dumps(counts);
+
+    return json_data;
+
+@app.route('/GET_RELEATED_DOC', methods=['POST'])
+def request_get_docs_including_word():
+
+    contents = request.get_json(silent=True);
+
+    logging.debug('contents: %s', contents);
+
+    res = checkInputValidation('GET_RELEATED_DOCS', contents);
+    if  res != 200:
+        return 'error'
+
+    word = contents['word'];
+    tiles = contents['tiles'];
+    
+    # run topic modeling for each tile
+    docs = [];
+    for tile in tiles:
+        level = tile['level'];
+        x = tile['x']
+        y = tile['y']
+
+        # these parameters are set by another function such as a set_params. 
+        # we use the predefined value at this moment.
+        time_range = {};
+        time_range['start_date'] = 0;
+        time_range['end_date'] = 0;
+
+        docs_per_tile = TM.get_releated_docs(level, x, y, word);
+        docs.append(docs_per_tile);
+
+    # verify that the calculation is correct using log.
+    for docs_per_tile in docs:
+        logging.debug('docs_per_tile: %s', docs_per_tile)
+
+    json_data = json.dumps(counts);
+
+    return json_data;
+
+@app.route('/GET_WORD_INFO', methods=['POST'])
 def request_get_word_info():
 
-    zoom_level = 9;
-    tile_id = 100;
-    keyword = "sample_word"
+    # TBD
 
-    TM.get_word_info(zoom_level, tile_id, keyword);
-    return redirect('/web_client_test')
+    return ;
 
 @app.route('/GENERATE_TILE', methods=['GET'])
 def request_generate_tile():
@@ -143,4 +204,4 @@ if __name__ == '__main__':
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port='5000')
