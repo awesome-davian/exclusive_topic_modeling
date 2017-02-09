@@ -6,6 +6,10 @@ import numpy as np
 import pymongo
 import sys
 sys.path.insert(0, '../')
+conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
+
+dbname = constants.DB_NAME;
+db = conn[dbname];
 
 class TopicModelingModule():
 
@@ -123,9 +127,66 @@ class TopicModelingModule():
 
 		voca = self.db.get_vocabulary();
 
-		topics = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+        #[topics_list] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		[topics_list, w_scores, t_scores] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		topics = np.asarray(topics_list);
+		topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
 
-		return topics;
+		word_scores = np.asarray(w_scores);
+		word_scores = np.reshape(word_scores, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+
+		topic_scores = np.asarray(t_scores);
+
+		# find original word and replace
+		for topic in topics:
+			for word in topic:
+				s_count=0
+				for each in db['vocabulary_hashmap'].find():
+					if((word==each['stem']) and (s_count==0)):
+						temp_word=each['word']
+						temp_count=each['count']
+						#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
+					if(word==each['stem']):
+						if(each['count']>temp_count):
+							temp_count=each['count']
+							temp_word=each['word']
+						s_count+=1	
+				#logging.debug('the result is %s   %s', word, temp_word)		
+				word=temp_word
+
+
+
+		# update at 8th February, 2017 - the formation starts here.
+
+	#	tile = self.db[tile_name]
+		rettopics = []
+		freq_k = constants.DEFAULT_NUM_TOP_K;
+		freq_tpk = constants.DEFAULT_NUM_TOPICS;
+		for i in range(0,freq_tpk):
+
+			tpc = {}
+			# topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i})['topic_score'];
+			tpc['score'] = topic_scores[i,0]
+			# 1. starting from topic_scores
+			
+			# 2. 
+			words = [];
+			for i1 in range(0,freq_k):
+				# topic.append(each['word']);
+						word = {};
+						word['word'] = topics[i,i1]
+						word['score'] = word_scores[i,i1]
+						words.append(word)
+
+					# topic['words'] = words;
+			tpc['words'] = words;
+
+			rettopics.append(tpc);
+
+
+		# end. 
+
+		return rettopics;
 
 	def get_topics(self, level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
 
@@ -158,7 +219,7 @@ class TopicModelingModule():
 
 		result['topic'] = topics;
 
-		print(result);
+		#print(result);
 
 		return result;
 
@@ -210,7 +271,7 @@ class TopicModelingModule():
 		raw_data=self.db.get_raw_data(tile_id)
 		for idx, each in enumerate(raw_data):
 			for doc_num in doc_list:
-				if (idx==doc_num-1) and (each['text'].find(word)!=0):
+				if ((idx==doc_num-1) and (each['text'].find(word)!=0)):
 					raw_documents={}
 					raw_documents['text']=each['text']
 					raw_documents['created_at']=each['created_at']
