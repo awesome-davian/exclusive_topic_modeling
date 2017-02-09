@@ -65,9 +65,46 @@ class DBWrapper():
 
 		return voca;
 
-	def get_raw_data(self, doc_id):
-		# todo
-		return "raw_data";
+	def get_vocabulary_hashmap(self):
+
+		voca_hash= [] 
+		for each in self.db['vocabulary_hashmap'].find():
+			voca_hash_elemet={}
+			voca_hash_elemet['word']=each['word']
+			voca_hash_elemet['stem']=each['stem']
+			voca_hash_elemet['count']=each['count']
+			voca_hash.append(voca_hash_elemet)
+
+		return voca_hash;	
+	    	
+
+	def get_raw_data(self, tile_id):
+
+		logging.debug('tile_id: %s', tile_id)
+
+		raw_data= []
+
+		for tile_name in self.db.collection_names():
+
+			if tile_name.endswith('_raw') == False:
+				continue;
+			
+			if tile_name.find(str(tile_id)) < 0:
+				continue;
+		
+			logging.info(tile_name);
+
+			current_raw_db=self.db[tile_name];
+
+			for each in current_raw_db.find():
+				raw_text= {}
+				raw_text['text']=each['text']
+				raw_text['created_at']=each['created_at']
+				raw_data.append(raw_text)
+
+			break;
+
+		return raw_data;
 
 	def get_precomputed_topics(self, level, x, y):
 

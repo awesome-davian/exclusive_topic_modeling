@@ -134,7 +134,7 @@ class TopicModelingModule():
 		tile_id = self.get_tile_id(level, x, y);
 		
 		# for testing
-		exclusiveness = 50;
+		#exclusiveness = 50;
 
 		result = {};
 		tile = {};
@@ -162,12 +162,69 @@ class TopicModelingModule():
 
 		return result;
 
+
 	def get_releated_docs(self, level, x, y, word):
 
 		logging.debug('get_releated_docs(%s, %s, %s, %s)', level, x, y, word)
-		
-		return 'res';
+
+		tile_id = self.get_tile_id(level, x, y);
+
+		result = {};
+		tile = {};
+		tile['x'] = x;
+		tile['y'] = y; 
+		tile['level'] = level;
+
+		result['tile'] = tile;
+		documents = [];
+
+        #find stemmed word form voca-hashmap
+		voca_hash= self.db.get_vocabulary_hashmap();
+		for each in voca_hash:
+			if word==each['word']:
+				stem_word=each['stem']
+				break;
+			else:
+			    logging.error('no such word')
+		logging.info(stem_word)
+
+		#get stemmed word id from voca 
+		voca= self.db.get_vocabulary();
+		for idx, each in enumerate(voca):
+		 	if stem_word==each:
+		 		word_id=idx+1 
+		 		break;
+
+		logging.info(word_id);
+
+        #get doc list for tem_doc.mtx
+		tile_mtx = self.db.get_term_doc_matrix(tile_id);
+		doc_list=[]
+		for each in tile_mtx:
+			if each[0]==word_id:
+				doc_list.append(each[1])
+
+		logging.info(doc_list)		
+
+		#get raw_documents from raw_data 
+		raw_data=self.db.get_raw_data(tile_id)
+		for idx, each in enumerate(raw_data):
+			for doc_num in doc_list:
+				if (idx==doc_num-1) and (each['text'].find(word)!=0):
+					raw_documents={}
+					raw_documents['text']=each['text']
+					raw_documents['created_at']=each['created_at']
+					documents.append(raw_documents)
+
+		result['documents'] = documents;
+
+		return result;
 
 	def get_word_info(self, level, x, y, word):
 		# TBD
 		return "word_info";
+
+
+
+
+

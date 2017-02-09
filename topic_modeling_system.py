@@ -41,11 +41,10 @@ def checkInputValidation(method, contents):
         for tile in tiles:
             logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
     
-    elif method=='GET_RELEATED_DOCS':
-        # logging the request 
-
-        terms=contents['parameters']
-        # todo 
+    # elif method=='GET_RELEATED_DOCS':
+    #     # logging the request 
+        
+    #     # todo 
 
     return error_code;
 
@@ -174,7 +173,7 @@ def request_get_docs_including_word():
     for docs_per_tile in docs:
         logging.debug('docs_per_tile: %s', docs_per_tile)
 
-    json_data = json.dumps(counts);
+    json_data = json.dumps(docs);
 
     return json_data;
 
