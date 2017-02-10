@@ -86,7 +86,7 @@ class TopicModelingModule():
     
 
 
-	def run_topic_modeling(self, level, x, y, exclusiveness):
+	def run_topic_modeling(self, level, x, y, exclusiveness, num_clusters, num_keywords):
 		
 		logging.debug('run_topic_modeling(%d, %d, %d, %.2f)', level, x, y, exclusiveness);
 
@@ -112,7 +112,7 @@ class TopicModelingModule():
 		idxa = 0;
 		for each in neighbor_mtx:
 			if each == []: 
-				print("found it, idx: " + str(idxa));
+				logging.debug("found it, idx: " + str(idxa));
 				B.append(each);
 			else:
 				B.append(each.tolist());
@@ -128,12 +128,12 @@ class TopicModelingModule():
 		voca = self.db.get_vocabulary();
 
         #[topics_list] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-		[topics_list, w_scores, t_scores] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		[topics_list, w_scores, t_scores] = self.eng.function_run_extm(A, B, exclusiveness, voca, num_clusters, num_keywords, nargout=3);
 		topics = np.asarray(topics_list);
-		topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+		topics = np.reshape(topics, (num_clusters, num_keywords));
 
 		word_scores = np.asarray(w_scores);
-		word_scores = np.reshape(word_scores, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
+		word_scores = np.reshape(word_scores, (num_clusters, num_keywords));
 
 		topic_scores = np.asarray(t_scores);
 
@@ -160,9 +160,7 @@ class TopicModelingModule():
 
 	#	tile = self.db[tile_name]
 		rettopics = []
-		freq_k = constants.DEFAULT_NUM_TOP_K;
-		freq_tpk = constants.DEFAULT_NUM_TOPICS;
-		for i in range(0,freq_tpk):
+		for i in range(0,num_clusters):
 
 			tpc = {}
 			# topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i})['topic_score'];
@@ -171,7 +169,7 @@ class TopicModelingModule():
 			
 			# 2. 
 			words = [];
-			for i1 in range(0,freq_k):
+			for i1 in range(0,num_keywords):
 				# topic.append(each['word']);
 						word = {};
 						word['word'] = topics[i,i1]

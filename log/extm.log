@@ -36,3 +36,53 @@
 ['02-10 13:48:39'][DEBUG] topic: {'topic': [{'words': [{'count': 6159, 'word': 'lovelies', 'score': 0.25794403990034714}, {'count': 360, 'word': 'xo', 'score': 0.030375985281703714}, {'count': 1131, 'word': 'sleeps', 'score': 0.011995700711828872}], 'score': 0.06846064416919106}, {'words': [{'count': 28026, 'word': 'https', 'score': 0.18562786312937885}, {'count': 1737, 'word': 'homee', 'score': 0.007084186219725281}, {'count': 1563, 'word': 'santas', 'score': 0.006462826914803315}], 'score': 0.18310981450943062}, {'words': [{'count': 777, 'word': 'lt', 'score': 0.594447106482817}, {'count': 261, 'word': 'falls', 'score': 0.03335900201375909}, {'count': 228, 'word': 'asleep', 'score': 0.032646362131068106}], 'score': 0.008153380992739257}], 'tile': {'y': 638, 'level': 10, 'x': 300}} (topic_modeling_system.py:98)
 ['02-10 13:48:39'][DEBUG] topic: {'topic': [{'words': [{'count': 28026, 'word': 'https', 'score': 0.18478672234678484}, {'count': 1041, 'word': 'centered', 'score': 0.0053711594053186444}, {'count': 2277, 'word': 'xmas', 'score': 0.004471345048924135}], 'score': 0.24050728598025412}, {'words': [{'count': 6159, 'word': 'lovelies', 'score': 0.2205619137059843}, {'count': 3522, 'word': 'familys', 'score': 0.022430722883037622}, {'count': 2589, 'word': 'gifted', 'score': 0.010476245601987308}], 'score': 0.06984195611927041}, {'words': [{'count': 4362, 'word': 'lols', 'score': 0.12009771023792724}, {'count': 2973, 'word': 'fucks', 'score': 0.015116908210872224}, {'count': 2142, 'word': 'shitted', 'score': 0.009353378546670843}], 'score': 0.11986158148828746}], 'tile': {'y': 638, 'level': 10, 'x': 301}} (topic_modeling_system.py:98)
 ['02-10 13:48:39'][INFO ] 163.152.71.221 - - [10/Feb/2017 13:48:39] "POST /GET_TOPICS/uuid_for_test HTTP/1.1" 200 - (_internal.py:87)
+['02-10 13:52:17'][DEBUG] contents: {'tiles': [{'y': 638, 'level': 10, 'x': 300}, {'y': 638, 'level': 10, 'x': 301}], 'parameters': {'exclusiveness': 10, 'word_count': 3, 'time': {'from': 1356998400000, 'to': 1425168000000}, 'exclude': ['salad', 'soup'], 'topic_count': 3, 'include': ['mcdonalds', 'wendys']}} (topic_modeling_system.py:66)
+['02-10 13:52:17'][DEBUG] include keyword: mcdonalds (topic_modeling_system.py:36)
+['02-10 13:52:17'][DEBUG] include keyword: wendys (topic_modeling_system.py:36)
+['02-10 13:52:17'][DEBUG] exclude keyword: salad (topic_modeling_system.py:38)
+['02-10 13:52:17'][DEBUG] exclude keyword: soup (topic_modeling_system.py:38)
+['02-10 13:52:17'][DEBUG] x: 300, y: 638, level: 10 (topic_modeling_system.py:42)
+['02-10 13:52:17'][DEBUG] x: 301, y: 638, level: 10 (topic_modeling_system.py:42)
+['02-10 13:52:17'][DEBUG] get_topics(10, 300, 638) (topic_modeling_module.py:193)
+['02-10 13:52:17'][DEBUG] run_topic_modeling(10, 300, 638, 10.00) (topic_modeling_module.py:91)
+['02-10 13:52:17'][DEBUG] [308863, 308862, 308861, 307839, 307837, 306815, 306814, 306813] (topic_modeling_module.py:96)
+['02-10 13:52:17'][DEBUG] id: 307838 (database_wrapper.py:20)
+['02-10 13:52:17'][INFO ] tile_2013_w52_10_300_638_307838_mtx (database_wrapper.py:30)
+['02-10 13:52:17'][DEBUG] [[  1.00000000e+00   1.00000000e+00   1.00000000e+00]
+ [  2.00000000e+00   1.00000000e+00   1.00000000e+00]
+ [  3.00000000e+00   1.00000000e+00   1.00000000e+00]
+ ..., 
+ [  2.41000000e+02   1.91400000e+03   1.00000000e+00]
+ [  6.00000000e+00   1.91400000e+03   1.00000000e+00]
+ [  3.61300000e+03   1.91400000e+03   1.00000000e+00]] (database_wrapper.py:42)
+['02-10 13:52:18'][DEBUG] id: 308863 (database_wrapper.py:20)
+['02-10 13:52:18'][INFO ] tile_2013_w52_10_301_639_308863_mtx (database_wrapper.py:30)
+['02-10 13:52:42'][DEBUG] [[  1.79900000e+03   1.00000000e+00   1.00000000e+00]
+ [  1.39100000e+03   1.00000000e+00   1.00000000e+00]
+ [  2.10000000e+01   1.00000000e+00   1.00000000e+00]
+ ..., 
+ [  1.27800000e+03   1.95930000e+04   1.00000000e+00]
+ [  1.02400000e+03   1.95940000e+04   1.00000000e+00]
+ [  2.72500000e+03   1.95940000e+04   1.00000000e+00]] (database_wrapper.py:42)
+['02-10 13:52:42'][DEBUG] id: 308862 (database_wrapper.py:20)
+['02-10 13:52:42'][INFO ] tile_2013_w52_10_301_638_308862_mtx (database_wrapper.py:30)
+['02-10 13:52:52'][DEBUG] [[  5.03000000e+02   1.00000000e+00   1.00000000e+00]
+ [  1.73000000e+02   1.00000000e+00   1.00000000e+00]
+ [  3.61400000e+03   1.00000000e+00   1.00000000e+00]
+ ..., 
+ [  4.47100000e+03   1.41830000e+04   1.00000000e+00]
+ [  1.19200000e+03   1.41830000e+04   1.00000000e+00]
+ [  1.90000000e+02   1.41830000e+04   1.00000000e+00]] (database_wrapper.py:42)
+['02-10 13:52:52'][DEBUG] id: 308861 (database_wrapper.py:20)
+['02-10 13:52:52'][DEBUG] [] (database_wrapper.py:42)
+['02-10 13:52:52'][DEBUG] id: 307839 (database_wrapper.py:20)
+['02-10 13:52:52'][DEBUG] [] (database_wrapper.py:42)
+['02-10 13:52:52'][DEBUG] id: 307837 (database_wrapper.py:20)
+['02-10 13:52:52'][DEBUG] [] (database_wrapper.py:42)
+['02-10 13:52:52'][DEBUG] id: 306815 (database_wrapper.py:20)
+['02-10 13:52:52'][DEBUG] [] (database_wrapper.py:42)
+['02-10 13:52:52'][DEBUG] id: 306814 (database_wrapper.py:20)
+['02-10 13:52:52'][DEBUG] [] (database_wrapper.py:42)
+['02-10 13:52:52'][DEBUG] id: 306813 (database_wrapper.py:20)
+['02-10 13:52:52'][DEBUG] [] (database_wrapper.py:42)
+['02-10 13:54:16'][INFO ] 163.152.71.221 - - [10/Feb/2017 13:54:16] "POST /GET_TOPICS/uuid_for_test HTTP/1.1" 500 - (_internal.py:87)
