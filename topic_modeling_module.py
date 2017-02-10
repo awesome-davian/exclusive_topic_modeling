@@ -96,6 +96,9 @@ class TopicModelingModule():
 		logging.debug(neighbor_ids)
 
 		tile_mtx = self.db.get_term_doc_matrix(tile_id);
+		if tile_mtx == []:
+			return [];
+
 		neighbor_mtx = self.db.get_term_doc_matrices(neighbor_ids);
 
 		# print(type(neighbor_mtx));
@@ -138,6 +141,7 @@ class TopicModelingModule():
 		topic_scores = np.asarray(t_scores);
 
 		# find original word and replace
+		temp_word = "";
 		for topic in topics:
 			for word in topic:
 				s_count=0
@@ -239,6 +243,7 @@ class TopicModelingModule():
 		documents = [];
 
         #find stemmed word form voca-hashmap
+		stem_word = "";
 		voca_hash= self.db.get_vocabulary_hashmap();
 		for each in voca_hash:
 			if word==each['word']:
@@ -247,6 +252,7 @@ class TopicModelingModule():
 		logging.info(stem_word)
 
 		#get stemmed word id from voca 
+		word_id = "";
 		voca= self.db.get_vocabulary();
 		for idx, each in enumerate(voca):
 		 	if stem_word==each['stem']:
