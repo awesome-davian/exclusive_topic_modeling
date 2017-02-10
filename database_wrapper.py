@@ -60,7 +60,9 @@ class DBWrapper():
 		
 		voca = []
 		for each in self.db['vocabulary'].find():
-			word = each['stem'];
+			word = {}
+			word['stem'] =each['stem']
+			word['count'] = each['count'];
 			voca.append(word);
 
 		return voca;
@@ -106,7 +108,7 @@ class DBWrapper():
 
 		return raw_data;
 
-	def get_precomputed_topics(self, level, x, y):
+	def get_precomputed_topics(self, level, x, y ,topic_count, word_count):
 
 		logging.debug('get_precomputed_topics(%d, %d, %d)', level, x, y);
 
@@ -130,21 +132,65 @@ class DBWrapper():
 				logging.debug('found, %s', tile_name);
 
 				tile = self.db[tile_name]
-				for i in range(1,11):
+				for i in range(0,topic_count):
 
 					topic = {};
-					topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i})['topic_score'];
+					topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i+1})['topic_score'];
 
 					words = [];
-					
-					for each in tile.find({'topic_id': i}).sort('rank',pymongo.ASCENDING):
-						# topic.append(each['word']);
-						
-						word = {};
+
+					for idx, each in enumerate(tile.find({'topic_id': i+1}).sort('rank',pymongo.ASCENDING)):
+						word={}
 						word['word'] = each['word']
 						word['score'] = each['score']
-						word['count']=each['count']  # add count element 
+						
+					    #find stemmed word form voca-hashmap
+						voca_hash= self.get_vocabulary_hashmap();
+						for each in voca_hash:
+							if word['word']==each['word']:
+								stem_word=each['stem']
+								break;
+						logging.info(stem_word)
+
+						#get stemmed word count  from voca 
+						voca= self.get_vocabulary();
+						for each in voca:
+						 	if stem_word==each['stem']:	
+						 		word['count']=each['count']
+						 		break;
+
 						words.append(word)
+
+
+						if(idx>=word_count-1):
+							break;
+
+
+
+					# for each in tile.find({'topic_id': i+1}).sort('rank',pymongo.ASCENDING).range(0,topic_count):
+						
+					# 	for i in range(0,word_count):
+					# 		word = {};
+					# 		word['word'] = each['word']
+					# 		word['score'] = each['score']
+
+					# 		# #find stemmed word form voca-hashmap
+					# 		# voca_hash= self.get_vocabulary_hashmap();
+					# 		# for each in voca_hash:
+					# 		# 	if word==each['word']:
+					# 		# 		stem_word=each['stem']
+					# 		# 		break;
+					# 		# logging.info(stem_word)
+
+					# 		# #get stemmed word count  from voca 
+					# 		# voca= self.get_vocabulary();
+					# 		# for each in voca:
+					# 		#  	if stem_word==each['stem']:
+					# 		#  		word['count']=each['count']
+					# 		#  		break;
+
+					# 		# add count element 
+					# 		words.append(word)
 
 					topic['words'] = words;
 

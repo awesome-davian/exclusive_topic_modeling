@@ -210,7 +210,7 @@ class TopicModelingModule():
 		if exclusiveness == 0 :  
 
 			# get precomputed tile data
-			topics = self.db.get_precomputed_topics(level, x, y);
+			topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
 
 		else :
 
@@ -245,14 +245,12 @@ class TopicModelingModule():
 			if word==each['word']:
 				stem_word=each['stem']
 				break;
-			else:
-			    logging.error('no such word')
 		logging.info(stem_word)
 
 		#get stemmed word id from voca 
 		voca= self.db.get_vocabulary();
 		for idx, each in enumerate(voca):
-		 	if stem_word==each:
+		 	if stem_word==each['stem']:
 		 		word_id=idx+1 
 		 		break;
 
