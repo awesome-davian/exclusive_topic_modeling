@@ -1,7 +1,7 @@
 # v0.1.x.x : Local test
 # v0.2.x.x : Protocol test in progress
 # v0.5.x.x : Protocol test complete
-VERSION = 'v0.2.0.4_Feb8'
+VERSION = 'v0.2.0.5_Feb9'
 
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'

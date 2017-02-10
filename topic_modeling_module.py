@@ -154,8 +154,6 @@ class TopicModelingModule():
 				#logging.debug('the result is %s   %s', word, temp_word)		
 				word=temp_word
 
-
-
 		# update at 8th February, 2017 - the formation starts here.
 
 	#	tile = self.db[tile_name]
@@ -186,7 +184,7 @@ class TopicModelingModule():
 
 		return rettopics;
 
-	def get_topics(self, level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
+	def get_topics(self, level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, time_from, time_to):
 
 		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		
@@ -194,6 +192,9 @@ class TopicModelingModule():
 		
 		# for testing
 		#exclusiveness = 50;
+
+		exclusiveness /= 100;
+		logging.debug('exclusiveness: %f', exclusiveness);
 
 		result = {};
 		tile = {};
@@ -208,11 +209,11 @@ class TopicModelingModule():
 		if exclusiveness == 0 :  
 
 			# get precomputed tile data
-			topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
+			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
 
 		else :
 
-			topics = self.run_topic_modeling(level, x, y, exclusiveness, num_clusters, num_keywords);
+			topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count);
 
 
 		result['topic'] = topics;

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect
+from flask_api import status
 import tile_generator
 import topic_modeling_module
 import database_wrapper
@@ -21,32 +22,82 @@ def initProject():
 
 def checkInputValidation(method, contents):
 
-    # just print the information at this moment.
-
-    error_code = 200;
+    error_string = "Success";
 
     if method == 'GET_TOPICS':
-        # logging the requested items
 
-        terms = contents['parameters'];
-        include_keywords = terms['include'];
-        exclude_keywords = terms['exclude'];
+        parameters = [];
+        exclusiveness = -1;
+        topic_count = -1;
+        word_count = -1;
+        time_from = 0;
+        time_to = 1609372800000; # Dec. 31, 2020.
+        include_words = [];
+        exclude_words = [];
+        tiles = [];
 
-        for word in include_keywords:
-            logging.debug('include keyword: %s', word);
-        for word in exclude_keywords:
-            logging.debug('exclude keyword: %s', word);
+        try: 
+            parameters = contents['parameters']
+            exclusiveness = parameters['exclusiveness'];
+            topic_count = parameters['topic_count'];
+            word_count = parameters['word_count'];
+            time_range = parameters['time'];
+            time_from = time_range['from'];
+            time_to = time_range['to'];
+            include_words = parameters['include_words'];
+            exclude_words = parameters['exclude_words'];
+            tiles = contents['tiles'];
 
-        tiles = contents['tiles'];
-        for tile in tiles:
-            logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
-    
-    # elif method=='GET_RELEATED_DOCS':
-    #     # logging the request 
+            if exclusiveness < 0 or exclusiveness > 100:
+                error_string = "Invalid exclusiveness.";
+            if topic_count < 1 or topic_count > 10:
+                error_string = "Invalid topic_count.";
+            if word_count < 1 or word_count > 10:
+                error_string = "Invalid word_count.";
+            
+            for tile in tiles:
+                level = -1;
+                x = -1;
+                y = -1;
+
+                level = tile['level'];
+                x = tile['x']
+                y = tile['y']
+                
+                if level < 9 or level > 15:
+                    error_string = "Invalid tile.level";
+                if x < 0:
+                    error_string = "Invalid tile.x";
+                if y < 0:
+                    error_string = "Invalid tile.y";
+
+        except KeyError as e:
+            error_string = 'KeyError: ' + e.args[0];
+
+        return error_string, parameters, exclusiveness, topic_count, word_count, time_from, time_to, include_words, exclude_words, tiles;
+
+    elif method == 'GET_RELATED_DOCS':
         
-    #     # todo 
+        try:
+            word = contents['word'];
+            tile = contents['tile'];
+            level = tile['level'];
+            x = tile['x'];
+            y = tile['y'];
 
-    return error_code;
+            if level < 9 or level > 15:
+                error_string = "Invalid tile.level";
+            if x < 0:
+                error_string = "Invalid tile.x";
+            if y < 0:
+                error_string = "Invalid tile.y";
+
+        except KeyError as e:
+            error_string = 'KeyError: ' + e.args[0];
+        
+        return error_string, word, level, x, y;
+
+    return error_string;
 
 @app.route('/')
 @app.route('/index')
@@ -63,34 +114,34 @@ def request_get_topics(uuid):
 
     contents = request.get_json(silent=True);
 
-    logging.debug('contents: %s', contents);
+    logging.info('Request from %s: %s', request.remote_addr, contents);
 
-    res = checkInputValidation('GET_TOPICS', contents);
-    if  res != 200:
-        return 'error'
+    error_string, parameters, exclusiveness, topic_count, word_count, time_from, time_to, include_words, exclude_words, tiles = checkInputValidation('GET_TOPICS', contents);
+    if error_string != "Success":
+        logging.error('ERROR_BAD_REQUEST: %s', error_string);
+        return error_string, status.HTTP_400_BAD_REQUEST;
 
-    terms = contents['parameters'];
-    include_keywords = terms['include'];
-    exclude_keywords = terms['exclude'];
-    num_topics=terms['topic_count'];
-    num_keywords=terms['word_count'];
-    exclusiveness=terms['exclusiveness'];
-    time=terms['time'];
-
-    tiles = contents['tiles'];
+    # print request values
+    logging.debug('exclusiveness: %s', exclusiveness);
+    logging.debug('topic_count: %s', topic_count);
+    logging.debug('word_count: %s', word_count);
+    logging.debug('time: %s ~ %s', time_from, time_to);
+    for word in include_words:
+        logging.debug('include words: %s', word);
+    for word in exclude_words:
+        logging.debug('exclude words: %s', word);
+    for tile in tiles:
+        logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
     
     # run topic modeling for each tile
     topics = [];
     for tile in tiles:
-        zoom_level = tile['level'];
+        level = tile['level'];
         x = tile['x']
         y = tile['y']
 
         # change parameters form default set_params to json input. 
-        time_range = {};
-        time_range['start_date'] = time['from'];
-        time_range['end_date'] = time['to'];
-        topic = TM.get_topics(zoom_level, x, y, num_topics, num_keywords, include_keywords, exclude_keywords, exclusiveness, time_range);
+        topic = TM.get_topics(level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, time_from, time_to);
         topics.append(topic);
 
     # verify that the calculation is correct using log.
@@ -101,77 +152,31 @@ def request_get_topics(uuid):
 
     return json_data;
 
-@app.route('/GET_WORD_REF_COUNT', methods=['POST'])
-def request_get_word_ref_count():
+@app.route('/GET_RELATED_DOCS/<uuid>', methods=['POST'])
+def request_get_related_docs(uuid):
 
     contents = request.get_json(silent=True);
 
-    logging.debug('contents: %s', contents);
+    logging.info('Request from %s: %s', request.remote_addr, contents);
 
-    res = checkInputValidation('GET_WORD_REF_COUNT', contents);
-    if  res != 200:
-        return 'error'
+    error_string, word, level, x, y = checkInputValidation('GET_RELATED_DOCS', contents);
+    if error_string != "Success":
+        logging.error('ERROR_BAD_REQUEST: %s', error_string);
+        return error_string, status.HTTP_400_BAD_REQUEST;
 
-    word = contents['word'];
-    tiles = contents['tiles'];
-    
-    # run topic modeling for each tile
-    counts = [];
-    for tile in tiles:
-        level = tile['level'];
-        x = tile['x']
-        y = tile['y']
-
-        # these parameters are set by another function such as a set_params. 
-        # we use the predefined value at this moment.
-        time_range = {};
-        time_range['start_date'] = 0;
-        time_range['end_date'] = 0;
-
-        count = TM.get_word_ref_count(level, x, y, word);
-        counts.append(count);
-
-    # verify that the calculation is correct using log.
-    for count in counts:
-        logging.debug('count: %s', count)
-
-    json_data = json.dumps(counts);
-
-    return json_data;
-
-@app.route('/GET_RELEATED_DOCS', methods=['POST'])
-def request_get_docs_including_word():
-
-    contents = request.get_json(silent=True);
-
-    logging.debug('contents: %s', contents);
-
-    res = checkInputValidation('GET_RELEATED_DOCS', contents);
-    if  res != 200:
-        return 'error'
-
-    word = contents['word'];
-    tiles = contents['tiles'];
-    
     # run topic modeling for each tile
     docs = [];
-    for tile in tiles:
-        level = tile['level'];
-        x = tile['x']
-        y = tile['y']
-
-        # these parameters are set by another function such as a set_params. 
-        # we use the predefined value at this moment.
-        time_range = {};
-        time_range['start_date'] = 0;
-        time_range['end_date'] = 0;
-
-        docs_per_tile = TM.get_releated_docs(level, x, y, word);
-        docs.append(docs_per_tile);
+    docs = TM.get_releated_docs(level, x, y, word);
 
     # verify that the calculation is correct using log.
-    for docs_per_tile in docs:
-        logging.debug('docs_per_tile: %s', docs_per_tile)
+    doc_list = docs['documents'];
+    logging.debug('found %d doc(s)', len(doc_list));
+    
+    for idx, doc in enumerate(doc_list):
+        logging.debug('[%d]created_at: %s', idx, doc['created_at']);
+        logging.debug('[%d]text: %s', idx, doc['text'].encode('utf-8'));
+        #logging.debug('')
+    
 
     json_data = json.dumps(docs);
 
@@ -209,4 +214,4 @@ if __name__ == '__main__':
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
-    app.run(host='0.0.0.0', port='5000')
+    app.run(host='0.0.0.0', port='5001')
