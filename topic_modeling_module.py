@@ -212,7 +212,7 @@ class TopicModelingModule():
 
 		else :
 
-			topics = self.run_topic_modeling(level, x, y, exclusiveness);
+			topics = self.run_topic_modeling(level, x, y, exclusiveness, num_clusters, num_keywords);
 
 
 		result['topic'] = topics;
