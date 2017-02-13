@@ -150,7 +150,7 @@ class DBWrapper():
 							if word['word']==each['word']:
 								stem_word=each['stem']
 								break;
-						logging.info(stem_word)
+						#logging.info(stem_word)
 
 						#get stemmed word count  from voca 
 						voca= self.get_vocabulary();
@@ -166,31 +166,6 @@ class DBWrapper():
 							break;
 
 
-
-					# for each in tile.find({'topic_id': i+1}).sort('rank',pymongo.ASCENDING).range(0,topic_count):
-						
-					# 	for i in range(0,word_count):
-					# 		word = {};
-					# 		word['word'] = each['word']
-					# 		word['score'] = each['score']
-
-					# 		# #find stemmed word form voca-hashmap
-					# 		# voca_hash= self.get_vocabulary_hashmap();
-					# 		# for each in voca_hash:
-					# 		# 	if word==each['word']:
-					# 		# 		stem_word=each['stem']
-					# 		# 		break;
-					# 		# logging.info(stem_word)
-
-					# 		# #get stemmed word count  from voca 
-					# 		# voca= self.get_vocabulary();
-					# 		# for each in voca:
-					# 		#  	if stem_word==each['stem']:
-					# 		#  		word['count']=each['count']
-					# 		#  		break;
-
-					# 		# add count element 
-					# 		words.append(word)
 
 					topic['words'] = words;
 
