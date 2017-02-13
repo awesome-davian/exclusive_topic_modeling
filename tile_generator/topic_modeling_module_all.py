@@ -138,7 +138,8 @@ for tile_name in db.collection_names():
 					temp_word=each['word']
 					temp_count=each['count']
 					#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
-				if((word==each['stem']) and (s_count!=0)):
+				# if((word==each['stem']) and (s_count!=0)):
+				if(word==each['stem']):
 					if(each['count']>temp_count):
 						temp_count=each['count']
 						temp_word=each['word']
