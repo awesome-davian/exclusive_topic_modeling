@@ -138,18 +138,18 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {}; %Wtopk_score={}; Topic_score={};
     [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score] = parsenmf(WC,HC,dict,topk);
 
-    WCsort1 = sort(WC(:,1),'descend');
-    WCsort2 = sort(WC(:,2),'descend');
-    WCsort3 = sort(WC(:,3),'descend');
-    WCsort4 = sort(WC(:,4),'descend');
-    WCsort5 = sort(WC(:,5),'descend');
-    WCsort6 = sort(WC(:,6),'descend');
-    WCsort7 = sort(WC(:,7),'descend');
-    WCsort8 = sort(WC(:,8),'descend');
-    WCsort9 = sort(WC(:,9),'descend');
-    WCsort10 = sort(WC(:,10),'descend');
-    [ WCsort1(1:5) WCsort2(1:5) WCsort3(1:5) WCsort4(1:5) WCsort5(1:5) ];
-    [ WCsort6(1:5) WCsort7(1:5) WCsort8(1:5) WCsort9(1:5) WCsort10(1:5) ];
+%     WCsort1 = sort(WC(:,1),'descend');
+%     WCsort2 = sort(WC(:,2),'descend');
+%     WCsort3 = sort(WC(:,3),'descend');
+%     WCsort4 = sort(WC(:,4),'descend');
+%     WCsort5 = sort(WC(:,5),'descend');
+%     WCsort6 = sort(WC(:,6),'descend');
+%     WCsort7 = sort(WC(:,7),'descend');
+%     WCsort8 = sort(WC(:,8),'descend');
+%     WCsort9 = sort(WC(:,9),'descend');
+%     WCsort10 = sort(WC(:,10),'descend');
+%     [ WCsort1(1:5) WCsort2(1:5) WCsort3(1:5) WCsort4(1:5) WCsort5(1:5) ];
+%     [ WCsort6(1:5) WCsort7(1:5) WCsort8(1:5) WCsort9(1:5) WCsort10(1:5) ];
 
     ttopk = Wtopk(:);
     Topics = ttopk(1:k*topk)';
