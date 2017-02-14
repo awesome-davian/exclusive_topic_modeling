@@ -93,22 +93,6 @@ for tile_name in db.collection_names():
 
 	topic_scores = np.asarray(t_scores)[0];
 
-	# # find original word and replace
-	# for topic in topics:
-	# 	for word in topic:
-	# 		s_count=0
-	# 		for each in db['vocabulary_hashmap'].find():
-	# 			if((word==each['stem']) and (s_count==0)):
-	# 				temp_word=each['word']
-	# 				temp_count=each['count']
-	# 				#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
-	# 			if((word==each['stem']) and (s_count!=0)):
-	# 				if(each['count']>temp_count):
-	# 					temp_count=each['count']
-	# 					temp_word=each['word']
-	# 				s_count+=1			
-	# 		logging.debug('the result is %s   %s', word, temp_word)		
-	# 		word=temp_word			
 
 	# store topics in DB
 	tile = db[tile_name]
@@ -132,6 +116,8 @@ for tile_name in db.collection_names():
 
 			rank += 1;
 			
+			temp_count=0;
+			temp_word="";
 			s_count=0
 			for each in db['vocabulary_hashmap'].find():
 				if((word==each['stem']) and (s_count==0)):
@@ -142,7 +128,7 @@ for tile_name in db.collection_names():
 					if(each['count']>temp_count):
 						temp_count=each['count']
 						temp_word=each['word']
-					s_count+=1			
+				s_count+=1			
 			#logging.debug('the result is %s   %s', word, temp_word)	
 			word=temp_word	
 			

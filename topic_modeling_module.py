@@ -215,6 +215,7 @@ class TopicModelingModule():
 
 		# find original word and replace
 		temp_word = "";
+		temp_count=0;
 		for topic in topics:
 			for word in topic:
 				s_count=0
@@ -228,7 +229,7 @@ class TopicModelingModule():
 						if(each['count']>temp_count):
 							temp_count=each['count']
 							temp_word=each['word']
-						s_count+=1	
+					s_count+=1	
 				#logging.debug('the result is %s   %s', word, temp_word)		
 				word=temp_word
 
@@ -287,14 +288,10 @@ class TopicModelingModule():
 		if exclusiveness == 0 :  
 
 			# get precomputed tile data
-<<<<<<< HEAD
-			topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
+			#topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
 			
-			tile_mtx = self.db.get_term_doc_matrix(tile_id);
-			self.make_sub_term_doc_matrix(tile_mtx,include_word_list,exclude_word_list,time_range)
-=======
-			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
->>>>>>> 1d72da48a45c5ea87109a5681182e7dec1b28074
+			#tile_mtx = self.db.get_term_doc_matrix(tile_id);
+			self.make_sub_term_doc_matrix(tile_mtx,include_word_list,exclude_word_list,time_range)			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
 
 		else :
 
