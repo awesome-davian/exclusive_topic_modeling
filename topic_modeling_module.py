@@ -169,6 +169,9 @@ class TopicModelingModule():
 		logging.debug(neighbor_ids)
 
 		tile_mtx = self.db.get_term_doc_matrix(tile_id);
+		if tile_mtx == []:
+			return [];
+
 		neighbor_mtx = self.db.get_term_doc_matrices(neighbor_ids);
 
 		# print(type(neighbor_mtx));
@@ -211,6 +214,7 @@ class TopicModelingModule():
 		topic_scores = np.asarray(t_scores);
 
 		# find original word and replace
+		temp_word = "";
 		for topic in topics:
 			for word in topic:
 				s_count=0
@@ -226,8 +230,6 @@ class TopicModelingModule():
 						s_count+=1	
 				#logging.debug('the result is %s   %s', word, temp_word)		
 				word=temp_word
-
-
 
 		# update at 8th February, 2017 - the formation starts here.
 
@@ -259,7 +261,7 @@ class TopicModelingModule():
 
 		return rettopics;
 
-	def get_topics(self, level, x, y, num_clusters, num_keywords, include_word_list, exclude_word_list, exclusiveness, time_range):
+	def get_topics(self, level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, time_from, time_to):
 
 		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		
@@ -267,6 +269,9 @@ class TopicModelingModule():
 		
 		# for testing
 		#exclusiveness = 50;
+
+		exclusiveness /= 100;
+		logging.debug('exclusiveness: %f', exclusiveness);
 
 		result = {};
 		tile = {};
@@ -281,14 +286,18 @@ class TopicModelingModule():
 		if exclusiveness == 0 :  
 
 			# get precomputed tile data
+<<<<<<< HEAD
 			topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
 			
 			tile_mtx = self.db.get_term_doc_matrix(tile_id);
 			self.make_sub_term_doc_matrix(tile_mtx,include_word_list,exclude_word_list,time_range)
+=======
+			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
+>>>>>>> 1d72da48a45c5ea87109a5681182e7dec1b28074
 
 		else :
 
-			topics = self.run_topic_modeling(level, x, y, exclusiveness, num_clusters, num_keywords);
+			topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count);
 
 
 
@@ -315,6 +324,7 @@ class TopicModelingModule():
 		documents = [];
 
         #find stemmed word form voca-hashmap
+		stem_word = "";
 		voca_hash= self.db.get_vocabulary_hashmap();
 		for each in voca_hash:
 			if word==each['word']:
@@ -323,6 +333,7 @@ class TopicModelingModule():
 		logging.info(stem_word)
 
 		#get stemmed word id from voca 
+		word_id = "";
 		voca= self.db.get_vocabulary();
 		for idx, each in enumerate(voca):
 		 	if stem_word==each['stem']:
