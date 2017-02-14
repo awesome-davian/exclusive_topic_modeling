@@ -40,6 +40,10 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
           %  max_tdm_n = max(max_tdm_n,num_tdm_n);
             end
     end
+    Euclid_dist_mat = [1.414; 1; 1.414; 1; 1; 1.414 ;1; 1.414];
+
+    N_ON = N_ON .* Euclid_dist_mat;
+
     %num_tdm
     freq=0;
     NB = cell(8,1);
@@ -129,8 +133,8 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
 
     % AL = AL;
     % BE = BE;
-    AL = (1-xcl) * AL/sum(10*AL)
-    BE = xcl * BE/sum(10*BE)
+    AL = (1-xcl) * AL/sum(10*AL);
+    BE = xcl * BE/sum(10*BE);
     %   ii) doing the initialisation
     [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,30,AL,BE,freq,N_ON); %NB coming in cell format. 
     %[WC,WN,HC,HN] = xcl_nmf(AC,NB,k*2,k,30,AL,BE);
