@@ -15,6 +15,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     % 2. Sparsing
     dict = Voca;
     ATDMs = cell(9,1);
+    N_ON = zeros(8,1);
 %    ATDMs{1} = Tdm;
     [nrows, ncols] = cellfun(@size, Ntdms);
 
@@ -28,7 +29,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
             if ncols(i) == 0
                 continue
             else
-
+            N_ON(i) = 1;
             Tdm_cell = Ntdms{1, i};
             Mtx = cell2mat( cellfun( @(x) cell2mat(x), Tdm_cell, 'UniformOutput', 0 ) );
             Ntdm = reshape(Mtx, 3, [])';
@@ -70,6 +71,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     NB_norm = cell(8,1);
     AC_norm = bsxfun(@rdivide,AC,sqrt(sum(AC.^2))); %NaN Value going in. 
     AC_norm(isnan(AC_norm))=1e-16;
+
     for c = 1:8
         if (ncols(c) == 0)
             continue
@@ -82,45 +84,76 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     % 4. NMF
     %   i) initialising
     % scaling
-    xcl = exclusiveness; 
-    AL = ones(1,8)./N_size;
-    AL = 20+ 80 * bsxfun(@rdivide,AL',sum(AL'));
-    BE = ones(1,8)./N_size;
-    BE = 20+ 80 * bsxfun(@rdivide,BE',sum(BE'));
-    AL = bsxfun(@rdivide,AL',sum(AL'));
-    BE = bsxfun(@rdivide,BE',sum(BE'));
+     xcl = exclusiveness; 
+    % AL = ones(1,8)./(N_size+1e-16);
+    % AL(isnan(AL))=1e-16;
+    % AL = 20 + 80 * bsxfun(@rdivide,AL',sum(AL'));
+    % BE = ones(1,8)./(N_size+1e-16);
+    % BE(isnan(BE))=1e-16;
+    % BE = 20 + 80 * bsxfun(@rdivide,BE',sum(BE'));
+    % AL = bsxfun(@rdivide,AL',sum(AL'))
+    % BE = bsxfun(@rdivide,BE',sum(BE'))
 
-
-    AL = (1-xcl)*AL; BE = xcl*BE;
+    % Scaling
+    N_size
+    AL = ones(8,1);
+    BE = ones(8,1);
     
+    for i = 1:8
+        if N_ON(i) == 0
+            AL(i) = 0;
+            BE(i) = 0;
+        
+        else
+            AL(i) = AL(i)/N_size(i);
+            BE(i) = BE(i)/N_size(i);
+        end
+
+    end
+    AL = AL./sum(AL);
+    BE = BE./sum(BE);
+    for i = 1:8
+        if N_ON(i) == 0
+            continue
+        else
+            AL(i) = 20 + 80*AL(i);
+            BE(i) = 20 + 80*BE(i);
+        end
+    end
+
+    % for i = 1:8
+    %     if N_ON(i) == 0
+    %         AL = 
+    %     end
+    % end
+
+    % AL = AL;
+    % BE = BE;
+    AL = (1-xcl) * AL/sum(10*AL)
+    BE = xcl * BE/sum(10*BE)
     %   ii) doing the initialisation
-       [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,20,AL,BE,freq); %NB coming in cell format. 
+    [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,30,AL,BE,freq,N_ON); %NB coming in cell format. 
     %[WC,WN,HC,HN] = xcl_nmf(AC,NB,k*2,k,30,AL,BE);
     % 5. Displaying the key words (parsing)
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {}; %Wtopk_score={}; Topic_score={};
     [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score] = parsenmf(WC,HC,dict,topk);
-    % WCsort1 = sort(WC(:,1),'descend');
-    % WCsort2 = sort(WC(:,2),'descend');
-    % WCsort3 = sort(WC(:,3),'descend');
-    % WCsort4 = sort(WC(:,4),'descend');
-    % WCsort5 = sort(WC(:,5),'descend');
-    % WCsort6 = sort(WC(:,6),'descend');
-    % WCsort7 = sort(WC(:,7),'descend');
-    % WCsort8 = sort(WC(:,8),'descend');
-    % WCsort9 = sort(WC(:,9),'descend');
-    % WCsort10 = sort(WC(:,10),'descend');
-    % WCsort1(1:5)
-    % WCsort2(1:5)
-    % WCsort3(1:5)
-    % WCsort4(1:5)
-    % WCsort5(1:5)
-    % WCsort6(1:6);
-    % WCsort7(1:7);
-    % WCsort8(1:8);
-    % WCsort9(1:9);
-    % WCsort10(1:10);
+
+%     WCsort1 = sort(WC(:,1),'descend');
+%     WCsort2 = sort(WC(:,2),'descend');
+%     WCsort3 = sort(WC(:,3),'descend');
+%     WCsort4 = sort(WC(:,4),'descend');
+%     WCsort5 = sort(WC(:,5),'descend');
+%     WCsort6 = sort(WC(:,6),'descend');
+%     WCsort7 = sort(WC(:,7),'descend');
+%     WCsort8 = sort(WC(:,8),'descend');
+%     WCsort9 = sort(WC(:,9),'descend');
+%     WCsort10 = sort(WC(:,10),'descend');
+%     [ WCsort1(1:5) WCsort2(1:5) WCsort3(1:5) WCsort4(1:5) WCsort5(1:5) ];
+%     [ WCsort6(1:5) WCsort7(1:5) WCsort8(1:5) WCsort9(1:5) WCsort10(1:5) ];
+
     ttopk = Wtopk(:);
     Topics = ttopk(1:k*topk)';
+
 
     tWtopk_score = Wtopk_score(:);
     wtopk_score = tWtopk_score(1:k*topk)';
@@ -129,7 +162,6 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     topic_score = tTopic_score(1:k)'; 
 
     Topic_score;
-    Wtopk(:,:);
 
     
 % clean up variables

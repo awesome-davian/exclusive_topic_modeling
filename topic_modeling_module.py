@@ -223,7 +223,8 @@ class TopicModelingModule():
 						temp_word=each['word']
 						temp_count=each['count']
 						#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
-					if(word==each['stem']):
+					#if(word==each['stem']):
+					if((word==each['stem']) and (s_count!=0)):
 						if(each['count']>temp_count):
 							temp_count=each['count']
 							temp_word=each['word']

@@ -2,7 +2,7 @@
 # v0.2.x.x : Protocol test in progress
 # v0.3.x.x : GET_RELATED_TOPIC protocol added
 # v0.5.x.x : Protocol test complete
-VERSION = 'v0.3.0.2_Feb11'	# stemming algorithm applied for precomputed tile data.
+VERSION = 'v0.3.0.3_Feb12'	# stemming algorithm applied for the on-demand tiling.
 
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
