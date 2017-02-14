@@ -250,7 +250,7 @@ class TopicModelingModule():
 				# topic.append(each['word']);
 						word = {};
 						word['word'] = topics[i,i1]
-						word['score'] = word_scores[i,i1]
+						word['scoret'] = word_scores[i,i1]
 						words.append(word)
 
 					# topic['words'] = words;
@@ -288,10 +288,10 @@ class TopicModelingModule():
 		if exclusiveness == 0 :  
 
 			# get precomputed tile data
-			#topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
+			topics = self.db.get_precomputed_topics(level, x, y,num_clusters,num_keywords);
 			
 			#tile_mtx = self.db.get_term_doc_matrix(tile_id);
-			self.make_sub_term_doc_matrix(tile_mtx,include_word_list,exclude_word_list,time_range)			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
+			#self.make_sub_term_doc_matrix(tile_mtx,include_word_list,exclude_word_list,time_range)			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
 
 		else :
 
