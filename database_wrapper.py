@@ -2,6 +2,8 @@ import logging
 import pymongo
 import constants
 import numpy as np
+import time
+
 
 class DBWrapper():
 
@@ -113,6 +115,12 @@ class DBWrapper():
 		logging.debug('get_precomputed_topics(%d, %d, %d)', level, x, y);
 
 		topics = [];
+
+		start_time=time.time()
+
+		voca_hash = self.get_vocabulary_hashmap()
+		voca= self.get_vocabulary();
+
 		for tile_name in self.db.collection_names():
 
 			if tile_name.endswith('_topics') == False:
@@ -139,31 +147,46 @@ class DBWrapper():
 
 					words = [];
 
+					#start_time_find_info=time.time()
+
 					for idx, each in enumerate(tile.find({'topic_id': i+1}).sort('rank',pymongo.ASCENDING)):
 						word={}
 						word['word'] = each['word']
 						word['score'] = each['score']
 						
+						#start_time_find_count=time.time()
+
 					    #find stemmed word form voca-hashmap
-						voca_hash= self.get_vocabulary_hashmap();
 						for each in voca_hash:
 							if word['word']==each['word']:
 								stem_word=each['stem']
 								break;
 						#logging.info(stem_word)
 
-						#get stemmed word count  from voca 
-						voca= self.get_vocabulary();
+						#get stemmed word count  from voca 				
 						for each in voca:
 						 	if stem_word==each['stem']:	
 						 		word['count']=each['count']
 						 		break;
 
+
+						# #find count from voca-hash						
+						# for each in voca_hash:
+						# 	if(word['word']==each['word']):
+						# 		word['count']=each['count']
+						# 		break;
+
 						words.append(word)
+
+						#elaspsed_time_find_couunt=time.time()-start_time_find_count
+						#logging.info("Done get count. Execution time: %.3fms", elaspsed_time_find_couunt)
 
 
 						if(idx>=word_count-1):
 							break;
+
+					#elaspsed_time_find_info=time.time()-start_time_find_info
+					#logging.info("Done find info. Execution time: %.3fms", elaspsed_time_find_info)		
 
 
 
@@ -172,5 +195,8 @@ class DBWrapper():
 					topics.append(topic);
 
 				break;
+
+		elaspsed_time=time.time() - start_time
+		logging.info("Done get Pre-computed topics. Execution time: %.3fms", elaspsed_time)	
 
 		return topics;
