@@ -6,6 +6,7 @@ import numpy as np
 import pymongo
 import sys
 from nltk import PorterStemmer
+import time
 
 
 porter_stemmer=PorterStemmer();
@@ -91,6 +92,9 @@ class TopicModelingModule():
 
 		for word in word_list:
 
+			stem_word ="";
+			word_id=0;
+
 	        #find stemmed word form voca-hashmap
 			for each in voca_hash:
 				if word==each['word']:
@@ -119,15 +123,16 @@ class TopicModelingModule():
 		return doc_lists;
   
 
-	def make_sub_term_doc_matrix(self, term_doc_mtx, include_word_list, exclude_word_list):
+	def make_sub_term_doc_matrix(self, term_doc_mtx, include_word_list, exclude_word_list, voca_hash, voca):
 
-		voca_hash= self.db.get_vocabulary_hashmap();
-		voca= self.db.get_vocabulary();
+		start_time_make_sub=time.time()
+
 
 		exclude_doc_list=self.get_doc_idx_include_word(term_doc_mtx, exclude_word_list, voca_hash, voca)
 		include_doc_list=self.get_doc_idx_include_word(term_doc_mtx, include_word_list, voca_hash, voca)
 
 		new_tile_mtx=[]
+		word_idx=0;
 
 		if(len(include_word_list)>0):
 			for each in term_doc_mtx:
@@ -168,17 +173,19 @@ class TopicModelingModule():
 
 		new_tile_mtx = np.array(new_tile_mtx, dtype=np.double).reshape(int(np.size(new_tile_mtx)/3), 3)				 	
 
-
+		elapsed_time_make_sub= time.time() - start_time_make_sub
+		logging.info('get_topics -make sub term_doc_mtx Execution time: %.3fms', elapsed_time_make_sub)
 	
 		logging.debug(new_tile_mtx)
-
 
 		return new_tile_mtx;
     
 
 
-	def run_topic_modeling(self, level, x, y, exclusiveness, num_clusters, num_keywords):
+	def run_topic_modeling(self, level, x, y, exclusiveness, num_clusters, num_keywords, voca):
 		
+		start_time = time.time()
+
 		logging.debug('run_topic_modeling(%d, %d, %d, %.2f)', level, x, y, exclusiveness);
 
 		tile_id = self.get_tile_id(level, x, y);
@@ -200,6 +207,8 @@ class TopicModelingModule():
 		# logging.debug(neighbor_mtx);
 		# logging.debug(tile_mtx);
 
+		start_time_makeab = time.time()
+
 		A = matlab.double(tile_mtx.tolist());
 
 		B = [];
@@ -213,15 +222,23 @@ class TopicModelingModule():
 
 			idxa += 1;
 
+
+		elapsed_time_makeab= time.time() - start_time_makeab
+		logging.info('run_topic_modeling -make ab Execution time: %.3fms', elapsed_time_makeab)
+
+
+		start_time_function_run = time.time()
+
 		# for each in B:
 		# 	print(type(each));
 
 		# print(type(neighbor_mtx));
 		# print(type(tile_mtx.tolist()));
 
-		voca = self.db.get_vocabulary();
 
         #[topics_list] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+
+
 		[topics_list, w_scores, t_scores] = self.eng.function_run_extm(A, B, exclusiveness, voca, num_clusters, num_keywords, nargout=3);
 		topics = np.asarray(topics_list);
 		topics = np.reshape(topics, (num_clusters, num_keywords));
@@ -231,12 +248,20 @@ class TopicModelingModule():
 
 		topic_scores = np.asarray(t_scores);
 
+		elapsed_time_function_run = time.time() - start_time_function_run
+		logging.info('run_topic_modeling -function_run_extm Execution time: %.3fms', elapsed_time_function_run)
+
+
+		start_time_replace = time.time()
 		# find original word and replace
-		temp_word = "";
-		temp_count=0;
+		
 		for topic in topics:
 			for word in topic:
+				
 				s_count=0
+				temp_word = "";
+				temp_count=0;
+
 				for each in db['vocabulary_hashmap'].find():
 					if((word==each['stem']) and (s_count==0)):
 						temp_word=each['word']
@@ -250,7 +275,8 @@ class TopicModelingModule():
 					s_count+=1	
 				#logging.debug('the result is %s   %s', word, temp_word)		
 				word=temp_word
-
+		elapsed_time_replace= time.time() - start_time_replace
+		logging.info('run_topic_modeling -replace Execution time: %.3fms', elapsed_time_replace)
 		# update at 8th February, 2017 - the formation starts here.
 
 	#	tile = self.db[tile_name]
@@ -279,13 +305,21 @@ class TopicModelingModule():
 
 		# end. 
 
+		elapsed_time= time.time() - start_time
+		logging.info('run_topic_modeling  Execution time: %.3fms', elapsed_time)
+	
+
 		return rettopics;
 
 	def get_topics(self, level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, time_from, time_to):
 
-		logging.debug('get_topics(%s, %s, %s)', level, x, y)
+		start_time=time.time()
 		
+		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		tile_id = self.get_tile_id(level, x, y);
+
+		voca_hash= self.db.get_vocabulary_hashmap();
+		voca= self.db.get_vocabulary();
 		
 		# for testing
 		#exclusiveness = 50;
@@ -304,22 +338,22 @@ class TopicModelingModule():
 		topics = []
 		# check if it needs a precomputed tile data.
 		if exclusiveness == 0 :  
-
-			# get precomputed tile data
-
+			# get precomputed tile data       			
 			tile_mtx = self.db.get_term_doc_matrix(tile_id);
-			self.make_sub_term_doc_matrix(tile_mtx,include_words,exclude_words)
-			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count);
-
+			self.make_sub_term_doc_matrix(tile_mtx,include_words,exclude_words, voca_hash, voca)
 			
-			
+			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count, voca_hash, voca);
+						
 		else :
 
-			topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count);
+			topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count, voca);
 
 
 
 		result['topic'] = topics;
+
+		end_time=time.time() - start_time
+		logging.info('end of get_topics Execution time: %.3fms' , end_time)
 
 		#print(result);
 
@@ -329,6 +363,8 @@ class TopicModelingModule():
 	def get_releated_docs(self, level, x, y, word):
 
 		logging.debug('get_releated_docs(%s, %s, %s, %s)', level, x, y, word)
+
+		start_time = time.time()
 
 		tile_id = self.get_tile_id(level, x, y);
 
@@ -344,6 +380,7 @@ class TopicModelingModule():
         #find stemmed word form voca-hashmap
 		stem_word = "";
 		voca_hash= self.db.get_vocabulary_hashmap();
+
 		for each in voca_hash:
 			if word==each['word']:
 				stem_word=each['stem']
@@ -380,6 +417,9 @@ class TopicModelingModule():
 					documents.append(raw_documents)
 
 		result['documents'] = documents;
+
+		elapsed_time=time.time()-start_time
+		logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
 
 		return result;
 

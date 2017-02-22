@@ -19,6 +19,8 @@ class DBWrapper():
 	# The APIs for Topic Modeling Module
 	def get_term_doc_matrix(self, id):
 		
+		start_time=time.time()
+
 		logging.debug('id: %s', id)
 		tile_mtx = [];
 		for tile_name in self.db.collection_names():
@@ -43,14 +45,24 @@ class DBWrapper():
 
 		logging.debug(tile_mtx)
 
+		elapsed_time=time.time() - start_time
+		logging.info('get term_doc_matrix Execution time : %.3fms' , elapsed_time)
+
+
 		return tile_mtx;
 
 	def get_term_doc_matrices(self, ids):
 		
+		start_time_get_mtx=time.time()
+
 		tile_mtxs = [];
 
 		for tile_id in ids:
 			tile_mtxs.append(self.get_term_doc_matrix(tile_id));
+
+
+		elapsed_time_get_mtx= time.time() - start_time_get_mtx
+		logging.info('get_topics -get tile_mtx Execution time: %.3fms', elapsed_time_get_mtx)
 
 		return tile_mtxs;
 
@@ -59,7 +71,9 @@ class DBWrapper():
 		return "document_list";
 
 	def get_vocabulary(self):
-		
+
+		start_time=time.time()
+
 		voca = []
 		for each in self.db['vocabulary'].find():
 			word = {}
@@ -67,9 +81,14 @@ class DBWrapper():
 			word['count'] = each['count'];
 			voca.append(word);
 
+		elapsed_time=time.time() - start_time
+		logging.info('get voca Execution time : %.3fms' , elapsed_time)
+
 		return voca;
 
 	def get_vocabulary_hashmap(self):
+
+		start_time=time.time()
 
 		voca_hash= [] 
 		for each in self.db['vocabulary_hashmap'].find():
@@ -79,10 +98,15 @@ class DBWrapper():
 			voca_hash_elemet['count']=each['count']
 			voca_hash.append(voca_hash_elemet)
 
+
+		elapsed_time=time.time() - start_time
+		logging.info('get voca_hash Execution time : %.3fms' , elapsed_time)
 		return voca_hash;	
 	    	
 
 	def get_raw_data(self, tile_id):
+
+		start_time = time.time()
 
 		logging.debug('tile_id: %s', tile_id)
 
@@ -108,18 +132,18 @@ class DBWrapper():
 
 			break;
 
+		elapsed_time=time.time() - start_time
+		logging.info('get_raw_data Execution time : %.3fms' , elapsed_time)
+
 		return raw_data;
 
-	def get_precomputed_topics(self, level, x, y ,topic_count, word_count):
+	def get_precomputed_topics(self, level, x, y ,topic_count, word_count, voca_hash, voca):
 
 		logging.debug('get_precomputed_topics(%d, %d, %d)', level, x, y);
 
 		topics = [];
 
 		start_time=time.time()
-
-		voca_hash = self.get_vocabulary_hashmap()
-		voca= self.get_vocabulary();
 
 		for tile_name in self.db.collection_names():
 
@@ -147,7 +171,7 @@ class DBWrapper():
 
 					words = [];
 
-					#start_time_find_info=time.time()
+					start_time_find_info=time.time()
 
 					for idx, each in enumerate(tile.find({'topic_id': i+1}).sort('rank',pymongo.ASCENDING)):
 						word={}
@@ -185,8 +209,8 @@ class DBWrapper():
 						if(idx>=word_count-1):
 							break;
 
-					#elaspsed_time_find_info=time.time()-start_time_find_info
-					#logging.info("Done find info. Execution time: %.3fms", elaspsed_time_find_info)		
+					elaspsed_time_find_info=time.time()-start_time_find_info
+					logging.info("get_precomputed_topics -  find info. Execution time: %.3fms", elaspsed_time_find_info)		
 
 
 
