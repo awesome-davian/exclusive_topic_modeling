@@ -121,6 +121,13 @@ for line in f_stop:
 	stop_list.add(line[0:-1])
 f_stop.close()
 
+f_slang_stop=io.open('slangword')
+for line in f_slang_stop:
+	stop_list.add(line[0:-1])
+f_slang_stop.close()
+
+
+
 stemmed_word_one=collections.OrderedDict()
 stem_bag_words=collections.OrderedDict()
 
