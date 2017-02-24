@@ -51,8 +51,8 @@ public class TweetsToTiles {
         BasicDBObject query = new BasicDBObject();
         BasicDBObject subquery = new BasicDBObject();
         subquery.append("$ne", null);
-        query.append("geo", subquery);
-        query.append("lang","en");
+        query.append("coordinates", subquery);
+        //query.append("lang","en");
         DBCursor cursor = coll.find(query);
         return cursor;
     }
@@ -67,7 +67,7 @@ public class TweetsToTiles {
 
     static DB getOutputDB(Options opts) throws UnknownHostException {
         MongoClient mongoClient = new MongoClient(opts.output_host, opts.output_port);
-        DB db = mongoClient.getDB(opts.col + "_tiles131225");
+        DB db = mongoClient.getDB(opts.col + "_tiles_131225_test");
         return db;
 
     }
