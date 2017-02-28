@@ -59,7 +59,7 @@ public class TweetsToTiles {
     public static Date getTwitterDate(String date) throws ParseException {
 
         final String TWITTER="EEE MMM dd HH:mm:ss ZZZZZ yyyy";
-    	// final String TWITTER="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";	// mchoi
+    	//final String TWITTER="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";	// mchoi
         SimpleDateFormat sf = new SimpleDateFormat(TWITTER);
         sf.setLenient(true);
         return sf.parse(date);
@@ -67,7 +67,7 @@ public class TweetsToTiles {
 
     static DB getOutputDB(Options opts) throws UnknownHostException {
         MongoClient mongoClient = new MongoClient(opts.output_host, opts.output_port);
-        DB db = mongoClient.getDB(opts.col + "_tiles_131225_test");
+        DB db = mongoClient.getDB(opts.col + "_tiles_131225");
         return db;
 
     }
@@ -169,20 +169,20 @@ public class TweetsToTiles {
                             case "coordinates":
                                 coordinatejson = (BasicDBObject) tweetJSON.get("coordinates");
                                 coordinates = (List<Double>) coordinatejson.get("coordinates");
-                                // x = ((Number) coordinates.get(0)).doubleValue();
-                                // y = ((Number) coordinates.get(1)).doubleValue();
+                                //x = ((Number) coordinates.get(0)).doubleValue();
+                                //y = ((Number) coordinates.get(1)).doubleValue();
                                 x = ((Number) coordinates.get(1)).doubleValue();
                                 y = ((Number) coordinates.get(0)).doubleValue();
-                                System.out.println("x: " + x + ", y: " + y);
+                                //System.out.println("x: " + x + ", y: " + y);
                                 break;
                             case "geo":
                                 coordinatejson = (BasicDBObject) tweetJSON.get("geo");
                                 coordinates = (List<Double>) coordinatejson.get("coordinates");
-                                // x = ((Number) coordinates.get(0)).doubleValue();
-                                // y = ((Number) coordinates.get(1)).doubleValue();
+                                //x = ((Number) coordinates.get(0)).doubleValue();
+                                //y = ((Number) coordinates.get(1)).doubleValue();
                                 x = ((Number) coordinates.get(1)).doubleValue();
                                 y = ((Number) coordinates.get(0)).doubleValue();
-                                System.out.println("x: " + x + ", y: " + y);
+                                //System.out.println("x: " + x + ", y: " + y);
                                 break;
                         }
                         assert (x != Double.NaN && y != Double.NaN);
@@ -236,7 +236,7 @@ public class TweetsToTiles {
                             String output_name = "tile_" + interval
                                      + Integer.toString(level) + "_" + tweetTile.getX() + "_" + tweetTile.getY() + "_" + tweetTile.hashCode() + "_raw";
                             
-                            System.out.println(output_name);
+                            //System.out.println(output_name);
 
                             //insert tweet json into the appropriate collection
                             DBCollection outputCol = outputDB.getCollection(output_name);

@@ -17,7 +17,11 @@ import numpy as np
 #------------------------------------------------------------------------------------------------
 # read top 50 line
 
-max_num = int(sys.argv[2])
+#max_num = int(sys.argv[2])
+min_num = 50;
+max_num = 100;
+
+print('min_num: %d' % min_num)
 print('max_num: %d' % max_num)
 #output_directory = './'
 
@@ -31,12 +35,17 @@ output_file = open(output_file_name, 'w')
 idx = 0;
 for line in input_file:
 
-	if idx >= max_num:
+	idx += 1;
+
+	if idx <= min_num:
+		continue;
+
+	if idx > max_num:
 		break;
 	
 	print('%s' % line.replace('\n',''), file=output_file)
 	print('%d\n%s' % (idx,line))
-	idx += 1;
+	
 
 
 input_file.close()
