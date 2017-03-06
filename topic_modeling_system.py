@@ -136,6 +136,7 @@ def request_get_topics(uuid):
     # run topic modeling for each tile
     topics = [];
     for tile in tiles:
+
         level = tile['level'];
         x = tile['x']
         y = tile['y']
@@ -215,3 +216,60 @@ if __name__ == '__main__':
     TG = tile_generator.TileGenerator(DB)
 
     app.run(host='0.0.0.0', port='5001')
+
+
+
+#--- add new protocol
+@app.route('/GET_TILE_DETAIL_INFO/<uuid>', methods=['POST'])
+def request_get_tile_detail_info(uuid):
+
+    contents = request.get_json(silent=True);
+    logging.info('Request from %s: %s ', request.remote_addr, contents)
+
+    outputs = []
+
+    #get date from & to 
+    for time in date:
+        time_from = time['from']
+        time_to = time['to']
+
+
+    for tile in tiles:
+        level = tile['level']
+        x = tile['x']
+        y = tile['y']
+
+        output = TM.get_tile_detail_info(level, x, y, time_from, time_to);
+        outputs.append(output)
+
+    for output in outputs:
+        logging.debug('output: %s', output)
+
+
+    json_data = json.dumps(outputs);
+
+
+    return json_data 
+
+
+
+@app.route('/GET_HITMAP/<uuid>', methods=['POST'])
+def request_get_tile_detail_info(uuid):
+
+    contents = request.get_json(silent=True);
+    logging.info('Request from %s: %s ', request.remote_addr, contents)
+
+    outputs = []
+
+    #get date from & to 
+    for time in date:
+        time_from = time['from']
+        time_to = time['to']
+
+
+    hitmap = TM.get_hitmap(time_from, time_to);
+
+
+    json_data = json.dumps(hitmap);
+
+    return json_data 

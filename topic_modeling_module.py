@@ -423,6 +423,40 @@ class TopicModelingModule():
 
 		return result;
 
+	def get_tile_detail_info(level, x, y, time_from, time_to):
+
+		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, time_from, time_to)
+
+		tile_id = self.get_tile_id(level, x, y)
+
+		result = {};
+		tile = {};
+		tile['x'] = x;
+		tile['y'] = y; 
+		tile['level'] = level;
+
+		result['tile'] = tile;
+
+		#todo: get all_topics / get time_graph
+		time_graph = self.get_time_graph();
+		topics = self.get_all_topics();
+
+		result['time_graph'] = time_graph
+		result['all_topics'] = topics
+
+
+		return result;
+
+	def get_himap(time_from, time_to):
+
+		logging.debug('get_himap(%s, %s)', time_from, time_to)
+
+
+		return result
+
+
+
+
 	def get_word_info(self, level, x, y, word):
 		# TBD
 		return "word_info";
