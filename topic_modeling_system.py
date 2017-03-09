@@ -41,9 +41,7 @@ def checkInputValidation(method, contents):
             exclusiveness = parameters['exclusiveness'];
             topic_count = parameters['topic_count'];
             word_count = parameters['word_count'];
-            time_range = parameters['time'];
-            time_from = time_range['from'];
-            time_to = time_range['to'];
+            date = parameters['date'];
             include_words = parameters['include_words'];
             exclude_words = parameters['exclude_words'];
             tiles = contents['tiles'];
@@ -74,7 +72,7 @@ def checkInputValidation(method, contents):
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
 
-        return error_string, parameters, exclusiveness, topic_count, word_count, time_from, time_to, include_words, exclude_words, tiles;
+        return error_string, parameters, exclusiveness, topic_count, word_count, date, include_words, exclude_words, tiles;
 
     elif method == 'GET_RELATED_DOCS':
         
@@ -116,7 +114,7 @@ def request_get_topics(uuid):
 
     logging.info('Request from %s: %s', request.remote_addr, contents);
 
-    error_string, parameters, exclusiveness, topic_count, word_count, time_from, time_to, include_words, exclude_words, tiles = checkInputValidation('GET_TOPICS', contents);
+    error_string, parameters, exclusiveness, topic_count, word_count, date, include_words, exclude_words, tiles = checkInputValidation('GET_TOPICS', contents);
     if error_string != "Success":
         logging.error('ERROR_BAD_REQUEST: %s', error_string);
         return error_string, status.HTTP_400_BAD_REQUEST;
@@ -125,7 +123,7 @@ def request_get_topics(uuid):
     logging.debug('exclusiveness: %s', exclusiveness);
     logging.debug('topic_count: %s', topic_count);
     logging.debug('word_count: %s', word_count);
-    logging.debug('time: %s ~ %s', time_from, time_to);
+    logging.debug('date: %s', date);
     for word in include_words:
         logging.debug('include words: %s', word);
     for word in exclude_words:
@@ -142,7 +140,7 @@ def request_get_topics(uuid):
         y = tile['y']
 
         # change parameters form default set_params to json input. 
-        topic = TM.get_topics(level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, time_from, time_to);
+        topic = TM.get_topics(level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, date);
         topics.append(topic);
 
     # verify that the calculation is correct using log.

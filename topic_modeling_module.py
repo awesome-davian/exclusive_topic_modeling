@@ -14,8 +14,8 @@ porter_stemmer=PorterStemmer();
 sys.path.insert(0, '../')
 conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 
-dbname = constants.DB_NAME;
-db = conn[dbname];
+# dbname = constants.DB_NAME;
+# db = conn[dbname];
 
 class TopicModelingModule():
 
@@ -311,15 +311,15 @@ class TopicModelingModule():
 
 		return rettopics;
 
-	def get_topics(self, level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, time_from, time_to):
+	def get_topics(self, level, x, y, topic_count, word_count, include_words, exclude_words, exclusiveness, date):
 
 		start_time=time.time()
 		
 		logging.debug('get_topics(%s, %s, %s)', level, x, y)
 		tile_id = self.get_tile_id(level, x, y);
 
-		voca_hash= self.db.get_vocabulary_hashmap();
-		voca= self.db.get_vocabulary();
+		# voca_hash= self.db.get_vocabulary_hashmap();
+		# voca= self.db.get_vocabulary();
 		
 		# for testing
 		#exclusiveness = 50;
@@ -337,25 +337,25 @@ class TopicModelingModule():
 
 		topics = []
 		# check if it needs a precomputed tile data.
-		if exclusiveness == 0 :  
-			# get precomputed tile data       			
-			tile_mtx = self.db.get_term_doc_matrix(tile_id);
-			self.make_sub_term_doc_matrix(tile_mtx,include_words,exclude_words, voca_hash, voca)
+		# if exclusiveness == 0 :  
+		# 	# get precomputed tile data       			
+		# 	tile_mtx = self.db.get_term_doc_matrix(tile_id);
+		# 	self.make_sub_term_doc_matrix(tile_mtx,include_words,exclude_words, voca_hash, voca)
 			
-			topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count, voca_hash, voca);
+		# 	topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count, voca_hash, voca);
 						
-		else :
+		# else :
 
-			topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count, voca);
+		# 	topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count, voca);
 
-
+		topics = self.db.get_topics(level, x, y, date, topic_count, word_count);
 
 		result['topic'] = topics;
 
 		end_time=time.time() - start_time
 		logging.info('end of get_topics Execution time: %.3fms' , end_time)
 
-		#print(result);
+		print(result);
 
 		return result;
 

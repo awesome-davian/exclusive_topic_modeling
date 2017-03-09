@@ -1,4 +1,4 @@
-import sys
+import os, sys
 sys.path.insert(0, '../')
 import constants
 import pymongo
@@ -6,20 +6,37 @@ import numpy as np
 import matlab.engine
 import logging, logging.config
 import time
+import collections
+from os import walk
 
 logging.config.fileConfig('logging.conf')
 logging.info('Run topic modeling for all tiles using standard NMF')
 
+arglen = len(sys.argv)
+if arglen != 4:
+	print("Usage: python topic_modeling_module_all.py [neighbor_matrix_dir(IN)] [global_voca(IN)] [topic_directory(OUT)]")
+	print("For example, python topic_modeling_module_all.py ./mtx_neighbor/ ./voca/voca_131103-131105 ./topics/131103-131105/")
+	exit(0)
+
+module_name = sys.argv[0]
+neighbor_mtx_dir = sys.argv[1]
+global_voca_path = sys.argv[2]
+topic_dir = sys.argv[3]
+
+if not os.path.exists(neighbor_mtx_dir):
+	logging.info('The Neighbor Term-Doc. Matrix Directory(%s) is Not exist. Exit %s.', neighbor_mtx_dir, module_name)
+	exit(0)
+
+if not os.path.exists(topic_dir):
+    os.makedirs(topic_dir)
+
+# Load the Matlab module
 start_time = time.time()
 eng = matlab.engine.start_matlab();
 eng.cd('../matlab/standard_nmf/');
+#eng.cd('../matlab/discnmf_code/');
 elapsed_time = time.time() - start_time;
-logging.info('matlab loading time: %.3f ms', elapsed_time);
-
-conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
-
-dbname = constants.DB_NAME;
-db = conn[dbname];
+logging.info('matlab loading time: %.3f s', elapsed_time);
 
 def get_next_sequence_value(sequence_name):
 
@@ -41,49 +58,150 @@ def del_stored_topics():
 		if name.endswith('_topics') == True:
 			db.counters.delete_one({'_id':name})
 
-logging.info('loading vocabulary...');
-start_time = time.time()
-voca = []
-idx = 0;
-for each in db['vocabulary'].find():
-	word = each['stem'];
-	voca.append(word);
+def readVoca(word_map, bag_words, stem_bag_words):
 
-elapsed_time = time.time() - start_time;
-logging.info('Done: loading vocabulary: %.3f ms', elapsed_time);
+	voca_file = open(global_voca_path, 'r', encoding='UTF8')
+	voca_hash_file = open(global_voca_path+'_hash', 'r', encoding='UTF8')
 
-del_stored_topics();
+	idx = 1
+	list_voca = []
+	voca = voca_file.readlines()
+	for line in voca:
+		v = line.split('\t')
+		bag_words[v[0]] = int(v[1])
+		word_map[v[0]] = idx
+		idx += 1
+		list_voca.append(v[0])
 
-logging.info('Run NMF for all tiles...');
-start_time = time.time()
-for tile_name in db.collection_names():
-	if tile_name.endswith('_mtx') == False:
-		continue;
+	# idx = 0
+	# for key, value in bag_words.items():
+	# 	if idx > 100:
+	# 		break
+	# 	print("%s, %d" % (key, int(value)))
+	# 	idx += 1
 
-	logging.info('Running NMF for %s...', tile_name);
-	start_time_detail = time.time()
+	voca_hash = voca_hash_file.readlines()
+	for line in voca_hash:
+		v = line.split('\t')
+		if v[0] not in stem_bag_words:
+			stem_bag_words[v[0]] = collections.OrderedDict()
 
-	tile_mtx_db = db[tile_name];
+		stem_bag_words[v[0]][v[1]] = int(v[2])
+
+	# idx = 0
+	# for key, value in stem_bag_words.items():
+	# 	if idx > 100:
+	# 		break
+
+	# 	print("%s, %s, %s" % (key, list(value)[0], value[list(value)[0]]))
+	# 	idx += 1
+
+	voca_file.close()
+	voca_hash_file.close()
+
+	return list_voca
+
+def readLocalVoca(word_map, bag_words):
+
+	voca_file_name = tile_name.replace('mtx_', 'voca_')
+	local_voca_file = open(neighbor_mtx_dir+voca_file_name, 'r', encoding='UTF8')
+
+	idx = 1
+	list_voca = []
+	voca = local_voca_file.readlines()
+	for line in voca:
+		v = line.split('\t')
+		bag_words[v[0]] = int(v[1])
+		word_map[v[0]] = idx
+		idx += 1
+		list_voca.append(v[0])
+
+	local_voca_file.close()
+
+	return list_voca
+
+def readTermDocMtx(need_neighbor_mtx):
+
+	if need_neighbor_mtx == True:
+		mtx_file = open(neighbor_mtx_dir + tile_name, 'r', encoding='UTF8')
+	else:
+		mtx_file = open(neighbor_mtx_dir + tile_name.replace('mtx_', 'nmtx_'), 'r', encoding='UTF8')
+	
+	lines = mtx_file.readlines()
 
 	tile_mtx = [];
-	for each in tile_mtx_db.find():
-		item = np.array([each['term_idx'], each['doc_idx'], each['freq']], dtype=np.int32);
-		tile_mtx = np.append(tile_mtx, item, axis=0);
-		
-	tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(tile_mtx_db.count(), 3)
+	for line in lines:
+		v = line.split('\t')
+		item = np.array([int(v[0]), int(v[1]), int(v[2])], dtype=np.int32)
+		tile_mtx = np.append(tile_mtx, item, axis=0)
+
+	mtx_file.close()
+
+	logging.info("#lines: %s", len(lines))
+	tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(len(lines), 3)
+
+	return tile_mtx
+
+logging.info('loading vocabulary...');
+s_time_voca = time.time()
+
+stem_bag_words_g =collections.OrderedDict()
+bag_words_g = collections.OrderedDict()
+word_map_g = collections.OrderedDict()
+
+list_voca_g = readVoca(word_map_g, bag_words_g, stem_bag_words_g)
+
+elapsed_time = time.time() - s_time_voca;
+logging.info('Done: loading vocabulary: %.3f s', elapsed_time);
+
+_, _, filenames = next(walk(neighbor_mtx_dir), (None, None, []))
+
+logging.info('Run NMF for all tiles...');
+mtx_tile_list = (mtx_tile for mtx_tile in filenames if mtx_tile.startswith('mtx_') == True)
+
+# logging.info('The number of matrices: %d', sum(1 for x in mtx_tile_list))
+
+passed_cnt = 0
+for tile_name in mtx_tile_list:
+
+	logging.info('Load vocabulary for %s', tile_name);
+	start_time_detail = time.time()
+
+	# read local voca
+	bag_words_l = collections.OrderedDict()
+	word_map_l = collections.OrderedDict()
+	# doc_map_l = collections.OrderedDict()
+
+	list_voca_l = readLocalVoca(word_map_l, bag_words_l)
+
+	elapsed_time = time.time() - start_time_detail;
+	logging.info('Done: loading vocabulary: %.3f s', elapsed_time);
+
+	logging.info('Loading Term-Doc. Matrices for %s...', tile_name);
+	start_time_detail = time.time()
+
+	# read single term-doc matrix
+	tile_mtx = readTermDocMtx(False)
 
 	if len(tile_mtx) < constants.MIN_ROW_FOR_TOPIC_MODELING:
 		logging.debug('# of row is too small(%d). --> continue', len(tile_mtx))
-		continue;
+		passed_cnt += 1
+		continue
+
+	tile_nmtx = readTermDocMtx(True)
 
 	elapsed_time_detail = time.time() - start_time_detail
-	logging.info('Done: Running NMF for %s, elapse: %.3fms', tile_name, elapsed_time_detail);
+	logging.info('Done: Loading Term-Doc. Matrices for %s, elapse: %.3fms', tile_name, elapsed_time_detail);	
 
-	# run topic modeling
 	logging.info('Running the Topic Modeling for %s...', tile_name);
 	start_time_detail = time.time()
 	A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
-	[topics_list, w_scores, t_scores] = eng.function_runme(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+	N = tile_nmtx.tolist() # sparse function in function_run_extm().
+
+	# for exclusiveness in range(0, 6):
+
+	[topics_list, w_scores, t_scores] = eng.function_runme(A, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+	#[topics_list, w_scores, t_scores] = eng.function_run_extm(A, N, exclusiveness, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
 
 	topics = np.asarray(topics_list);
 	topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
@@ -93,56 +211,51 @@ for tile_name in db.collection_names():
 
 	topic_scores = np.asarray(t_scores)[0];
 
+	# store topics in DB		
 
-	# store topics in DB
-	tile = db[tile_name]
-	tile_topic_name = tile_name.replace('_mtx','')+'_topics'
-	tile_topic = db[tile_topic_name]	
+	# logging.debug(word_scores)
+	# logging.debug(topic_scores)
 
-	logging.debug(word_scores)
-	logging.debug(topic_scores)
+	topic_name = tile_name.replace('mtx_','topics_')
+	logging.info('file_name: %s', topic_dir+topic_name)
+	# topic_file = open(topic_dir+topic_name+'_'+exclusiveness, 'a', encoding='UTF8')
+	topic_file = open(topic_dir+topic_name, 'a', encoding='UTF8')
 
 	topic_id = 0;
 	for topic in topics:
 		
-		topic_id += 1;
-		rank = 0;
+		topic_file.write(str(topic_scores[topic_id]) + '\n')
 
-		tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': (constants.TOPIC_ID_MARGIN_FOR_SCORE+topic_id), 'topic_score': topic_scores[topic_id-1]})
-        
+		rank = 0;
 		for word in topic: 
 
-			word_score = word_scores[topic_id-1, rank];
+			word_score = word_scores[topic_id, rank];
 
 			rank += 1;
 			
 			temp_count=0;
 			temp_word="";
 			s_count=0
-			for each in db['vocabulary_hashmap'].find():
-				if((word==each['stem']) and (s_count==0)):
-					temp_word=each['word']
-					temp_count=each['count']
-					#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
-				if((word==each['stem']) and (s_count!=0)):
-					if(each['count']>temp_count):
-						temp_count=each['count']
-						temp_word=each['word']
-				s_count+=1			
-			#logging.debug('the result is %s   %s', word, temp_word)	
-			word=temp_word	
-			
-			tile_topic.insert({'_id': get_next_sequence_value(tile_topic_name), 'topic_id': topic_id, 'rank': rank, 'word': word, 'score': word_score});
-			
-			#logging.debug('the result is    %s', word)
+
+			g_word = list_voca_g[int(word)]
+
+			res_word = ''
+			for key, value in stem_bag_words_g[g_word].items():
+				res_word = key
+				break
+
+			word_cnt = bag_words_l[word]
+
+			topic_file.write(str(res_word) + '\t' + str(word_cnt) + '\t' + str(word_score) + '\n')
+			#logging.info(str(rank) + '\t' + str(res_word) + '\t' + str(word_score) + '\n')
+
+		topic_id += 1;
   
+	topic_file.close()	
+
 	elapsed_time_detail = time.time() - start_time_detail
 	logging.info('Done: Running the Topic Modeling for %s, elapse: %.3fms', tile_name, elapsed_time_detail);
 
 elapsed_time = time.time() - start_time;
 logging.info('Done: NMF, elapsed: %.3fms', elapsed_time);
-
-# eng = matlab.engine.start_matlab()
-# eng.cd(constants.MATLAB_DIR)
-
-# ret = eng.triarea(1.0,5.0)
+logging.debug('passed_cnt: %d', passed_cnt)

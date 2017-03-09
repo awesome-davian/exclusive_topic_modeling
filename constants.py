@@ -7,14 +7,21 @@ VERSION = 'v0.3.0.3_Feb12'	# stemming algorithm applied for the on-demand tiling
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
 DEFAULT_MONGODB_PORT = 27017
-#DB_NAME = 'tweets_tiles'
-DB_NAME = 'tweets_tiles131225'
+
+# DB_NAME_TILE = 'tweets_tiles' + DB_NAME_POSTFIX
+# DB_NAME_MTX = 'SALT_DB_mtx' + DB_NAME_POSTFIX
+# DB_NAME_TOPICS = 'SALT_DB_topics' + DB_NAME_POSTFIX
+
+DATA_RANGE = '131103-131105'
 
 DEFAULT_NUM_TOPICS = 10
 DEFAULT_NUM_TOP_K = 10
 DEFAULT_EXCLUSIVENESS = 0
 
 MIN_ROW_FOR_TOPIC_MODELING = 30
+MIN_WORD_FREQUENCY = 5
+
+
 
 TOPIC_ID_MARGIN_FOR_SCORE = 10000
 

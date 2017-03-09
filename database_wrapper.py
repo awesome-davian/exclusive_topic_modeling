@@ -3,7 +3,7 @@ import pymongo
 import constants
 import numpy as np
 import time
-
+from datetime import datetime 
 
 class DBWrapper():
 
@@ -12,9 +12,10 @@ class DBWrapper():
 		return;
 
 	def connect(self, ip, port):
-		self.conn = pymongo.MongoClient(ip, port);
-		self.dbname = constants.DB_NAME;
-		self.db = self.conn[self.dbname];
+		# self.conn = pymongo.MongoClient(ip, port);
+		# self.dbname = constants.DB_NAME;
+		# self.db = self.conn[self.dbname];
+		return
 
 	# The APIs for Topic Modeling Module
 	def get_term_doc_matrix(self, id):
@@ -136,6 +137,60 @@ class DBWrapper():
 		logging.info('get_raw_data Execution time : %.3fms' , elapsed_time)
 
 		return raw_data;
+
+
+	def get_topics(self, level, x, y, date, topic_count, word_count):
+		
+		logging.debug('get_topics(%d, %d, %d, %s)', level, x, y, date);
+
+		date_format = "%Y-%m-%d"
+		date = datetime.strptime(date, date_format)
+		year = date.timetuple().tm_year
+		day_of_year = date.timetuple().tm_yday
+
+		datapath = './tile_generator/topics/'+constants.DATA_RANGE+'/'
+		topic_file_name = 'topics_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+
+		topics = []
+		
+		try: 
+			with open(datapath+topic_file_name, 'r') as f:
+				
+				topic = {}
+				words = []
+
+				lines = f.readlines()
+				idx = 0
+				for line in lines:
+					line = line.strip()
+					if idx == 0:
+						topic['score'] = float(line)
+						topic['exclusiveness'] = float(line)
+						idx += 1
+					else:
+						
+						v = line.split('\t')
+						word = {}
+						word['word'] = str(v[0])
+						word['count'] = int(v[1])
+						word['score'] = float(v[2])
+
+						words.append(word)
+
+						idx += 1
+						if idx > 10:
+							idx = 0
+							
+							topic['words'] = words
+							topics.append(topic)
+
+							topic = {}
+							words = []
+		except FileNotFoundError:
+			logging.debug('%s is not exist.', topic_file_name)
+
+		return topics
+
 
 	def get_precomputed_topics(self, level, x, y ,topic_count, word_count, voca_hash, voca):
 
