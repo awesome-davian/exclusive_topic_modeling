@@ -30,8 +30,7 @@ def checkInputValidation(method, contents):
         exclusiveness = -1;
         topic_count = -1;
         word_count = -1;
-        time_from = 0;
-        time_to = 1609372800000; # Dec. 31, 2020.
+        date = '0000-00-00'
         include_words = [];
         exclude_words = [];
         tiles = [];
