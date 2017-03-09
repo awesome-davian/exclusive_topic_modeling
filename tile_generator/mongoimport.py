@@ -21,6 +21,21 @@ def check_input_args(argv):
 	print('argv[3]: %s -> Source' % (argv[3]))
 	print("")
 
+def get_next_sequence_value(sequence_name):
+
+	# print("test: " % (db.counters.find_one({'_id':sequence_name})['seq']))
+
+	db.counters.find_and_modify(
+		{'_id':sequence_name}, 
+		{'$inc':{'seq':1}}, upsert=True, new=True
+	)
+
+	# print("test: " % (db.counters.find_one({'_id':sequence_name})['seq']))
+
+	#exit(0)
+
+	return db.counters.find_one({'_id':sequence_name})['seq']
+
 def import_file(input_file):
 
 	print("Importing file(%s)... " % input_file)
@@ -41,7 +56,7 @@ def import_file(input_file):
 
 				if idx % 10000 == 0:
 					elapsed_time = time.time() - start_time
-					print("%d items imported. Elapsed time: %.5fms" % (idx, elapsed_time));
+					print("%d items imported. Elapsed time: %.5fs" % (idx, elapsed_time));
 					start_time = time.time()
 
 				line_json = json.loads(line)
@@ -67,14 +82,21 @@ def import_file(input_file):
 
 					tweet_id = line_json["id"]
 					tweet_text = line_json["body"] if "body" in line_json else line_json["text"]
-					tweet_coordinates = line_json["geo"] if "geo" in line_json else line_json["coordinates"]
 					tweet_created_at = line_json["postedTime"] if "postedTime" in line_json else line_json["created_at"]
 					tweet_user_id = line_json["actor"]["id"] if "actor" in line_json else line_json["user"]["id"]
 					tweet_user_name = line_json["actor"]["displayName"] if "actor" in line_json else line_json["user"]["name"]
 					tweet_favorite_count = line_json["actor"]["favoritesCount"] if "actor" in line_json else line_json["favorite_count"]
 					tweet_retweet_count = line_json["retweetCount"] if "retweetCount" in line_json else line_json["retweet_count"]
 
-					col.insert({"id": tweet_id,
+					if "coordinates" in line_json:
+						tweet_coordinates = line_json["coordinates"]
+					else:
+						tweet_coordinates = line_json["geo"]
+						temp = tweet_coordinates["coordinates"][0]
+						tweet_coordinates["coordinates"][0] = tweet_coordinates["coordinates"][1]
+						tweet_coordinates["coordinates"][1] = temp
+
+					col.insert({"_id": get_next_sequence_value(col_name), "id": tweet_id,
 						"text": tweet_text,
 						"coordinates": tweet_coordinates,
 						"created_at": tweet_created_at,
@@ -95,7 +117,7 @@ def import_file(input_file):
 		print("%s is not a file." % input_file)
 
 	function_elapsed_time = time.time() - function_start_time;
-	print("Complete. Elapsed time: %.3fms" % (function_elapsed_time))
+	print("Complete. Elapsed time: %.3fs" % (function_elapsed_time))
 
 	if key_err != 0:
 		print("[Err]# of Key Errors: %d" % (key_err))
@@ -108,7 +130,7 @@ def import_file(input_file):
 arglen = len(sys.argv)
 if arglen != 4:
 	print("Usage: python mongoimport.py [db_name] [col_name] [source file or directory]")
-	print("For example, python mongoimport.py test_rawdata_131225_final tweets ../2013_12_25")
+	print("For example, python mongoimport.py test_rawdata_131225_final SALT_DB_131225 ../2013_12_25")
 	exit(0)
 
 check_input_args(sys.argv)
@@ -139,4 +161,4 @@ else :
 	import_file(input_file);
 
 module_elapsed_time = time.time() - module_start_time;
-print("All done. Total Elapsed Time: %.3fms" % (module_elapsed_time));
+print("All done. Total Elapsed Time: %.3fs" % (module_elapsed_time));
