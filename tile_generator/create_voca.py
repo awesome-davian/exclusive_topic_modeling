@@ -24,7 +24,7 @@ if arglen != 4:
 	print("For example, python create_voca.py test_rawdata_140130 SALT_DB_140130 ./voca/voca_140130")
 	exit(0)
 
-logging.info('Run create_voca.py %s %s %s', sys.argv[1], sys.argv[2], sys.argv[3])
+# logging.info('Run create_voca.py %s %s %s', sys.argv[1], sys.argv[2], sys.argv[3])
 
 module_name = sys.argv[0]
 rawdata_db_name = sys.argv[1]

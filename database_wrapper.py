@@ -143,8 +143,10 @@ class DBWrapper():
 		
 		logging.debug('get_topics(%d, %d, %d, %s)', level, x, y, date);
 
-		date_format = "%Y-%m-%d"
-		date = datetime.strptime(date, date_format)
+		# date_format = "%Y-%m-%d"
+		# date = datetime.strptime(date, date_format)
+
+		date = datetime.fromtimestamp(int(int(date)/1000))
 		year = date.timetuple().tm_year
 		day_of_year = date.timetuple().tm_yday
 
