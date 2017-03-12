@@ -4,12 +4,180 @@ import constants
 import numpy as np
 import time
 from datetime import datetime 
+import collections
+
+def getTwitterDate(date):
+	date_format = ''
+	if len(date) == 30:
+		# date_format = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+		date_format = "%a %b %d %H:%M:%S %z %Y"
+		
+	else:
+		# date_format = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+		date_format = "%Y-%m-%dT%H:%M:%S.000Z"
+
+	return datetime.strptime(date, date_format)
 
 class DBWrapper():
 
 	def __init__(self):
+		
+		self.map_idx_to_word, self.map_word_to_idx, self.bag_words, self.stem_bag_words = self.read_voca()
+		self.map_idx_to_doc = self.read_docs()
+		self.map_related_docs = self.read_related_docs()
 
 		return;
+
+	def get_global_docs_map_idx_to_doc(self):
+		return self.map_idx_to_doc
+
+	def get_global_voca_map_idx_to_word(self):
+		return self.map_idx_to_word
+
+	def get_global_voca_map_word_to_idx(self):
+		return self.map_word_to_idx
+
+	def get_related_docs_map(self):
+		return self.map_related_docs
+
+	def read_docs(self):
+
+		start_time = time.time()
+
+		docs_file = open(constants.GLOBAL_DOC_FILE_PATH, 'r', encoding='UTF8')
+
+		map_idx_to_doc = collections.OrderedDict()
+		docs = docs_file.readlines()
+		
+		for idx, doc in enumerate(docs):
+
+			v = doc.split('\t')
+
+			# doc_time = getTwitterDate(v[1])
+			# #year = doc_time.timetuple().tm_year
+			# day_of_year = doc_time.timetuple().tm_yday
+
+			map_idx_to_doc[idx+1] = collections.OrderedDict()
+			map_idx_to_doc[idx+1] = [v[1], v[2], v[3], v[4], v[5]]
+
+			# try:
+			# 	if len(map_idx_to_doc[idx][day_of_year]) == 0:
+			# 		map_idx_to_doc[idx][day_of_year] = []
+			# except KeyError:
+			# 	map_idx_to_doc[idx][day_of_year] = []
+
+			# 	map_idx_to_doc[idx][day_of_year].append([v[2], v[3], v[4], v[5]])
+
+		docs_file.close()
+
+		elapsed_time= time.time() - start_time
+		logging.info('read_docs(). Elapsed time: %.3fms', elapsed_time)	
+
+		return map_idx_to_doc
+
+	def read_voca(self):
+
+		start_time = time.time()
+
+		stem_bag_words =collections.OrderedDict()
+		bag_words = collections.OrderedDict()
+		map_word_to_idx = collections.OrderedDict()
+
+		voca_file = open(constants.GLOBAL_VOCA_FILE_PATH, 'r', encoding='UTF8')
+		voca_hash_file = open(constants.GLOBAL_VOCA_FILE_PATH+'_hash', 'r', encoding='UTF8')
+
+		idx = 1
+		map_idx_to_word = collections.OrderedDict()
+		voca = voca_file.readlines()
+		for line in voca:
+			v = line.split('\t')
+			bag_words[v[0]] = int(v[1])
+			map_word_to_idx[v[0]] = idx
+			map_idx_to_word[idx]=v[0]
+			idx += 1
+
+		# idx = 0
+		# for key, value in bag_words.items():
+		# 	if idx > 100:
+		# 		break
+		# 	print("%s, %d" % (key, int(value)))
+		# 	idx += 1
+
+		voca_hash = voca_hash_file.readlines()
+		for line in voca_hash:
+			v = line.split('\t')
+			if v[0] not in stem_bag_words:
+				stem_bag_words[v[0]] = collections.OrderedDict()
+
+			stem_bag_words[v[0]][v[1]] = int(v[2])
+
+		# idx = 0
+		# for key, value in stem_bag_words.items():
+		# 	if idx > 100:
+		# 		break
+
+		# 	print("%s, %s, %s" % (key, list(value)[0], value[list(value)[0]]))
+		# 	idx += 1
+
+		voca_file.close()
+		voca_hash_file.close()
+
+		elapsed_time= time.time() - start_time
+		logging.info('read_voca(). Elapsed time: %.3fms', elapsed_time)	
+
+		return map_idx_to_word, map_word_to_idx, bag_words, stem_bag_words
+
+	def read_related_docs(self):
+		start_time=time.time()
+
+		rel_docs = collections.OrderedDict()
+		with open(constants.MTX_DIR + constants.DATA_RANGE + '/total_mtx', 'r', encoding='UTF8') as f:
+			lines = f.readlines()
+			for line in lines:
+				v = line.split('\t')
+
+				word_idx = int(v[0])
+				doc_idx = int(v[1])
+
+				doc_time = getTwitterDate(self.map_idx_to_doc[doc_idx][0])
+				date = doc_time.timetuple().tm_yday
+				unixtime = time.mktime(doc_time.timetuple())
+				username = str(self.map_idx_to_doc[doc_idx][3])
+				text = str(self.map_idx_to_doc[doc_idx][4])
+
+				if word_idx in rel_docs:
+					pass
+				else:
+					rel_docs[word_idx] = collections.OrderedDict()
+
+				if date in rel_docs[word_idx]:
+					pass
+				else:
+					rel_docs[word_idx][date] = []
+
+				rel_docs[word_idx][date].append([username, unixtime, text])
+
+				# try:
+				# 	rel_docs[word_idx][date].append(text)
+				# except KeyError:
+				# 	rel_docs[word_idx] = collections.OrderedDict()
+				# 	rel_docs[word_idx][date] = []
+				# 	rel_docs[word_idx][date].append(text)
+
+				# if word_idx == 5318:
+				# 	word = self.get_global_voca_map_idx_to_word()[word_idx]
+
+				# 	logging.info('word: %s, doc: %s', word, text)
+
+				# 	doc_list = rel_docs[word_idx][date]
+				# 	for doc in doc_list:
+				# 		logging.info(doc)
+				# 	exit(0)
+
+		elapsed_time= time.time() - start_time
+		logging.info('get_related_docs_map(). Elapsed time: %.3fms', elapsed_time)	
+
+		return rel_docs
 
 	def connect(self, ip, port):
 		# self.conn = pymongo.MongoClient(ip, port);
@@ -50,7 +218,7 @@ class DBWrapper():
 		logging.info('get term_doc_matrix Execution time : %.3fms' , elapsed_time)
 
 
-		return tile_mtx;
+		return tile_mtx;	
 
 	def get_term_doc_matrices(self, ids):
 		

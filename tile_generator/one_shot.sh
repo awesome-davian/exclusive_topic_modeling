@@ -34,7 +34,7 @@ then
 	python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_FILE_PATH}
 else
 	echo ""
-	echo "Do not import rawdata because the rawdata path is not exist."
+	echo "Do not import rawdata because the argv[2](rawdata path) is not exist."
 fi
 
 echo ""

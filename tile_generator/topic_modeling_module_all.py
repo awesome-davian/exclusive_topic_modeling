@@ -58,20 +58,20 @@ def del_stored_topics():
 		if name.endswith('_topics') == True:
 			db.counters.delete_one({'_id':name})
 
-def readVoca(word_map, bag_words, stem_bag_words):
+def readGlobalVoca(word_map, bag_words, stem_bag_words):
 
 	voca_file = open(global_voca_path, 'r', encoding='UTF8')
 	voca_hash_file = open(global_voca_path+'_hash', 'r', encoding='UTF8')
 
 	idx = 1
-	list_voca = []
+	list_voca = collections.OrderedDict()
 	voca = voca_file.readlines()
 	for line in voca:
 		v = line.split('\t')
 		bag_words[v[0]] = int(v[1])
 		word_map[v[0]] = idx
+		list_voca[idx] = v[0]
 		idx += 1
-		list_voca.append(v[0])
 
 	# idx = 0
 	# for key, value in bag_words.items():
@@ -101,33 +101,35 @@ def readVoca(word_map, bag_words, stem_bag_words):
 
 	return list_voca
 
-def readLocalVoca(word_map, bag_words):
+def readLocalVoca(tile_name, word_map, bag_words):
 
 	voca_file_name = tile_name.replace('mtx_', 'voca_')
 	local_voca_file = open(neighbor_mtx_dir+voca_file_name, 'r', encoding='UTF8')
 
 	idx = 1
-	list_voca = []
+	list_voca = collections.OrderedDict()
 	voca = local_voca_file.readlines()
 	for line in voca:
 		v = line.split('\t')
 		bag_words[v[0]] = int(v[1])
 		word_map[v[0]] = idx
+		list_voca[idx] = v[0]
 		idx += 1
-		list_voca.append(v[0])
 
 	local_voca_file.close()
 
 	return list_voca
 
-def readLocalDoc():
+def readLocalDoc(tile_name):
 	doc_file_name = tile_name.replace('mtx_', 'docmap_')
 	local_doc_file = open(neighbor_mtx_dir+doc_file_name, 'r', encoding='UTF8')
 
-	list_doc = []
+	list_doc = collections.OrderedDict()
 	docs = local_doc_file.readlines()
+	idx = 1
 	for doc in docs:
-		list_doc.append(doc)
+		list_doc[idx] = doc
+		idx += 1
 
 	local_doc_file.close()
 
@@ -194,11 +196,11 @@ def readTermDocMtx(mtx, nmtx):
 logging.info('loading vocabulary...');
 s_time_voca = time.time()
 
-stem_bag_words_g =collections.OrderedDict()
+stem_bag_words_g = collections.OrderedDict()
 bag_words_g = collections.OrderedDict()
 word_map_g = collections.OrderedDict()
 
-list_voca_g = readVoca(word_map_g, bag_words_g, stem_bag_words_g)
+list_voca_g = readGlobalVoca(word_map_g, bag_words_g, stem_bag_words_g)
 
 elapsed_time = time.time() - s_time_voca;
 logging.info('Done: loading vocabulary: %.3f s', elapsed_time);
@@ -225,7 +227,7 @@ for tile_name in mtx_tile_list:
 	word_map_l = collections.OrderedDict()
 	# doc_map_l = collections.OrderedDict()
 
-	list_voca_l = readLocalVoca(word_map_l, bag_words_l)
+	list_voca_l = readLocalVoca(tile_name, word_map_l, bag_words_l)
 
 	logging.info('Vocabulary size: %d', len(list_voca_l))
 
@@ -235,7 +237,7 @@ for tile_name in mtx_tile_list:
 	logging.info('Load document for %s', tile_name);
 	start_time_detail = time.time()
 
-	list_doc_l = readLocalDoc()
+	list_doc_l = readLocalDoc(tile_name)
 
 	logging.info('Doc size: %d', len(list_doc_l))
 	
@@ -245,20 +247,15 @@ for tile_name in mtx_tile_list:
 	logging.info('Loading Term-Doc. Matrices for %s...', tile_name);
 	start_time_detail = time.time()
 
+	# read single term-doc matrix
 	tile_mtx = []
 	tile_nmtx = []
-
-	# read single term-doc matrix
 	[tile_mtx, tile_nmtx] = readTermDocMtx(tile_mtx, tile_nmtx)
-
-	# tile_mtx = readTermDocMtx(False)
 
 	if len(tile_mtx) < constants.MIN_ROW_FOR_TOPIC_MODELING:
 		logging.debug('# of row is too small(%d). --> continue', len(tile_mtx))
 		passed_cnt += 1
 		continue
-
-	# tile_nmtx = readTermDocMtx(True)
 
 	elapsed_time_detail = time.time() - start_time_detail
 	logging.info('Done: Loading Term-Doc. Matrices for %s, elapse: %.3fms', tile_name, elapsed_time_detail);	

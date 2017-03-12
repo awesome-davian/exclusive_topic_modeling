@@ -182,8 +182,9 @@ time_make_bag_words = 0;
 time_find = 0;
 time_insert = 0;
 
-# mtx_file = open('./mtx2/total_mtx', 'w', encoding='UTF8')
-for doc in rawdata_col.find():
+mtx_file = open(mtx_dir + 'total_mtx', 'w', encoding='UTF8')
+col_size = rawdata_col.count()
+for idx, doc in enumerate(rawdata_col.find()):
 	text = doc['text']
 
 	s_time_bag_words = time.time()
@@ -205,7 +206,7 @@ for doc in rawdata_col.find():
 			time_find += time.time() - s_time_find;
 
 			s_time_insert = time.time()
-			# mtx_file.write(str(word_idx) + '\t' + str(doc['_id']) + '\t' + str(bag_words_one[word]) + '\n')
+			mtx_file.write(str(word_idx) + '\t' + str(doc['_id']) + '\t' + str(bag_words_one[word]) + '\n')
 			time_insert += time.time() - s_time_insert;
 
 			for level in range(9, 14):
@@ -220,11 +221,14 @@ for doc in rawdata_col.find():
 		except KeyError:
 			continue
 
-#mtx_file.close()
+	if ((idx+1) % 10000) == 0:
+		logging.info('Creating the term-document matrix... (%d/%d)', idx+1, col_size)
+
+mtx_file.close()
 
 elapsed_time = time.time() - start_time
 
-logging.info('Time to create bag of words: %.3fs, Time to find: %.3fs, Time to insert: %.3fs', time_make_bag_words, time_find, time_insert)
+logging.info('Time to create Term-Doc-Frequency Matrix: %.3fs, Time to find: %.3fs, Time to insert: %.3fs', time_make_bag_words, time_find, time_insert)
 logging.info('Done: Creating the total term-document frequency matrix. Execution time: %.3fs', elapsed_time)
 
 
