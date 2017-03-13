@@ -25,25 +25,35 @@ fi
 
 if [ -z != ${TWITTER_DATA_PATH} ];
 then
+	echo ""
 	echo "python mongoimport.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${TWITTER_DATA_PATH}"
 	python mongoimport.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${TWITTER_DATA_PATH}
 
+	echo ""
 	echo "python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_FILE_PATH}"
 	python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_FILE_PATH}
+else
+	echo ""
+	echo "Do not import rawdata because the argv[2](rawdata path) is not exist."
 fi
 
+echo ""
 echo "python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_FILE_PATH}"
 python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_FILE_PATH}
 
+echo ""
 echo "python termdoc_gen_atonce.py ${VOCA_FILE_PATH} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
 python termdoc_gen_atonce.py ${VOCA_FILE_PATH} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
 
+echo ""
 echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
 python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
 
+echo ""
 echo "python topic_modeling_module_all.py ${NEIGHBOR_MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}"
 python topic_modeling_module_all.py ${NEIGHBOR_MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}
 
 END=$(date +%s);
 
-echo $((END-START)) | awk '{print "Done. Elapsed time: " int($1/60)"m "int($1%60)"s"}'
+echo ""
+echo $((END-START)) | awk '{print "Done. Total Elapsed time: " int($1/60)"m "int($1%60)"s"}'

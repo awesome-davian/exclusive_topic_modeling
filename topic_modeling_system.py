@@ -8,6 +8,7 @@ import json
 import logging, logging.config
 import constants
 
+
 logging.config.fileConfig('logging.conf')
 
 app = Flask(__name__)
@@ -62,7 +63,7 @@ def checkInputValidation(method, contents):
                 x = tile['x']
                 y = tile['y']
                 
-                if level < 9 or level > 15:
+                if level < 9 or level > 13:
                     error_string = "Invalid tile.level";
                 if x < 0:
                     error_string = "Invalid tile.x";
@@ -82,8 +83,9 @@ def checkInputValidation(method, contents):
             level = tile['level'];
             x = tile['x'];
             y = tile['y'];
+            date = tile['date']
 
-            if level < 9 or level > 15:
+            if level < 9 or level > 13:
                 error_string = "Invalid tile.level";
             if x < 0:
                 error_string = "Invalid tile.x";
@@ -93,7 +95,7 @@ def checkInputValidation(method, contents):
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
         
-        return error_string, word, level, x, y;
+        return error_string, word, level, x, y, date;
 
     return error_string;
 
@@ -158,23 +160,24 @@ def request_get_related_docs(uuid):
 
     logging.info('Request from %s: %s', request.remote_addr, contents);
 
-    error_string, word, level, x, y = checkInputValidation('GET_RELATED_DOCS', contents);
+    error_string, word, level, x, y, date = checkInputValidation('GET_RELATED_DOCS', contents);
     if error_string != "Success":
         logging.error('ERROR_BAD_REQUEST: %s', error_string);
         return error_string, status.HTTP_400_BAD_REQUEST;
 
     # run topic modeling for each tile
     docs = [];
-    docs = TM.get_releated_docs(level, x, y, word);
+    docs = TM.get_related_docs(level, x, y, word, date);
 
     # verify that the calculation is correct using log.
-    doc_list = docs['documents'];
-    logging.debug('found %d doc(s)', len(doc_list));
+    # doc_list = docs['documents'];
+    logging.debug('found %d doc(s)', len(docs));
     
-    for idx, doc in enumerate(doc_list):
-        logging.debug('[%d]created_at: %s', idx, doc['created_at']);
-        logging.debug('[%d]text: %s', idx, doc['text'].encode('utf-8'));
-        #logging.debug('')
+    # for idx, doc in enumerate(docs):
+    #     # logging.debug('[%d]created_at: %s', idx, doc['created_at']);
+    #     # logging.debug('[%d]text: %s', idx, doc['text'].encode('utf-8'));
+    #     #logging.debug('')
+    #     logging.debug(doc)
     
 
     json_data = json.dumps(docs);
@@ -203,18 +206,6 @@ def request_run_topic_modeling():
 
     TG.run_topic_modeling(TM, num_clusters, num_clusters, exclusiveness)
     return redirect('/tile_generator_test')
-
-if __name__ == '__main__':
-
-    initProject()
-
-    DB = database_wrapper.DBWrapper()
-    DB.connect("localhost", constants.DEFAULT_MONGODB_PORT)
-    TM = topic_modeling_module.TopicModelingModule(DB)
-    TG = tile_generator.TileGenerator(DB)
-
-    app.run(host='0.0.0.0', port='5000')
-
 
 
 #--- add new protocol
@@ -249,10 +240,8 @@ def request_get_tile_detail_info(uuid):
 
     return json_data 
 
-
-
 @app.route('/GET_HITMAP/<uuid>', methods=['POST'])
-def request_get_tile_detail_info(uuid):
+def request_get_hitmap(uuid):
 
     contents = request.get_json(silent=True);
     logging.info('Request from %s: %s ', request.remote_addr, contents)
@@ -267,7 +256,17 @@ def request_get_tile_detail_info(uuid):
 
     hitmap = TM.get_hitmap(time_from, time_to);
 
-
     json_data = json.dumps(hitmap);
 
     return json_data 
+
+if __name__ == '__main__':
+
+    initProject()
+
+    DB = database_wrapper.DBWrapper()
+    DB.connect("localhost", constants.DEFAULT_MONGODB_PORT)
+    TM = topic_modeling_module.TopicModelingModule(DB)
+    TG = tile_generator.TileGenerator(DB)
+
+    app.run(host='0.0.0.0', port='5001')

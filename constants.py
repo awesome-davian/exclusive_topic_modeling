@@ -2,7 +2,7 @@
 # v0.2.x.x : Protocol test in progress
 # v0.3.x.x : GET_RELATED_TOPIC protocol added
 # v0.5.x.x : Protocol test complete
-VERSION = 'v0.3.0.3_Feb12'	# stemming algorithm applied for the on-demand tiling.
+VERSION = 'v0.3.0.5_Mar13'	# get related docs complete
 
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
@@ -14,14 +14,19 @@ DEFAULT_MONGODB_PORT = 27017
 
 DATA_RANGE = '131103-131105'
 
-DEFAULT_NUM_TOPICS = 10
-DEFAULT_NUM_TOP_K = 10
+GLOBAL_VOCA_FILE_PATH = './tile_generator/voca/voca_' + DATA_RANGE
+GLOBAL_DOC_FILE_PATH = './tile_generator/rawdata/raw_' + DATA_RANGE
+NEIGHBOR_MTX_DIR = './tile_generator/mtx_neighbor/'
+MTX_DIR = './tile_generator/mtx/'
+
+DEFAULT_NUM_TOPICS = 5
+DEFAULT_NUM_TOP_K = 5
 DEFAULT_EXCLUSIVENESS = 0
 
 MIN_ROW_FOR_TOPIC_MODELING = 30
-MIN_WORD_FREQUENCY = 5
+MIN_WORD_FREQUENCY = 10
 
-
+MAX_RELATED_DOCS = 1000
 
 TOPIC_ID_MARGIN_FOR_SCORE = 10000
 

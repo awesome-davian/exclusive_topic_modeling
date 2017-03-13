@@ -6,6 +6,8 @@ import constants
 import numpy as np
 import collections
 import logging, logging.config
+import util
+from datetime import datetime 
 
 import constants
 
@@ -38,6 +40,13 @@ logging.info('size: %d', col.count())
 raw_file = open(res_file_name, 'w', encoding='UTF8')
 for doc in col.find().sort('_id', pymongo.ASCENDING):
 	# logging.info('_id: %s, text: %s', doc['_id'], doc['text']);
-	raw_file.write(str(doc['_id']) + '\t' + str(doc['created_at']) + '\t' + str(doc['coordinates']['coordinates'][0]) + '\t' + str(doc['coordinates']['coordinates'][1]) + '\t' + str(doc['user']['name']) + '\t' + str(doc['text']) + '\n')
+
+	# doc_time = util.getTwitterDate(doc['created_at'])
+	# day_of_year = doc_time.timetuple().tm_yday
+
+	name = str(doc['user']['name'].replace('\n', ' ').replace('\r', ' '))
+	text = str(doc['text'].replace('\n', ' ').replace('\r', ' '))
+
+	raw_file.write(str(doc['_id']) + '\t' + str(doc['created_at']) + '\t' + str(doc['coordinates']['coordinates'][0]) + '\t' + str(doc['coordinates']['coordinates'][1]) + '\t' + name + '\t' + text + '\n')
 
 raw_file.close()

@@ -7,6 +7,7 @@ import pymongo
 import sys
 from nltk import PorterStemmer
 import time
+from datetime import datetime
 
 
 porter_stemmer=PorterStemmer();
@@ -28,10 +29,10 @@ class TopicModelingModule():
 		self.nmf = nmf_core
 		self.db = DB
 
-		logging.info("loading Matlab module...");
-		self.eng = matlab.engine.start_matlab();
-		self.eng.cd('./matlab/discnmf_code/');
-		logging.info("Done: loading Matlab module");
+		# logging.info("loading Matlab module...");
+		# self.eng = matlab.engine.start_matlab();
+		# self.eng.cd('./matlab/discnmf_code/');
+		# logging.info("Done: loading Matlab module");
 
 	def get_tile_id(self, level, x, y):
 
@@ -359,69 +360,181 @@ class TopicModelingModule():
 
 		return result;
 
-
-	def get_releated_docs(self, level, x, y, word):
-
-		logging.debug('get_releated_docs(%s, %s, %s, %s)', level, x, y, word)
+	def get_related_docs(self, level, x, y, word, date):
 
 		start_time = time.time()
 
-		tile_id = self.get_tile_id(level, x, y);
+		# get docs including the word 
+		date = datetime.fromtimestamp(int(int(date)/1000))
+		year = date.timetuple().tm_year
+		day_of_year = date.timetuple().tm_yday
 
-		result = {};
-		tile = {};
-		tile['x'] = x;
-		tile['y'] = y; 
-		tile['level'] = level;
+		logging.debug('get_releated_docs(%s, %s, %s, %s, %d)', level, x, y, word, day_of_year)
 
-		result['tile'] = tile;
-		documents = [];
+		s_word = porter_stemmer.stem(word)
+		word_idx = self.db.get_global_voca_map_word_to_idx()[s_word]
 
-        #find stemmed word form voca-hashmap
-		stem_word = "";
-		voca_hash= self.db.get_vocabulary_hashmap();
+		logging.info('word: %s, s_word: %s, word_idx: %d', word, s_word, word_idx)
 
-		for each in voca_hash:
-			if word==each['word']:
-				stem_word=each['stem']
-				break;
-		logging.info(stem_word)
+		map_related_docs = self.db.get_related_docs_map()[word_idx]
 
-		#get stemmed word id from voca 
-		word_id = "";
-		voca= self.db.get_vocabulary();
-		for idx, each in enumerate(voca):
-		 	if stem_word==each['stem']:
-		 		word_id=idx+1 
-		 		break;
+		logging.info('stemmed word: %s, idx: %d', s_word, word_idx)
 
-		logging.info(word_id);
+		d = str(constants.DATA_RANGE).split('-')
 
-        #get doc list for tem_doc.mtx
-		tile_mtx = self.db.get_term_doc_matrix(tile_id);
-		doc_list=[]
-		for each in tile_mtx:
-			if each[0]==word_id:
-				doc_list.append(each[1])
+		d[0] = '20'+d[0][0:2] + '-' + d[0][2:4] + '-' + d[0][4:6]
+		d[1] = '20'+d[1][0:2] + '-' + d[1][2:4] + '-' + d[1][4:6]
 
-		logging.info(doc_list)		
+		logging.debug(d[0])
+		logging.debug(d[1])
 
-		#get raw_documents from raw_data 
-		raw_data=self.db.get_raw_data(tile_id)
-		for idx, each in enumerate(raw_data):
-			for doc_num in doc_list:
-				if ((idx==doc_num-1) and (each['text'].find(word)!=0)):
-					raw_documents={}
-					raw_documents['text']=each['text']
-					raw_documents['created_at']=each['created_at']
-					documents.append(raw_documents)
+		date_format = "%Y-%m-%d"
+		start_date = datetime.strptime(d[0], date_format).timetuple().tm_yday
+		end_date = datetime.strptime(d[1], date_format).timetuple().tm_yday if len(d) > 1 else start_date
 
-		result['documents'] = documents;
+		# start_date = int(d[0])
+		# end_date = int(d[1]) if len(d) > 1 else int(d[0])
+
+		max_compare = max([end_date - day_of_year, day_of_year - start_date])
+
+		logging.debug('start date: %d', start_date)
+		logging.debug('end date: %d', end_date)
+		logging.debug('max_compare: %d', max_compare)
+
+		total_docs = []
+
+		# size = 0
+		# f_size = 0
+		# docs = self.db.get_related_docs_map()
+		# for each in docs.items():
+		
+		# 	try: 
+		# 		size += len(each[1][day_of_year])
+		# 		for txt in each[1][day_of_year]:
+		# 			f_size += txt.count('love')
+		# 			if txt.count('love') > 0:
+		# 				logging.debug('Found! [%d]: %s', each[0], str(txt).encode('utf-8'))
+
+		# 	except KeyError:
+		# 		pass
+			
+		# logging.debug('size of %d : %d, f_size: %d', day_of_year, size, f_size)
+
+		logging.debug('case: %s', day_of_year)
+
+		try: 
+			doc_list = map_related_docs[day_of_year]
+			for doc in doc_list:
+				d = {}
+				d['username'] = str(doc[0])
+				d['created_at'] = int(doc[1])
+				d['text'] = str(doc[2])
+				total_docs.append(d)
+		except KeyError:
+			pass
+
+		logging.debug('len: %s', len(total_docs))
+
+		if len(total_docs) < constants.MAX_RELATED_DOCS:
+
+			for each in range(1, max_compare+1):	
+				
+				date_cursor = day_of_year - each
+				if date_cursor < start_date:
+					continue
+				else:
+					logging.debug('case: %s', date_cursor)
+
+					try: 
+						doc_list = map_related_docs[date_cursor]
+						for doc in doc_list:
+							d = {}
+							d['username'] = str(doc[0])
+							d['created_at'] = int(doc[1])
+							d['text'] = str(doc[2])
+							total_docs.append(d)
+					except KeyError:
+						pass
+
+				logging.debug('len: %s', len(total_docs))
+
+				if len(total_docs) > constants.MAX_RELATED_DOCS:
+					break
+
+				date_cursor = day_of_year + each
+				if date_cursor > end_date:
+					continue
+				else:
+					logging.debug('case: %s', date_cursor)
+
+					try: 
+						doc_list = map_related_docs[date_cursor]
+						for doc in doc_list:
+							d = {}
+							d['username'] = str(doc[0])
+							d['created_at'] = int(doc[1])
+							d['text'] = str(doc[2])
+							total_docs.append(d)
+					except KeyError:
+						pass
+
+				logging.debug('len: %s', len(total_docs))
+
+				if len(total_docs) > constants.MAX_RELATED_DOCS:
+					break
+
+		result = {}
+		tile = {}
+		tile['x'] = x
+		tile['y'] = y
+		tile['level'] = level
+
+		result['tile'] = tile
+
+		result['documents'] = total_docs[:constants.MAX_RELATED_DOCS]
 
 		elapsed_time=time.time()-start_time
 		logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
 
-		return result;
+		return result
+
+	def getTermDocMtx(self, level, x, y, date):
+
+		date = datetime.fromtimestamp(int(int(date)/1000))
+		year = date.timetuple().tm_year
+		day_of_year = date.timetuple().tm_yday
+
+		tile_name = 'mtx_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+
+		mtx_file = open(constants.MTX_DIR + tile_name, 'r', encoding='UTF8')
+
+		lines = mtx_file.readlines()
+
+		tile_mtxs = [];
+		for line in lines:
+			v = line.split('\t')
+			item = [float(v[0]), float(v[1]), float(v[2])]
+			temp_mtx = np.append(temp_mtx, item, axis=0)
+
+		for nid in range(0, 9):
+
+			temp_mtx = []
+			for each in mtx_dict[nid]:
+				v = each.split('\t')
+				item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
+				temp_mtx = np.append(temp_mtx, item, axis=0)
+			temp_mtx = np.array(temp_mtx, dtype=np.double).reshape(len(mtx_dict[nid]), 3)
+
+			if nid == 0:
+				mtx = temp_mtx
+			else:
+				nmtx.append(temp_mtx)
+
+		mtx_file.close()
+
+		logging.info("#lines: %s", len(lines))
+
+		return mtx, nmtx
 
 	def get_tile_detail_info(level, x, y, time_from, time_to):
 
@@ -444,17 +557,13 @@ class TopicModelingModule():
 		result['time_graph'] = time_graph
 		result['all_topics'] = topics
 
-
 		return result;
 
 	def get_himap(time_from, time_to):
 
 		logging.debug('get_himap(%s, %s)', time_from, time_to)
 
-
 		return result
-
-
 
 
 	def get_word_info(self, level, x, y, word):
