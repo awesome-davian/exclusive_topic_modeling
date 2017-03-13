@@ -323,9 +323,9 @@ class DBWrapper():
 		return raw_data;
 
 
-	def get_topics(self, level, x, y, date, topic_count, word_count):
+	def get_topics(self, level, x, y, date, topic_count, word_count, exclusiveness):
 		
-		logging.debug('get_topics(%d, %d, %d, %s)', level, x, y, date);
+		logging.debug('get_topics(%d, %d, %d, %s, %d, %d, %d)', level, x, y, date, topic_count, word_count, exclusiveness);
 
 		# date_format = "%Y-%m-%d"
 		# date = datetime.strptime(date, date_format)
@@ -335,7 +335,7 @@ class DBWrapper():
 		day_of_year = date.timetuple().tm_yday
 
 		datapath = './tile_generator/topics/'+constants.DATA_RANGE+'/'
-		topic_file_name = 'topics_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		topic_file_name = 'topics_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
 
 		topics = []
 		
@@ -351,7 +351,6 @@ class DBWrapper():
 					line = line.strip()
 					if idx == 0:
 						topic['score'] = float(line)
-						topic['exclusiveness'] = float(line)
 						idx += 1
 					else:
 						
@@ -377,6 +376,11 @@ class DBWrapper():
 
 		return topics
 
+	def get_all_topics(self, level, x, y, year, yday_from, yday_to):
+
+
+
+		return
 
 	def get_precomputed_topics(self, level, x, y ,topic_count, word_count, voca_hash, voca):
 
