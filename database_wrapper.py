@@ -6,6 +6,7 @@ import time
 from datetime import datetime 
 import collections
 
+
 def getTwitterDate(date):
 	date_format = ''
 	if len(date) == 30:
@@ -15,6 +16,7 @@ def getTwitterDate(date):
 	else:
 		# date_format = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 		date_format = "%Y-%m-%dT%H:%M:%S.000Z"
+
 
 	return datetime.strptime(date, date_format)
 
