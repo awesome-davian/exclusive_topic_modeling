@@ -97,6 +97,31 @@ def checkInputValidation(method, contents):
         
         return error_string, word, level, x, y, date;
 
+    elif method == 'GET_HEATMAP':
+        try:
+            date_from = contents['parameters']['date']['from']
+            date_to = contents['parameters']['date']['to']
+            tiles = contents['tiles']
+            for tile in tiles:
+                level = -1;
+                x = -1;
+                y = -1;
+
+                level = tile['level'];
+                x = tile['x']
+                y = tile['y']
+                
+                if level < 9 or level > 13:
+                    error_string = "Invalid tile.level";
+                if x < 0:
+                    error_string = "Invalid tile.x";
+                if y < 0:
+                    error_string = "Invalid tile.y";
+
+        except KeyError as e:
+            error_string = 'KeyError: ' + e.args[0];
+        return error_string, int(date_from), int(date_to), tiles
+
     return error_string;
 
 @app.route('/')
@@ -240,23 +265,33 @@ def request_get_tile_detail_info(uuid):
 
     return json_data 
 
-@app.route('/GET_HITMAP/<uuid>', methods=['POST'])
-def request_get_hitmap(uuid):
+@app.route('/GET_HEATMAP/<uuid>', methods=['POST'])
+def request_get_heatmap(uuid):
 
     contents = request.get_json(silent=True);
-    logging.info('Request from %s: %s ', request.remote_addr, contents)
 
-    outputs = []
+    logging.info('Request from %s: %s', request.remote_addr, contents);
 
-    #get date from & to 
-    for time in date:
-        time_from = time['from']
-        time_to = time['to']
+    error_string, date_from, date_to, tiles = checkInputValidation('GET_HEATMAP', contents);
+    if error_string != "Success":
+        logging.error('ERROR_BAD_REQUEST: %s', error_string);
+        return error_string, status.HTTP_400_BAD_REQUEST;
 
+    logging.debug('date_from: %d', date_from);
+    logging.debug('date_to: %d', date_to);
+    for tile in tiles:
+        logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
 
-    hitmap = TM.get_hitmap(time_from, time_to);
+    heatmap_list = []
+    for tile in tiles:
+        level = tile['level'];
+        x = tile['x']
+        y = tile['y']
+        heatmaps = TM.get_hitmaps(level, x, y, date['from'], date['to']);
+        for heatmap in heatmaps:
+            heatmap_list.append(heatmap)
 
-    json_data = json.dumps(hitmap);
+    json_data = json.dumps(hitmap_list);
 
     return json_data 
 

@@ -179,6 +179,20 @@ class DBWrapper():
 
 		return rel_docs
 
+	def get_xscore(self, level, x, y, year, ydate):
+
+		xscore_dir = constants.XSCORE_DIR + constants.DATA_RANGE + '/'
+		file_name = topic_file_name = 'xscore_' + str(year) + '_d' + str(ydate) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+
+		score = 0.0
+		try:
+			with open(xscore_dir + file_name, 'r', encoding='UTF8') as f:
+				score = float(f.readline())
+		except FileNotFoundError:
+			score = -1.0
+
+		return score
+
 	def connect(self, ip, port):
 		# self.conn = pymongo.MongoClient(ip, port);
 		# self.dbname = constants.DB_NAME;
