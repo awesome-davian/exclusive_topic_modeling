@@ -325,7 +325,7 @@ class TopicModelingModule():
 		# for testing
 		#exclusiveness = 50;
 
-		exclusiveness /= 100;
+		exclusiveness /= 5;
 		logging.debug('exclusiveness: %f', exclusiveness);
 
 		result = {};
@@ -335,6 +335,13 @@ class TopicModelingModule():
 		tile['level'] = level;
 
 		result['tile'] = tile;
+
+		result['exclusiveness'] = exclusiveness
+
+		date = datetime.fromtimestamp(int(int(date)/1000))
+		year = date.timetuple().tm_year
+		day_of_year = date.timetuple().tm_yday
+		result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, day_of_year)
 
 		topics = []
 		# check if it needs a precomputed tile data.
@@ -349,7 +356,7 @@ class TopicModelingModule():
 
 		# 	topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count, voca);
 
-		topics = self.db.get_topics(level, x, y, date, topic_count, word_count);
+		topics = self.db.get_topics(level, x, y, date, topic_count, word_count, exclusiveness);
 
 		result['topic'] = topics;
 
@@ -359,40 +366,6 @@ class TopicModelingModule():
 		print(result);
 
 		return result;
-
-	def get_heatmaps(level, x, y, date_from, date_to):
-
-		logging.debug('get_heatmap(%d, %s, %s)', time_from, time_to)
-
-		# convert the unixtime to ydate
-		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
-		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
-
-		year = date_from.timetuple().year
-
-		yday_from = date_from.timetuple().tm_yday
-		yday_to = date_to.timetuple().tm_yday
-
-		result = []
-
-		for ydate in range(yday_from, yday_to+1):
-
-			# get heatmap list from db
-			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)
-
-			xcls_scores = {}
-
-			tile = {}
-			tile['x'] = x
-			tile['y'] = y
-			tile['level'] = level
-			xcls_scores['tile'] = tile
-
-			xcls_scores['exclusiveness'] = exclusiveness_score
-			xcls_scores['date'] = datetime.datetime(year=year, yday=ydate).strftime("%Y-%m-%d")
-			result.append(xcls_scores)
-
-		return result
 
 	def get_related_docs(self, level, x, y, word, date):
 
@@ -574,7 +547,14 @@ class TopicModelingModule():
 
 		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, time_from, time_to)
 
-		tile_id = self.get_tile_id(level, x, y)
+		# convert the unixtime to ydate
+		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
+		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
+
+		year = date_from.timetuple().year
+
+		yday_from = date_from.timetuple().tm_yday
+		yday_to = date_to.timetuple().tm_yday
 
 		result = {};
 		tile = {};
@@ -584,23 +564,67 @@ class TopicModelingModule():
 
 		result['tile'] = tile;
 
-		#todo: get all_topics / get time_graph
-		time_graph = self.get_time_graph();
-		topics = self.get_all_topics();
+		time_graph = []
+		all_topics = []
+		for ydate in range(yday_from, yday_to+1):
+			item = []
+			exclusiveness_score = self.get_xscore(level, x, y, year, ydate)
+			item['score'] = exclusiveness_score
+			item['date'] = datetime.datetime(year=year, yday=ydate).strftime("%d-%m-%Y")
+			time_graph.append(item)
 
-		result['time_graph'] = time_graph
-		result['all_topics'] = topics
+			item = []
+			item['date'] = datetime.datetime(year=year, yday=ydate).strftime("%d-%m-%Y")
+			topics = []
+			for xvalue in range(0, 6):
+				topic = {}
+				topic['exclusiveness'] = xvalue
+				topic['topic'] = self.db.get_topics(level, x, y, ydate, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
+				topics.append(topic)
+
+			item['topics'] = topics
+			all_topics.append(item)
+
+		result['time_grath'] = time_graph
+		result['all_topics'] = all_topics
 
 		return result;
 
+	def get_heatmaps(level, x, y, date_from, date_to):
 
+		logging.debug('get_heatmap(%d, %s, %s)', time_from, time_to)
+
+		# convert the unixtime to ydate
+		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
+		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
+
+		year = date_from.timetuple().year
+
+		yday_from = date_from.timetuple().tm_yday
+		yday_to = date_to.timetuple().tm_yday
+
+		result = []
+
+		for ydate in range(yday_from, yday_to+1):
+
+			# get heatmap list from db
+			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)
+
+			xcls_scores = {}
+
+			tile = {}
+			tile['x'] = x
+			tile['y'] = y
+			tile['level'] = level
+			xcls_scores['tile'] = tile
+
+			xcls_scores['exclusiveness'] = exclusiveness_score
+			xcls_scores['date'] = datetime.datetime(year=year, yday=ydate).strftime("%d-%m-%Y")
+			result.append(xcls_scores)
+
+		return result
 
 
 	def get_word_info(self, level, x, y, word):
 		# TBD
 		return "word_info";
-
-
-
-
-

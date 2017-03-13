@@ -121,6 +121,31 @@ def checkInputValidation(method, contents):
             error_string = 'KeyError: ' + e.args[0];
         return error_string, int(date_from), int(date_to), tiles
 
+    elif method == 'GET_TILE_DETAIL_INFO':
+        try:
+            date_from = contents['date']['from']
+            date_to = contents['date']['to']
+            tile = contents['tile']
+            
+            level = -1;
+            x = -1;
+            y = -1;
+
+            level = tile['level'];
+            x = tile['x']
+            y = tile['y']
+            
+            if level < 9 or level > 13:
+                error_string = "Invalid tile.level";
+            if x < 0:
+                error_string = "Invalid tile.x";
+            if y < 0:
+                error_string = "Invalid tile.y";
+
+        except KeyError as e:
+            error_string = 'KeyError: ' + e.args[0];
+        return error_string, int(date_from), int(date_to), tiles       
+
     return error_string;
 
 @app.route('/')
@@ -235,24 +260,25 @@ def request_run_topic_modeling():
 @app.route('/GET_TILE_DETAIL_INFO/<uuid>', methods=['POST'])
 def request_get_tile_detail_info(uuid):
 
-    contents = request.get_json(silent=True);
-    logging.info('Request from %s: %s ', request.remote_addr, contents)
+    logging.info('Request from %s: %s', request.remote_addr, contents);
 
-    outputs = []
+    error_string, date_from, date_to, tile = checkInputValidation('GET_TILE_DETAIL_INFO', contents);
+    if error_string != "Success":
+        logging.error('ERROR_BAD_REQUEST: %s', error_string);
+        return error_string, status.HTTP_400_BAD_REQUEST;
 
-    #get date from & to 
-    for time in date:
-        time_from = time['from']
-        time_to = time['to']
+    logging.debug('date_from: %d', date_from);
+    logging.debug('date_to: %d', date_to);
+    logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
 
+    output = []
+    
+    level = tile['level']
+    x = tile['x']
+    y = tile['y']
 
-    for tile in tiles:
-        level = tile['level']
-        x = tile['x']
-        y = tile['y']
-
-        output = TM.get_tile_detail_info(level, x, y, time_from, time_to);
-        outputs.append(output)
+    output = TM.get_tile_detail_info(level, x, y, time_from, time_to);
+    outputs.append(output)
 
     for output in outputs:
         logging.debug('output: %s', output)
