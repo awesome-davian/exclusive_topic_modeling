@@ -30,6 +30,10 @@ if not os.path.exists(neighbor_mtx_dir):
 if not os.path.exists(topic_dir):
     os.makedirs(topic_dir)
 
+xscore_dir = './xscore/' + constants.DATA_RANGE + '/'
+if not os.path.exists(xscore_dir):
+    os.makedirs(xscore_dir)
+
 # Load the Matlab module
 start_time = time.time()
 eng = matlab.engine.start_matlab();
@@ -274,7 +278,7 @@ for tile_name in mtx_tile_list:
 	for exclusiveness in range(0, 6):
 
 		# [topics_list, w_scores, t_scores] = eng.function_runme(A, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-		[topics_list, w_scores, t_scores] = eng.function_run_extm(A, N, exclusiveness/5, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		[topics_list, w_scores, t_scores, x_score] = eng.function_run_extm(A, N, exclusiveness/5, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
 
 		topics = np.asarray(topics_list);
 		topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
@@ -288,6 +292,10 @@ for tile_name in mtx_tile_list:
 
 		# logging.debug(word_scores)
 		# logging.debug(topic_scores)
+		x_score_name = tile_name.replace('mtx_', 'xscore_')
+		logging.info('file_name: %s', xscore_dir+x_score_name)
+		with open(xscore_dir+x_score_name, 'w', encoding='UTF8') as f:
+			f.write(str(x_score) + '\n')
 
 		topic_name = tile_name.replace('mtx_','topics_')
 		logging.info('file_name: %s', topic_dir+topic_name)

@@ -360,6 +360,40 @@ class TopicModelingModule():
 
 		return result;
 
+	def get_heatmaps(level, x, y, date_from, date_to):
+
+		logging.debug('get_heatmap(%d, %s, %s)', time_from, time_to)
+
+		# convert the unixtime to ydate
+		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
+		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
+
+		year = date_from.timetuple().year
+
+		yday_from = date_from.timetuple().tm_yday
+		yday_to = date_to.timetuple().tm_yday
+
+		result = []
+
+		for ydate in range(yday_from, yday_to+1):
+
+			# get heatmap list from db
+			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)
+
+			xcls_scores = {}
+
+			tile = {}
+			tile['x'] = x
+			tile['y'] = y
+			tile['level'] = level
+			xcls_scores['tile'] = tile
+
+			xcls_scores['exclusiveness'] = exclusiveness_score
+			xcls_scores['date'] = datetime.datetime(year=year, yday=ydate).strftime("%Y-%m-%d")
+			result.append(xcls_scores)
+
+		return result
+
 	def get_related_docs(self, level, x, y, word, date):
 
 		start_time = time.time()
@@ -559,11 +593,7 @@ class TopicModelingModule():
 
 		return result;
 
-	def get_himap(time_from, time_to):
 
-		logging.debug('get_himap(%s, %s)', time_from, time_to)
-
-		return result
 
 
 	def get_word_info(self, level, x, y, word):

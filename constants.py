@@ -18,6 +18,7 @@ GLOBAL_VOCA_FILE_PATH = './tile_generator/voca/voca_' + DATA_RANGE
 GLOBAL_DOC_FILE_PATH = './tile_generator/rawdata/raw_' + DATA_RANGE
 NEIGHBOR_MTX_DIR = './tile_generator/mtx_neighbor/'
 MTX_DIR = './tile_generator/mtx/'
+XSCORE_DIR = './tile_generator/xscore/'
 
 DEFAULT_NUM_TOPICS = 5
 DEFAULT_NUM_TOP_K = 5
