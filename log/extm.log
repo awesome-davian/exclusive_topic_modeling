@@ -1,114 +1,31 @@
-['02-22 11:13:15'][DEBUG] init (topic_modeling_module.py:26)
-['02-22 11:13:15'][INFO ] loading Matlab module... (topic_modeling_module.py:31)
-['02-22 11:13:20'][INFO ] Done: loading Matlab module (topic_modeling_module.py:34)
-['02-22 11:13:20'][INFO ]  * Running on http://0.0.0.0:5001/ (Press CTRL+C to quit) (_internal.py:87)
-['02-22 11:13:40'][INFO ] Request from 163.152.71.221: {'tiles': [{'y': 2556, 'level': 12, 'x': 1207}], 'parameters': {'topic_count': 5, 'exclude_words': [], 'exclusiveness': 50, 'include_words': [], 'time': {'to': 1388016000000, 'from': 1387843200000}, 'word_count': 5}} (topic_modeling_system.py:117)
-['02-22 11:13:40'][DEBUG] exclusiveness: 50 (topic_modeling_system.py:125)
-['02-22 11:13:40'][DEBUG] topic_count: 5 (topic_modeling_system.py:126)
-['02-22 11:13:40'][DEBUG] word_count: 5 (topic_modeling_system.py:127)
-['02-22 11:13:40'][DEBUG] time: 1387843200000 ~ 1388016000000 (topic_modeling_system.py:128)
-['02-22 11:13:40'][DEBUG] x: 1207, y: 2556, level: 12 (topic_modeling_system.py:134)
-['02-22 11:13:40'][DEBUG] get_topics(12, 1207, 2556) (topic_modeling_module.py:318)
-['02-22 11:13:41'][INFO ] get voca_hash Execution time : 0.240ms (database_wrapper.py:103)
-['02-22 11:13:41'][INFO ] get voca Execution time : 0.133ms (database_wrapper.py:85)
-['02-22 11:13:41'][DEBUG] exclusiveness: 0.500000 (topic_modeling_module.py:328)
-['02-22 11:13:41'][DEBUG] run_topic_modeling(12, 1207, 2556, 0.50) (topic_modeling_module.py:189)
-['02-22 11:13:41'][DEBUG] [4950525, 4950524, 4950523, 4946429, 4946427, 4942333, 4942332, 4942331] (topic_modeling_module.py:194)
-['02-22 11:13:41'][DEBUG] id: 4946428 (database_wrapper.py:24)
-['02-22 11:13:41'][INFO ] tile_2013_w52_12_1207_2556_4946428_mtx (database_wrapper.py:34)
-['02-22 11:13:41'][DEBUG] [[  1.21400000e+03   1.00000000e+00   1.00000000e+00]
- [  1.84230000e+04   1.00000000e+00   1.00000000e+00]
- [  4.75000000e+02   1.00000000e+00   1.00000000e+00]
- ..., 
- [  3.91000000e+02   2.37300000e+03   1.00000000e+00]
- [  1.02400000e+03   2.37400000e+03   1.00000000e+00]
- [  2.72500000e+03   2.37400000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:41'][INFO ] get term_doc_matrix Execution time : 0.328ms (database_wrapper.py:49)
-['02-22 11:13:41'][DEBUG] id: 4950525 (database_wrapper.py:24)
-['02-22 11:13:41'][INFO ] tile_2013_w52_12_1208_2557_4950525_mtx (database_wrapper.py:34)
-['02-22 11:13:41'][DEBUG] [[  1.33400000e+03   1.00000000e+00   1.00000000e+00]
- [  3.94840000e+04   1.00000000e+00   1.00000000e+00]
- [  1.09600000e+03   1.00000000e+00   1.00000000e+00]
- ..., 
- [  6.00000000e+00   3.40000000e+02   1.00000000e+00]
- [  4.64900000e+03   3.40000000e+02   1.00000000e+00]
- [  4.09630000e+04   3.40000000e+02   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:41'][INFO ] get term_doc_matrix Execution time : 0.024ms (database_wrapper.py:49)
-['02-22 11:13:41'][DEBUG] id: 4950524 (database_wrapper.py:24)
-['02-22 11:13:41'][INFO ] tile_2013_w52_12_1208_2556_4950524_mtx (database_wrapper.py:34)
-['02-22 11:13:41'][DEBUG] [[  5.21500000e+03   1.00000000e+00   1.00000000e+00]
- [  2.41700000e+03   1.00000000e+00   1.00000000e+00]
- [  3.33200000e+04   1.00000000e+00   1.00000000e+00]
- ..., 
- [  4.09650000e+04   1.36000000e+03   1.00000000e+00]
- [  8.98400000e+03   1.36100000e+03   1.00000000e+00]
- [  1.56000000e+02   1.36100000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:41'][INFO ] get term_doc_matrix Execution time : 0.122ms (database_wrapper.py:49)
-['02-22 11:13:41'][DEBUG] id: 4950523 (database_wrapper.py:24)
-['02-22 11:13:41'][INFO ] tile_2013_w52_12_1208_2555_4950523_mtx (database_wrapper.py:34)
-['02-22 11:13:41'][DEBUG] [[  2.01800000e+03   1.00000000e+00   1.00000000e+00]
- [  7.50000000e+01   1.00000000e+00   1.00000000e+00]
- [  3.73980000e+04   1.00000000e+00   1.00000000e+00]
- ..., 
- [  3.97000000e+02   1.63800000e+03   1.00000000e+00]
- [  2.68500000e+03   1.63900000e+03   1.00000000e+00]
- [  2.52000000e+02   1.63900000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:41'][INFO ] get term_doc_matrix Execution time : 0.148ms (database_wrapper.py:49)
-['02-22 11:13:41'][DEBUG] id: 4946429 (database_wrapper.py:24)
-['02-22 11:13:41'][INFO ] tile_2013_w52_12_1207_2557_4946429_mtx (database_wrapper.py:34)
-['02-22 11:13:42'][DEBUG] [[  2.10000000e+01   1.00000000e+00   1.00000000e+00]
- [  1.56000000e+02   1.00000000e+00   2.00000000e+00]
- [  7.50000000e+02   1.00000000e+00   1.00000000e+00]
- ..., 
- [  3.15700000e+03   2.88800000e+03   1.00000000e+00]
- [  4.90000000e+01   2.88800000e+03   1.00000000e+00]
- [  7.17000000e+02   2.88800000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:42'][INFO ] get term_doc_matrix Execution time : 0.410ms (database_wrapper.py:49)
-['02-22 11:13:42'][DEBUG] id: 4946427 (database_wrapper.py:24)
-['02-22 11:13:42'][INFO ] tile_2013_w52_12_1207_2555_4946427_mtx (database_wrapper.py:34)
-['02-22 11:13:42'][DEBUG] [[  1.19300000e+03   1.00000000e+00   1.00000000e+00]
- [  2.86700000e+03   1.00000000e+00   1.00000000e+00]
- [  7.88000000e+02   1.00000000e+00   1.00000000e+00]
- ..., 
- [  1.83900000e+04   2.63300000e+03   1.00000000e+00]
- [  1.87000000e+02   2.63300000e+03   1.00000000e+00]
- [  4.04700000e+03   2.63300000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:42'][INFO ] get term_doc_matrix Execution time : 0.446ms (database_wrapper.py:49)
-['02-22 11:13:42'][DEBUG] id: 4942333 (database_wrapper.py:24)
-['02-22 11:13:42'][INFO ] tile_2013_w52_12_1206_2557_4942333_mtx (database_wrapper.py:34)
-['02-22 11:13:43'][DEBUG] [[  3.10000000e+01   1.00000000e+00   1.00000000e+00]
- [  1.34000000e+02   1.00000000e+00   1.00000000e+00]
- [  1.33000000e+02   1.00000000e+00   1.00000000e+00]
- ..., 
- [  2.71200000e+03   2.90900000e+03   1.00000000e+00]
- [  3.70000000e+01   2.90900000e+03   1.00000000e+00]
- [  1.35000000e+02   2.90900000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:43'][INFO ] get term_doc_matrix Execution time : 0.444ms (database_wrapper.py:49)
-['02-22 11:13:43'][DEBUG] id: 4942332 (database_wrapper.py:24)
-['02-22 11:13:43'][INFO ] tile_2013_w52_12_1206_2556_4942332_mtx (database_wrapper.py:34)
-['02-22 11:13:47'][DEBUG] [[  1.04400000e+03   1.00000000e+00   1.00000000e+00]
- [  1.80000000e+02   1.00000000e+00   1.00000000e+00]
- [  1.34000000e+02   1.00000000e+00   1.00000000e+00]
- ..., 
- [  2.06380000e+04   6.94000000e+03   1.00000000e+00]
- [  3.73940000e+04   6.94000000e+03   1.00000000e+00]
- [  1.27800000e+03   6.94000000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:47'][INFO ] get term_doc_matrix Execution time : 4.076ms (database_wrapper.py:49)
-['02-22 11:13:47'][DEBUG] id: 4942331 (database_wrapper.py:24)
-['02-22 11:13:47'][INFO ] tile_2013_w52_12_1206_2555_4942331_mtx (database_wrapper.py:34)
-['02-22 11:13:48'][DEBUG] [[  4.64000000e+02   1.00000000e+00   1.00000000e+00]
- [  3.63000000e+03   2.00000000e+00   1.00000000e+00]
- [  3.10000000e+01   2.00000000e+00   1.00000000e+00]
- ..., 
- [  1.83860000e+04   4.06400000e+03   1.00000000e+00]
- [  9.72000000e+02   4.06400000e+03   1.00000000e+00]
- [  4.58000000e+02   4.06400000e+03   1.00000000e+00]] (database_wrapper.py:46)
-['02-22 11:13:48'][INFO ] get term_doc_matrix Execution time : 1.125ms (database_wrapper.py:49)
-['02-22 11:13:48'][INFO ] get_topics -get tile_mtx Execution time: 6.798ms (database_wrapper.py:65)
-['02-22 11:13:48'][INFO ] run_topic_modeling -make ab Execution time: 0.380ms (topic_modeling_module.py:227)
-['02-22 11:14:50'][INFO ] run_topic_modeling -function_run_extm Execution time: 62.026ms (topic_modeling_module.py:252)
-['02-22 11:14:54'][INFO ] run_topic_modeling -replace Execution time: 3.603ms (topic_modeling_module.py:279)
-['02-22 11:14:54'][INFO ] run_topic_modeling  Execution time: 73.137ms (topic_modeling_module.py:309)
-['02-22 11:14:54'][INFO ] end of get_topics Execution time: 73.524ms (topic_modeling_module.py:356)
-['02-22 11:14:54'][DEBUG] topic: {'tile': {'y': 2556, 'level': 12, 'x': 1207}, 'topic': [{'score': 0.10034027819097116, 'words': [{'scoret': 0.20018108824761324, 'word': {'stem': 'thi', 'count': 8481}}, {'scoret': 0.011380550352067739, 'word': {'stem': 'http', 'count': 28026}}, {'scoret': 0.011049591610631985, 'word': {'stem': 'watch', 'count': 1917}}, {'scoret': 0.0081723238511376729, 'word': {'stem': 'christma', 'count': 21816}}, {'scoret': 0.0080257693055485694, 'word': {'stem': 'fuck', 'count': 2973}}]}, {'score': 0.031384791603760252, 'words': [{'scoret': 0.25370546254952464, 'word': {'stem': 'feel', 'count': 2148}}, {'scoret': 0.022892301287474968, 'word': {'stem': 'weird', 'count': 216}}, {'scoret': 0.012269707853787098, 'word': {'stem': 'heart', 'count': 462}}, {'scoret': 0.012254940152502568, 'word': {'stem': 'tire', 'count': 405}}, {'scoret': 0.011673519354090443, 'word': {'stem': 'differ', 'count': 279}}]}, {'score': 0.063976331863782016, 'words': [{'scoret': 0.17130500011325181, 'word': {'stem': 'lol', 'count': 4362}}, {'scoret': 0.015104834538713821, 'word': {'stem': 'night', 'count': 1722}}, {'scoret': 0.013157828213335389, 'word': {'stem': 'im', 'count': 1908}}, {'scoret': 0.01286092497134079, 'word': {'stem': 'tweet', 'count': 933}}, {'scoret': 0.011013568535463087, 'word': {'stem': 'blade', 'count': 54}}]}, {'score': 0.012332301979872482, 'words': [{'scoret': 0.2888295086895345, 'word': {'stem': 'courtney', 'count': 51}}, {'scoret': 0.037249516124580447, 'word': {'stem': 'andrew', 'count': 72}}, {'scoret': 0.027140138212303253, 'word': {'stem': 'perfecto', 'count': 12}}, {'scoret': 0.027134425841826799, 'word': {'stem': 'ili', 'count': 117}}, {'scoret': 0.024270756106103113, 'word': {'stem': 'perfect', 'count': 351}}]}, {'score': 0.10310132019469165, 'words': [{'scoret': 0.13218611267275629, 'word': {'stem': 'wa', 'count': 4518}}, {'scoret': 0.065506045375023358, 'word': {'stem': 'realli', 'count': 1950}}, {'scoret': 0.034579025262054537, 'word': {'stem': 'fuck', 'count': 2973}}, {'scoret': 0.0083567303599148459, 'word': {'stem': 'gift', 'count': 2589}}, {'scoret': 0.0081223099117758903, 'word': {'stem': 'nycmixedbre', 'count': 93}}]}]} (topic_modeling_system.py:149)
-['02-22 11:14:54'][INFO ] 163.152.71.221 - - [22/Feb/2017 11:14:54] "POST /GET_TOPICS/uuid_for_test HTTP/1.1" 200 - (_internal.py:87)
+['03-10 17:22:14'][DEBUG] init (topic_modeling_module.py:26)
+['03-10 17:22:14'][INFO ] loading Matlab module... (topic_modeling_module.py:31)
+['03-10 17:22:19'][INFO ] Done: loading Matlab module (topic_modeling_module.py:34)
+['03-10 17:22:19'][INFO ]  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit) (_internal.py:87)
+['03-10 17:22:21'][INFO ] Request from 163.152.20.64: {'parameters': {'word_count': 3, 'exclusiveness': 0, 'include_words': [''], 'exclude_words': [''], 'topic_count': 3, 'time': {'to': 1425168000000, 'from': 1425168000000}}, 'tiles': [{'x': 300, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 639}, {'x': 301, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 640}, {'x': 301, 'level': 10, 'y': 637}, {'x': 302, 'level': 10, 'y': 637}, {'x': 303, 'level': 10, 'y': 638}, {'x': 299, 'level': 10, 'y': 640}, {'x': 299, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 639}, {'x': 303, 'level': 10, 'y': 639}, {'x': 301, 'level': 10, 'y': 641}, {'x': 300, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 637}, {'x': 302, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 640}, {'x': 299, 'level': 10, 'y': 641}, {'x': 299, 'level': 10, 'y': 637}, {'x': 303, 'level': 10, 'y': 641}]} (topic_modeling_system.py:115)
+['03-10 17:22:21'][ERROR] ERROR_BAD_REQUEST: KeyError: date (topic_modeling_system.py:119)
+['03-10 17:22:21'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:22:21] "POST /GET_TOPICS/test HTTP/1.1" 400 - (_internal.py:87)
+['03-10 17:22:21'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:22:21] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:22:35'][INFO ] Request from 163.152.20.64: {'parameters': {'word_count': 3, 'exclusiveness': 0, 'include_words': [''], 'exclude_words': [''], 'topic_count': 3, 'time': {'to': 1356998400000, 'from': 1356998400000}}, 'tiles': [{'x': 300, 'level': 10, 'y': 640}, {'x': 300, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 638}, {'x': 302, 'level': 10, 'y': 640}, {'x': 301, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 637}, {'x': 301, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 639}, {'x': 299, 'level': 10, 'y': 640}, {'x': 301, 'level': 10, 'y': 637}, {'x': 302, 'level': 10, 'y': 641}, {'x': 299, 'level': 10, 'y': 638}, {'x': 303, 'level': 10, 'y': 638}, {'x': 303, 'level': 10, 'y': 639}, {'x': 303, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 641}, {'x': 300, 'level': 10, 'y': 641}]} (topic_modeling_system.py:115)
+['03-10 17:22:35'][ERROR] ERROR_BAD_REQUEST: KeyError: date (topic_modeling_system.py:119)
+['03-10 17:22:35'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:22:35] "POST /GET_TOPICS/test HTTP/1.1" 400 - (_internal.py:87)
+['03-10 17:22:35'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:22:35] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:28:21'][INFO ] Request from 163.152.20.64: {'parameters': {'word_count': 3, 'exclusiveness': 0, 'include_words': [''], 'exclude_words': [''], 'topic_count': 3, 'time': {'to': 1399852800000, 'from': 1399852800000}}, 'tiles': [{'x': 301, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 638}, {'x': 302, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 640}, {'x': 300, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 640}, {'x': 301, 'level': 10, 'y': 637}, {'x': 300, 'level': 10, 'y': 637}, {'x': 302, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 639}, {'x': 299, 'level': 10, 'y': 638}, {'x': 303, 'level': 10, 'y': 639}, {'x': 303, 'level': 10, 'y': 638}, {'x': 299, 'level': 10, 'y': 640}, {'x': 301, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 641}, {'x': 299, 'level': 10, 'y': 637}, {'x': 303, 'level': 10, 'y': 641}, {'x': 300, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 641}]} (topic_modeling_system.py:115)
+['03-10 17:28:21'][ERROR] ERROR_BAD_REQUEST: KeyError: date (topic_modeling_system.py:119)
+['03-10 17:28:21'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:28:21] "POST /GET_TOPICS/test HTTP/1.1" 400 - (_internal.py:87)
+['03-10 17:28:21'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:28:21] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:28:22'][INFO ] Request from 163.152.20.64: {'parameters': {'word_count': 3, 'exclusiveness': 0, 'include_words': [''], 'exclude_words': [''], 'topic_count': 3, 'time': {'to': 1399852800000, 'from': 1399852800000}}, 'tiles': [{'x': 301, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 639}, {'x': 301, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 640}, {'x': 300, 'level': 10, 'y': 637}, {'x': 301, 'level': 10, 'y': 640}, {'x': 299, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 637}, {'x': 303, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 639}, {'x': 299, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 641}, {'x': 299, 'level': 10, 'y': 641}, {'x': 301, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 640}, {'x': 299, 'level': 10, 'y': 637}, {'x': 303, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 637}]} (topic_modeling_system.py:115)
+['03-10 17:28:22'][ERROR] ERROR_BAD_REQUEST: KeyError: date (topic_modeling_system.py:119)
+['03-10 17:28:22'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:28:22] "POST /GET_TOPICS/test HTTP/1.1" 400 - (_internal.py:87)
+['03-10 17:28:22'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:28:22] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:28:27'][INFO ] Request from 163.152.20.64: {'parameters': {'word_count': 3, 'exclusiveness': 0, 'include_words': [''], 'exclude_words': [''], 'topic_count': 3, 'time': {'to': 1399852800000, 'from': 1399852800000}}, 'tiles': [{'x': 301, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 638}, {'x': 300, 'level': 10, 'y': 639}, {'x': 302, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 638}, {'x': 301, 'level': 10, 'y': 637}, {'x': 301, 'level': 10, 'y': 640}, {'x': 302, 'level': 10, 'y': 637}, {'x': 302, 'level': 10, 'y': 640}, {'x': 303, 'level': 10, 'y': 639}, {'x': 300, 'level': 10, 'y': 640}, {'x': 300, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 639}, {'x': 303, 'level': 10, 'y': 640}, {'x': 301, 'level': 10, 'y': 641}, {'x': 299, 'level': 10, 'y': 638}, {'x': 303, 'level': 10, 'y': 638}, {'x': 299, 'level': 10, 'y': 640}, {'x': 300, 'level': 10, 'y': 641}, {'x': 303, 'level': 10, 'y': 637}, {'x': 299, 'level': 10, 'y': 641}, {'x': 299, 'level': 10, 'y': 637}, {'x': 303, 'level': 10, 'y': 641}, {'x': 302, 'level': 10, 'y': 641}]} (topic_modeling_system.py:115)
+['03-10 17:28:27'][ERROR] ERROR_BAD_REQUEST: KeyError: date (topic_modeling_system.py:119)
+['03-10 17:28:27'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:28:27] "POST /GET_TOPICS/test HTTP/1.1" 400 - (_internal.py:87)
+['03-10 17:28:27'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:28:27] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:45:49'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:45:49] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:46:55'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:46:55] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:46:56'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:46:56] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 17:47:15'][INFO ] 163.152.20.64 - - [10/Mar/2017 17:47:15] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 18:09:35'][INFO ] 163.152.20.64 - - [10/Mar/2017 18:09:35] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 18:10:34'][INFO ] 163.152.20.64 - - [10/Mar/2017 18:10:34] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)
+['03-10 18:12:03'][INFO ] 163.152.20.64 - - [10/Mar/2017 18:12:03] "POST /GET_HITMAP/test HTTP/1.1" 404 - (_internal.py:87)

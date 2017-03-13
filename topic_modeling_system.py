@@ -45,6 +45,7 @@ def checkInputValidation(method, contents):
             exclude_words = parameters['exclude_words'];
             tiles = contents['tiles'];
 
+        
             if exclusiveness < 0 or exclusiveness > 100:
                 error_string = "Invalid exclusiveness.";
             if topic_count < 1 or topic_count > 10:
@@ -212,7 +213,7 @@ if __name__ == '__main__':
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
-    app.run(host='0.0.0.0', port='5001')
+    app.run(host='0.0.0.0', port='5000')
 
 
 
