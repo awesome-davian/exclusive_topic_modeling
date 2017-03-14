@@ -425,8 +425,9 @@ class TopicModelingModule():
 
 		date = datetime.fromtimestamp(int(int(date)/1000))
 		year = date.timetuple().tm_year
-		day_of_year = date.timetuple().tm_yday
-		result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, day_of_year)
+		yday = date.timetuple().tm_yday
+
+		result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, yday)
 
 		topics = []
 		# check if it needs a precomputed tile data.
@@ -457,7 +458,7 @@ class TopicModelingModule():
 		# 	logging.info('doone ondemand_topics')
 
 
-		topics = self.db.get_topics(level, x, y, date, topic_count, word_count, exclusiveness);
+		topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
 		result['topic'] = topics;
 
@@ -648,7 +649,7 @@ class TopicModelingModule():
 
 		return mtx, nmtx
 
-	def get_tile_detail_info(level, x, y, time_from, time_to):
+	def get_tile_detail_info(self, level, x, y, time_from, time_to):
 
 		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, time_from, time_to)
 
@@ -656,7 +657,9 @@ class TopicModelingModule():
 		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
 		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
 
-		year = date_from.timetuple().year
+		year = date_from.timetuple().tm_year
+		mon = date_from.timetuple().tm_mon
+		mday = date_from.timetuple().tm_mday
 
 		yday_from = date_from.timetuple().tm_yday
 		yday_to = date_to.timetuple().tm_yday
@@ -675,11 +678,11 @@ class TopicModelingModule():
 			item = []
 			exclusiveness_score = self.get_xscore(level, x, y, year, ydate)
 			item['score'] = exclusiveness_score
-			item['date'] = datetime.datetime(year=year, yday=ydate).strftime("%d-%m-%Y")
+			item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 			time_graph.append(item)
 
 			item = []
-			item['date'] = datetime.datetime(year=year, yday=ydate).strftime("%d-%m-%Y")
+			item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 			topics = []
 			for xvalue in range(0, 6):
 				topic = {}
@@ -695,15 +698,17 @@ class TopicModelingModule():
 
 		return result;
 
-	def get_heatmaps(level, x, y, date_from, date_to):
+	def get_heatmaps(self, level, x, y, date_from, date_to):
 
-		logging.debug('get_heatmap(%d, %s, %s)', time_from, time_to)
+		logging.debug('get_heatmaps(%d, %d, %d, %d, %d)', level, x, y, date_from, date_to)
 
 		# convert the unixtime to ydate
 		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
 		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
 
-		year = date_from.timetuple().year
+		year = date_from.timetuple().tm_year
+		mon = date_from.timetuple().tm_mon
+		mday = date_from.timetuple().tm_mday
 
 		yday_from = date_from.timetuple().tm_yday
 		yday_to = date_to.timetuple().tm_yday
@@ -724,7 +729,10 @@ class TopicModelingModule():
 			xcls_scores['tile'] = tile
 
 			xcls_scores['exclusiveness'] = exclusiveness_score
-			xcls_scores['date'] = datetime.datetime(year=year, yday=ydate).strftime("%d-%m-%Y")
+			date = datetime(year=year, month=mon, day=mday)
+			date_str = date.strftime("%d-%m-%Y")
+			logging.debug('date_str: %s', date_str)
+			xcls_scores['date'] = date_str
 			result.append(xcls_scores)
 
 		return result
