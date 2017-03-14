@@ -12,6 +12,9 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     % addpath('./library/peripheral');
     % addpath('./library/discnmf');
 
+
+    tic % measuring timing for preparation 
+
     % 2. Sparsing
     dict = Voca;
     ATDMs = cell(9,1);
@@ -40,9 +43,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
           %  max_tdm_n = max(max_tdm_n,num_tdm_n);
             end
     end
-    Euclid_dist_mat = [1.414; 1; 1.414; 1; 1; 1.414 ;1; 1.414];
 
-    N_ON = N_ON .* Euclid_dist_mat;
 
     %num_tdm
     freq=0;
@@ -70,8 +71,10 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
  
     clear tdm;
 
-    
+    matrix_sparsing_time_total = toc
     % 3. Normalisation (why?)
+    tic
+
     NB_norm = cell(8,1);
     AC_norm = bsxfun(@rdivide,AC,sqrt(sum(AC.^2))); %NaN Value going in. 
     AC_norm(isnan(AC_norm))=1e-16;
@@ -84,7 +87,10 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
             NB_norm{c}(isnan(NB_norm{c}))=1e-16;
         end
     end
-    
+    Normalisation_time_only = toc
+    tic
+    Euclid_dist_mat = [1.414; 1; 1.414; 1; 1; 1.414 ;1; 1.414];
+    N_ON = N_ON .* Euclid_dist_mat;
     % 4. NMF
     %   i) initialising
     % scaling
@@ -99,7 +105,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     % BE = bsxfun(@rdivide,BE',sum(BE'))
 
     % Scaling
-    N_size
+    % N_size
     AL = ones(8,1);
     BE = ones(8,1);
     
@@ -136,9 +142,12 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     AL = (1-xcl) * AL/sum(10*AL);
     BE = xcl * BE/sum(10*BE);
     %   ii) doing the initialisation
+    % measuring the efficiency
+    coeff_time = toc
     [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,30,AL,BE,freq,N_ON); %NB coming in cell format. 
     %[WC,WN,HC,HN] = xcl_nmf(AC,NB,k*2,k,30,AL,BE);
     % 5. Displaying the key words (parsing)
+    tic
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {}; %Wtopk_score={}; Topic_score={};
     [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score] = parsenmf(WC,HC,dict,topk);
 
@@ -154,7 +163,8 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
 %     WCsort10 = sort(WC(:,10),'descend');
 %     [ WCsort1(1:5) WCsort2(1:5) WCsort3(1:5) WCsort4(1:5) WCsort5(1:5) ];
 %     [ WCsort6(1:5) WCsort7(1:5) WCsort8(1:5) WCsort9(1:5) WCsort10(1:5) ];
-
+    parsingtime = toc
+    tic
     ttopk = Wtopk(:);
     Topics = ttopk(1:k*topk)';
 
@@ -167,7 +177,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
 
     Topic_score;
 
-    
+    output_making_time = toc
 % clean up variables
 clear nrows;
 clear ncols;

@@ -8,6 +8,7 @@ function [WC,WN,HC,HN,par] =...
     params.addParamValue('BETA'          ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
     params.addParamValue('N_on'             ,[ 0 0 0 0 0 0 0 0 ],@(x) isvector(x) & x==8);
 
+    epsilon = 1e-16;
  %   params.addParamValue('reg'           , 0,@(x) isscalar(x) & x>=0);
 
     par = params.Results;
@@ -18,7 +19,7 @@ function [WC,WN,HC,HN,par] =...
     par.BETA = BETA;
     par.n = freq;
     Wm = size(AC,1);  
-   
+    s=rng;
     % WN = rand(Wm,par.k,8);
 
     % for c1=1:8
@@ -30,40 +31,53 @@ function [WC,WN,HC,HN,par] =...
     % end
     if(1<par.n+1)
         t = size(AC,2);
-        THC = rand(t,par.k);
-        THC = bsxfun(@rdivide,THC,sqrt(sum(THC.^2)));
-        HC = THC';
+%         THC = rand(t,par.k);
+%         THC = bsxfun(@rdivide,THC,sqrt(sum(THC.^2)));
+%         HC = THC';
+         
+        rng(s);
+        THC = rand(par.k,t);
+        HC = bsxfun(@rdivide,THC,sqrt(sum(THC.^2)));
+      %  HC(isnan(HC))=epsilon;
+        rng(s);
         TWC = rand(Wm,par.k);
         WC = bsxfun(@rdivide,TWC,sqrt(sum(TWC.^2)));
+    %    WC(isnan(WC))=epsilon;
+        
     end
- 
+    
+    disp('7');
     for c2 = 1:8
         if par.N_on(c2) == 0
             continue
         else
             clear THC;
             t = size(AN{c2},2);
-            THC = rand(t,par.k);
-            THC = bsxfun(@rdivide,THC,sqrt(sum(THC.^2)));
-            HN{c2} = THC';
+            rng(s);
+            THC = rand(par.k,t);
+            HN{c2}= bsxfun(@rdivide,THC,sqrt(sum(THC.^2)));
+            %HN{c2}(isnan(HN{c2}))=epsilon;
             clear TWC;
             t = Wm;
+            disp('8');
+            rng(s);
             TWC = rand(t,par.k);
             TWC = bsxfun(@rdivide,TWC,sqrt(sum(TWC.^2)));
             WN{c2} = TWC;
+            %WN{c2}(isnan(WN{c2}))=epsilon;
             clear THC;
             clear TWC;
         end
     end
-    
+
     %s  INITIALISING W,H Terminated (for the moment)    
     
     %s the iteration process to go.
     
 %    iter = 20; %initial iteration = 20;
 
-
-    for c3 = 1:iter        
+    disp('9');
+    for c3 = 1:iter      
         for c4 = 1:8
             if par.N_on(c4) == 0
                 continue
@@ -73,7 +87,7 @@ function [WC,WN,HC,HN,par] =...
         end 
         [HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,Wm,par);
     end
-
+    disp('10');
 
 end
 
@@ -82,11 +96,11 @@ function[HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,Wm,par)
     epsilon = 1e-16;
     WCtAC = WC'*AC;
 	WCtWC = WC'*WC;
-    WCtAC(isnan(WCtAC))=epsilon;
-    WCtWC(isnan(WCtWC))=epsilon;
+ %   WCtAC(isnan(WCtAC))=epsilon;
+ %   WCtWC(isnan(WCtWC))=epsilon;
     WCtWC_reg = applyReg(WCtWC,par,[0 1]);
     HCHCt = HC*HC';
-    HCHCt(isnan(HCHCt))=epsilon;
+ %   HCHCt(isnan(HCHCt))=epsilon;
 
     
 	for i = 1:par.k 	
@@ -96,7 +110,7 @@ function[HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,Wm,par)
     
     ACHCt = AC*HC';
     HCHCt = HC*HC';
-    ACHCt(isnan(ACHCt))=epsilon;
+%    ACHCt(isnan(ACHCt))=epsilon;
     
     T1 = zeros(Wm,1); 
     HCHCt_reg = applyReg(HCHCt,par,[1 0]); 
@@ -142,8 +156,8 @@ function[HC,WC,par] = xcl_c_itersolver(AC,HC,WC,WN,Wm,par)
  
     end    
 
-    HC(isnan(HC))=epsilon;
-    WC(isnan(WC))=epsilon;
+   % HC(isnan(HC))=epsilon;
+   % WC(isnan(WC))=epsilon;
     
 end
 
@@ -160,7 +174,7 @@ function[Wj,Hj,par] = xcl_n_itersolver(Aj,Hj,WC,WNi,alpha,beta,par)
     WjtWj = Wj'*Wj;
 
     HjHjt = Hj *Hj';
-    HjHjt(isnan(HjHjt))=epsilon;
+  %  HjHjt(isnan(HjHjt))=epsilon;
     WjtWj_reg = applyReg(WjtWj,par,[0 1]);
 
 	for i = 1:par.k
@@ -189,8 +203,8 @@ function[Wj,Hj,par] = xcl_n_itersolver(Aj,Hj,WC,WNi,alpha,beta,par)
 
     end
 
-    Wj(isnan(Wj))=epsilon;
-    Hj(isnan(Hj))=epsilon;
+ %   Wj(isnan(Wj))=epsilon;
+ %   Hj(isnan(Hj))=epsilon;
 
 end
 
