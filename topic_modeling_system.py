@@ -313,11 +313,11 @@ def request_get_heatmap(uuid):
         level = tile['level'];
         x = tile['x']
         y = tile['y']
-        heatmaps = TM.get_heatmaps(level, x, y, date['from'], date['to']);
+        heatmaps = TM.get_heatmaps(level, x, y, date_from, date_to);
         for heatmap in heatmaps:
             heatmap_list.append(heatmap)
 
-    json_data = json.dumps(hitmap_list);
+    json_data = json.dumps(heatmap_list);
 
     return json_data 
 

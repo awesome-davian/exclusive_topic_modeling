@@ -325,12 +325,10 @@ class DBWrapper():
 
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
-		logging.debug('get_topics(%d, %d, %d, %s, %d, %d, %d)', level, x, y, date, topic_count, word_count, exclusiveness);
+		logging.debug('get_topics(%d, %d, %d, %d, %d, %d, %d, %d)', level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
 		# date_format = "%Y-%m-%d"
 		# date = datetime.strptime(date, date_format)
-
-		logging.info(date)
 
 		datapath = './tile_generator/topics/'+constants.DATA_RANGE+'/'
 		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
