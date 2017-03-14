@@ -386,7 +386,7 @@ class TopicModelingModule():
 
 		return rettopics;
 
-	def get_ondemand_topics(self, level, x, y, date, topic_count, word_count, exclusiveness, include_words, exclude_words):
+	def get_ondemand_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words):
 
 		ondemand_topics=[]
 
@@ -449,12 +449,12 @@ class TopicModelingModule():
 
 		# if len(include_words)==0 and len(exclude_words) ==0:
 			
-		# 	topics = self.db.get_topics(level, x, y, date, topic_count, word_count, exclusiveness);
+		# 	topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 		# 	logging.info('sdone get_topics')
 
 		# else:
 
-		# 	topics =self.get_ondemand_topics(level, x, y, date, topic_count, word_count, exclusiveness, include_words, exclude_words)
+		# 	topics =self.get_ondemand_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words)
 		# 	logging.info('doone ondemand_topics')
 
 

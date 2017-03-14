@@ -330,6 +330,7 @@ class DBWrapper():
 		# date_format = "%Y-%m-%d"
 		# date = datetime.strptime(date, date_format)
 
+		exclusiveness = int(exclusiveness)
 
 		datapath = './tile_generator/topics/'+constants.DATA_RANGE+'/'
 		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
