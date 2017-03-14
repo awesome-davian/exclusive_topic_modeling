@@ -1,4 +1,4 @@
-function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, exclusiveness, Voca, k, topk)
+function [Topics, wtopk_score, topic_score,WC] = function_run_extm(Tdm, Ntdms, exclusiveness, Voca, k, topk)
     % 0. the term definitions:
     %   - k: how many clusters (the columns in W) shall be used?
     %   - topk: how many topics will be taken in each clusters. 
@@ -11,6 +11,8 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     % addpath('./library/ramkis');
     % addpath('./library/peripheral');
     % addpath('./library/discnmf');
+
+
 
     % 2. Sparsing
     dict = Voca;
@@ -40,9 +42,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
           %  max_tdm_n = max(max_tdm_n,num_tdm_n);
             end
     end
-    Euclid_dist_mat = [1.414; 1; 1.414; 1; 1; 1.414 ;1; 1.414];
 
-    N_ON = N_ON .* Euclid_dist_mat;
 
     %num_tdm
     freq=0;
@@ -58,7 +58,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
         Ntdm = reshape(Mtx, 3, [])';
         num_tdm(i) = max(Ntdm(:,2));
         NB{i} = sparse(Ntdm(:,1),Ntdm(:,2),Ntdm(:,3),max_tdm_m, max(Ntdm(:,2)) );
-        NB{i}(isnan(NB{i}))=1e-16;
+        % NB{i}(isnan(NB{i}))=1e-16;
 
         % end of sparsing. The end 
         end
@@ -66,12 +66,13 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
 
     N_size=num_tdm./max_tdm_n;    
     AC = sparse(Tdm(:,1),Tdm(:,2),Tdm(:,3),max_tdm_m, max(Tdm(:,2)) );
-    AC(isnan(AC))=1e-16;
+    % AC(isnan(AC))=1e-16;
  
     clear tdm;
 
-    
     % 3. Normalisation (why?)
+
+
     NB_norm = cell(8,1);
     AC_norm = bsxfun(@rdivide,AC,sqrt(sum(AC.^2))); %NaN Value going in. 
     AC_norm(isnan(AC_norm))=1e-16;
@@ -84,7 +85,9 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
             NB_norm{c}(isnan(NB_norm{c}))=1e-16;
         end
     end
-    
+
+    Euclid_dist_mat = [1.414; 1; 1.414; 1; 1; 1.414 ;1; 1.414];
+    N_ON = N_ON .* Euclid_dist_mat;
     % 4. NMF
     %   i) initialising
     % scaling
@@ -99,7 +102,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     % BE = bsxfun(@rdivide,BE',sum(BE'))
 
     % Scaling
-    N_size
+    % N_size
     AL = ones(8,1);
     BE = ones(8,1);
     
@@ -136,9 +139,12 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
     AL = (1-xcl) * AL/sum(10*AL);
     BE = xcl * BE/sum(10*BE);
     %   ii) doing the initialisation
+    % measuring the efficiency
+
     [WC,WN,HC,HN] = xcl_nmf(AC_norm,NB_norm,k*2,k,30,AL,BE,freq,N_ON); %NB coming in cell format. 
     %[WC,WN,HC,HN] = xcl_nmf(AC,NB,k*2,k,30,AL,BE);
     % 5. Displaying the key words (parsing)
+
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {}; %Wtopk_score={}; Topic_score={};
     [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score] = parsenmf(WC,HC,dict,topk);
 
@@ -167,7 +173,6 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
 
     Topic_score;
 
-    
 % clean up variables
 clear nrows;
 clear ncols;
