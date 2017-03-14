@@ -285,9 +285,7 @@ def request_get_tile_detail_info(uuid):
     for output in outputs:
         logging.debug('output: %s', output)
 
-
     json_data = json.dumps(outputs);
-
 
     return json_data 
 
@@ -316,6 +314,9 @@ def request_get_heatmap(uuid):
         heatmaps = TM.get_heatmaps(level, x, y, date_from, date_to);
         for heatmap in heatmaps:
             heatmap_list.append(heatmap)
+
+    for heatmap in heatmap_list:
+        logging.debug('heatmap: %s', heatmap)
 
     json_data = json.dumps(heatmap_list);
 
