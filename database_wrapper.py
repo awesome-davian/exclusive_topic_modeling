@@ -5,6 +5,7 @@ import numpy as np
 import time
 from datetime import datetime 
 import collections
+import random
 
 
 def getTwitterDate(date):
@@ -191,7 +192,8 @@ class DBWrapper():
 			with open(xscore_dir + file_name, 'r', encoding='UTF8') as f:
 				score = float(f.readline())
 		except FileNotFoundError:
-			score = -1.0
+			#score = -1.0
+			score = random.uniform(0, 1)
 
 		return score
 
@@ -322,6 +324,30 @@ class DBWrapper():
 
 		return raw_data;
 
+	def get_fake_topics(self):
+
+		topics = []
+		for idx in range(0, constants.DEFAULT_NUM_TOPICS+1):
+			topic = {}
+
+			topic['score'] = 0.12
+
+			words = []
+			for each in range(0, constants.DEFAULT_NUM_TOP_K+1):
+				word = {}
+				word['word'] = 'word_example_'+str(idx)
+				word['count'] = idx+1
+				word['score'] = random.uniform(0, 1)
+				words.append(word)
+
+			topic['words'] = words
+			# topic['exclusiveness'] = random.uniform(0, 1)
+
+			topics.append(topic)
+
+		return topics
+	
+
 
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
@@ -371,6 +397,8 @@ class DBWrapper():
 							words = []
 		except FileNotFoundError:
 			logging.debug('%s is not exist.', topic_file_name)
+			# set fake data
+			topics = self.get_fake_topics()
 
 		return topics
 

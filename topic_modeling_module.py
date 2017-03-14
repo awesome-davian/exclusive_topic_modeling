@@ -410,8 +410,8 @@ class TopicModelingModule():
 		# for testing
 		#exclusiveness = 50;
 
-		exclusiveness /= 5;
-		logging.debug('exclusiveness: %f', exclusiveness);
+		exclusiveness_local = exclusiveness / 5;
+		logging.debug('exclusiveness: %f', exclusiveness_local);
 
 		result = {};
 		tile = {};
@@ -421,13 +421,13 @@ class TopicModelingModule():
 
 		result['tile'] = tile;
 
-		result['exclusiveness'] = exclusiveness
+		# result['exclusiveness'] = exclusiveness
 
 		date = datetime.fromtimestamp(int(int(date)/1000))
 		year = date.timetuple().tm_year
 		yday = date.timetuple().tm_yday
 
-		result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, yday)
+		# result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, yday)
 
 		topics = []
 		# check if it needs a precomputed tile data.
