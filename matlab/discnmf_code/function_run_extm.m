@@ -59,7 +59,7 @@ function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, excl
         Ntdm = reshape(Mtx, 3, [])';
         num_tdm(i) = max(Ntdm(:,2));
         NB{i} = sparse(Ntdm(:,1),Ntdm(:,2),Ntdm(:,3),max_tdm_m, max(Ntdm(:,2)) );
-        NB{i}(isnan(NB{i}))=1e-16;
+       %NB{i}(isnan(NB{i}))=1e-16;
 
         % end of sparsing. The end 
         end
