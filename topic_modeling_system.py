@@ -313,7 +313,7 @@ def request_get_heatmap(uuid):
         level = tile['level'];
         x = tile['x']
         y = tile['y']
-        heatmaps = TM.get_hitmaps(level, x, y, date['from'], date['to']);
+        heatmaps = TM.get_heatmaps(level, x, y, date['from'], date['to']);
         for heatmap in heatmaps:
             heatmap_list.append(heatmap)
 
@@ -330,4 +330,4 @@ if __name__ == '__main__':
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
-    app.run(host='0.0.0.0', port='5000')
+    app.run(host='0.0.0.0', port='5001')

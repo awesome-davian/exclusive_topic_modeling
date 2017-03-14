@@ -425,8 +425,9 @@ class TopicModelingModule():
 
 		date = datetime.fromtimestamp(int(int(date)/1000))
 		year = date.timetuple().tm_year
-		day_of_year = date.timetuple().tm_yday
-		result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, day_of_year)
+		yday = date.timetuple().tm_yday
+
+		result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, yday)
 
 		topics = []
 		# check if it needs a precomputed tile data.
@@ -457,7 +458,7 @@ class TopicModelingModule():
 		# 	logging.info('doone ondemand_topics')
 
 
-		topics = self.db.get_topics(level, x, y, date, topic_count, word_count, exclusiveness);
+		topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
 		result['topic'] = topics;
 
@@ -697,7 +698,7 @@ class TopicModelingModule():
 
 	def get_heatmaps(level, x, y, date_from, date_to):
 
-		logging.debug('get_heatmap(%d, %s, %s)', time_from, time_to)
+		logging.debug('get_heatmaps(%d, %s, %s)', time_from, time_to)
 
 		# convert the unixtime to ydate
 		date_from = datetime.fromtimestamp(int(int(date_from)/1000))

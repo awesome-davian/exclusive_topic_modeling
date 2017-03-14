@@ -181,10 +181,10 @@ class DBWrapper():
 
 		return rel_docs
 
-	def get_xscore(self, level, x, y, year, ydate):
+	def get_xscore(self, level, x, y, year, yday):
 
 		xscore_dir = constants.XSCORE_DIR + constants.DATA_RANGE + '/'
-		file_name = topic_file_name = 'xscore_' + str(year) + '_d' + str(ydate) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		file_name = topic_file_name = 'xscore_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 		score = 0.0
 		try:
@@ -323,7 +323,7 @@ class DBWrapper():
 		return raw_data;
 
 
-	def get_topics(self, level, x, y, date, topic_count, word_count, exclusiveness):
+	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
 		logging.debug('get_topics(%d, %d, %d, %s, %d, %d, %d)', level, x, y, date, topic_count, word_count, exclusiveness);
 
@@ -331,14 +331,9 @@ class DBWrapper():
 		# date = datetime.strptime(date, date_format)
 
 		logging.info(date)
-		print(int(int(date)/1000))
-
-		date = datetime.fromtimestamp(int(int(date)/1000))
-		year = date.timetuple().tm_year
-		day_of_year = date.timetuple().tm_yday
 
 		datapath = './tile_generator/topics/'+constants.DATA_RANGE+'/'
-		topic_file_name = 'topics_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
+		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
 
 		topics = []
 		
