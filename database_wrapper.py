@@ -331,7 +331,7 @@ class DBWrapper():
 		# date = datetime.strptime(date, date_format)
 
 		logging.info(date)
-		print(int(int(date)/1000))
+		
 
 		date = datetime.fromtimestamp(int(int(date)/1000))
 		year = date.timetuple().tm_year
