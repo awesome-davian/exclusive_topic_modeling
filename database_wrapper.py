@@ -197,6 +197,19 @@ class DBWrapper():
 
 		return score
 
+	def get_W(self, level, x, y, year, yday):
+
+		W_dir = './W/' + constants.DATA_RANGE + '/'
+		file_name = W_file_name = 'W_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+
+		try:
+			with open(W_dir + file_name, 'r', encoding='UTF8') as f:
+				logging.info('get W')
+		except FileNotFoundError:
+			logging.info('not found')
+		
+		return W 
+
 	def connect(self, ip, port):
 		# self.conn = pymongo.MongoClient(ip, port);
 		# self.dbname = constants.DB_NAME;
@@ -341,7 +354,7 @@ class DBWrapper():
 				words.append(word)
 
 			topic['words'] = words
-			# topic['exclusiveness'] = random.uniform(0, 1)
+			topic['exclusiveness'] = random.uniform(0, 1)
 
 			topics.append(topic)
 
@@ -391,6 +404,7 @@ class DBWrapper():
 							idx = 0
 							
 							topic['words'] = words
+							topic['exclusiveness']=exclusiveness
 							topics.append(topic)
 
 							topic = {}
@@ -398,7 +412,7 @@ class DBWrapper():
 		except FileNotFoundError:
 			logging.debug('%s is not exist.', topic_file_name)
 			# set fake data
-			topics = self.get_fake_topics()
+			#topics = self.get_fake_topics()
 
 		return topics
 
