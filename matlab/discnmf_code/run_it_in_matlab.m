@@ -3,10 +3,10 @@ clear;
 clear all;
 
 % topk and k;
-topk=10;
+topk=5;
 k=5;
 % choose exclusiveness
-exclusiveness = 0.5;
+exclusiveness = 0.2;
 
 % add path to the libradata folder
 
@@ -33,6 +33,7 @@ Ntdms = cell(1,9);
 ATDMs = cell(9,1);
 N_ON = zeros(8,1);
 neigh_size = size(NEIGH_tdm,1);
+Wtopk_num=[];
 % decomposition into cells
 
 % 1. getting information on the neighboring matrix
@@ -178,7 +179,8 @@ end
     % 5. Displaying the key words (parsing)
     disp('12')
     Wtopk = {}; Htopk = {}; DocTopk = {}; Wtopk_idx = {}; %Wtopk_score={}; Topic_score={};
-    [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score] = parsenmf(WC,HC,dict,glob_dict,topk);
+    [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,Topic_score,Wtopk_num] = parsenmf(WC,HC,dict,glob_dict,topk);
+    topk_num = Wtopk_num';
     disp('13')
     WCsort1 = sort(WC(:,1),'descend');
     WCsort2 = sort(WC(:,2),'descend');
@@ -192,23 +194,208 @@ end
     WCsort10 = sort(WC(:,10),'descend');
     [ WCsort1(1:10) WCsort2(1:10) WCsort3(1:10) WCsort4(1:10) WCsort5(1:10) ] 
     [ WCsort6(1:10) WCsort7(1:10) WCsort8(1:10)  WCsort9(1:10) WCsort10(1:10) ]
-    
-    ttopk = Wtopk(:);
-    Topics = ttopk(1:k*topk)';
-    
-    
+    List_of_topics = {};
+    num_of_topics = [];
 
-    tWtopk_score = Wtopk_score(:);
-    wtopk_score = tWtopk_score(1:k*topk)';
+    
+    numt=1;
+    ttopk = Wtopk(:);
+   % Topics = ttopk(1:k*topk)';
+
+    for i=1:topk
+        if(WCsort1(i) > 0.000001)
+            List_of_topics(numt) = ttopk(i);
+            num_of_topics(numt) = topk_num(1,i);
+            Score_of_topics(numt) = Wtopk_score(1,i);
+            numt = numt+1;
+        end
+    end
+    for i=1:topk
+        if(WCsort2(i) > 0.000001)
+            List_of_topics(numt) = ttopk(10+i);
+            num_of_topics(numt) = topk_num(2,i);
+            Score_of_topics(numt) = Wtopk_score(2,i);
+            numt = numt+1;
+        end
+    end
+    for i=1:topk
+        if(WCsort3(i) > 0.000001)
+            List_of_topics(numt) = ttopk(20+i);
+            num_of_topics(numt) = topk_num(3,i);
+            Score_of_topics(numt) = Wtopk_score(3,i);
+            numt = numt+1;
+        end
+   end
+    for i=1:topk
+        if(WCsort4(i) > 0.000001)
+            List_of_topics(numt) = ttopk(30+i);
+            num_of_topics(numt) = topk_num(4,i);
+            Score_of_topics(numt) = Wtopk_score(4,i);
+            numt = numt+1;
+        end
+    end
+    for i=1:topk
+        if(WCsort5(i) > 0.000001)
+            List_of_topics(numt) = ttopk(40+i);
+            num_of_topics(numt) = topk_num(5,i);
+            Score_of_topics(numt) = Wtopk_score(5,i);
+            numt = numt+1;
+        end
+    end
+    
+    
+    
+    cnumt=1;
+    List_of_ctopics = {};
+    num_of_ctopics = [];
+    
+       for i=1:topk
+        if(WCsort6(i) > 0.000001)
+            List_of_ctopics(cnumt) = ttopk(50+i);
+            num_of_ctopics(cnumt) = topk_num(6,i);
+
+            cnumt = cnumt+1;
+        end
+    end
+    for i=1:topk
+        if(WCsort7(i) > 0.000001)
+            List_of_ctopics(cnumt) = ttopk(60+i);
+            num_of_ctopics(cnumt) = topk_num(7,i);
+            cnumt = cnumt+1;
+        end
+    end
+    for i=1:topk
+        if(WCsort8(i) > 0.000001)
+            List_of_ctopics(cnumt) = ttopk(70+i);
+            num_of_ctopics(cnumt) = topk_num(8,i);
+
+            cnumt = cnumt+1;
+        end
+   end
+    for i=1:topk
+        if(WCsort9(i) > 0.000001)
+            List_of_ctopics(cnumt) = ttopk(80+i);
+            num_of_ctopics(cnumt) = topk_num(9,i);
+
+            cnumt = cnumt+1;
+        end
+    end
+    for i=1:topk
+        if(WCsort10(i) > 0.000001)
+            List_of_ctopics(cnumt) = ttopk(90+i);
+            num_of_ctopics(cnumt) = topk_num(10,i);
+
+            cnumt = cnumt+1;
+        end
+    end
+   
+   
+   tWtopk_score = Score_of_topics;
+   num_of_topics;
+
+ %  wtopk_score = tWtopk_score(1:k*topk)';
     
     tTopic_score = Topic_score;
-    topic_score = tTopic_score(1:k)'
+    topic_score = tTopic_score(1:k)';
+    Topic_score;
 
-    Topic_score
-    sum(Topic_score)
-    A = sum(sum(WC(:,1:5)))
-    B = sum(sum(WC(:,5:10)))
-    excl_score = A / B
+ % make exclusiveness
+ 
+ 
+ % Getting common topics
+ 
+ 
+ 
+ 
+ num_of_topics
+ NB_Y = {};
+ Y = randsample(num_of_topics,10)
+ 
+        NB_Y{1} = [NB_ALL{1}(Y(1),:);NB_ALL{1}(Y(2),:);NB_ALL{1}(Y(3),:);NB_ALL{1}(Y(4),:);...
+                       NB_ALL{1}(Y(5),:);NB_ALL{1}(Y(6),:);NB_ALL{1}(Y(7),:);NB_ALL{1}(Y(8),:);...
+                       NB_ALL{1}(Y(9),:);NB_ALL{1}(Y(10),:)];
+    for i = 2:9
+        
+        if ncols(i) == 0
+            continue
+        else
+            NB_Y{i} = [NB_ALL{i}(Y(1),:);NB_ALL{i}(Y(2),:);NB_ALL{i}(Y(3),:);NB_ALL{i}(Y(4),:);...
+                       NB_ALL{i}(Y(5),:);NB_ALL{i}(Y(6),:);NB_ALL{i}(Y(7),:);NB_ALL{i}(Y(8),:);...
+                       NB_ALL{i}(Y(9),:);NB_ALL{i}(Y(10),:)];
+           
+        end
+    end
+ 
+%    for i=1:9
+%        
+%        NB_Y{i} = NB_Y{i} = 
+%    end
+%    
+ 
+ List_of_ctopics;
+ num_of_ctopics = unique(num_of_ctopics);
+ num_of_ctopics;
+ YC = randsample(num_of_ctopics,10)
+  
+         NB_YC{1} = [NB_ALL{1}(YC(1),:);NB_ALL{1}(YC(2),:);NB_ALL{1}(YC(3),:);NB_ALL{1}(YC(4),:);...
+                       NB_ALL{1}(YC(5),:);NB_ALL{1}(YC(6),:);NB_ALL{1}(YC(7),:);NB_ALL{1}(YC(8),:);...
+                       NB_ALL{1}(YC(9),:);NB_ALL{1}(YC(10),:)];
+    for i = 2:9
+        
+        if ncols(i) == 0
+            continue
+        else
+            NB_YC{i} = [NB_ALL{i}(YC(1),:);NB_ALL{i}(YC(2),:);NB_ALL{i}(YC(3),:);NB_ALL{i}(YC(4),:);...
+                       NB_ALL{i}(YC(5),:);NB_ALL{i}(YC(6),:);NB_ALL{i}(YC(7),:);NB_ALL{i}(YC(8),:);...
+                       NB_ALL{i}(YC(9),:);NB_ALL{i}(YC(10),:)];
+           
+        end
+    end
+    
+    Count_Y = cell(9,1);
+    Count_YC =cell(9,1);
+    count_y = [];
+    count_yc = [];
+    for i=1:9
+       if ncols(i) == 0
+            continue
+       else
+        Count_Y{i} = NB_Y{i}~=0,2;
+        
+       end
+    end
+   for i=1:9
+       if ncols(i) == 0
+            continued
+       else
+        count_y(i) = sum(sum(Count_Y{i},2));
+       end
+   end
+    
+    for i=1:9
+       if ncols(i) == 0
+            continue
+       else
+        Count_YC{i} = NB_YC{i}~=0,2;
+        
+       end
+    end
+    for i=1:9
+        if ncols(i) == 0
+            continue
+       else
+        count_yc(i) = sum(sum(Count_YC{i},2));
+        end
+    end
+    count_y;
+    count_yc;
+    
+    disc_pro = count_y(1)/sum(count_y(1:4))
+    comm_pro = count_yc(1)/sum(count_y(1:4))
+ 
+ 
+    
+    
 % clean up variables
 clear nrows;
 clear ncols;
