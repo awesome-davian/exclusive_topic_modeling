@@ -83,7 +83,7 @@ def checkInputValidation(method, contents):
             level = tile['level'];
             x = tile['x'];
             y = tile['y'];
-            date = tile['date']
+            date = contents['date']
 
             if level < 9 or level > 13:
                 error_string = "Invalid tile.level";
