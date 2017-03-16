@@ -31,7 +31,7 @@ conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 db = conn[db_name];
 col = db[col_name];
 
-raw_dir = './rawdata/'
+raw_dir = './data/rawdata/'
 if not os.path.exists(raw_dir):
     os.makedirs(raw_dir)
 

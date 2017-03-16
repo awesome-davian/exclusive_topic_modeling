@@ -14,36 +14,36 @@ logging.info('Run topic modeling for all tiles using Disc NMF')
 
 arglen = len(sys.argv)
 if arglen != 4:
-	print("Usage: python topic_modeling_module_all.py [neighbor_matrix_dir(IN)] [global_voca(IN)] [topic_directory(OUT)]")
-	print("For example, python topic_modeling_module_all.py ./mtx_neighbor/ ./voca/voca_131103-131105 ./topics/131103-131105/")
+	print("Usage: python topic_modeling_module_all.py [matrix_dir(IN)] [global_voca(IN)] [topic_directory(OUT)]")
+	print("For example, python topic_modeling_module_all.py ./mtx/ ./voca/voca_131103-131105 ./topics/131103-131105/")
 	exit(0)
 
 module_name = sys.argv[0]
-neighbor_mtx_dir = sys.argv[1]
+mtx_dir = sys.argv[1]
 global_voca_path = sys.argv[2]
 topic_dir = sys.argv[3]
 
-if not os.path.exists(neighbor_mtx_dir):
-	logging.info('The Neighbor Term-Doc. Matrix Directory(%s) is Not exist. Exit %s.', neighbor_mtx_dir, module_name)
+if not os.path.exists(mtx_dir):
+	logging.info('The Term-Doc. Matrix Directory(%s) is Not exist. Exit %s.', mtx_dir, module_name)
 	exit(0)
 
 if not os.path.exists(topic_dir):
     os.makedirs(topic_dir)
 
-xscore_dir = './xscore/' + constants.DATA_RANGE + '/'
+xscore_dir = './data/xscore/' + constants.DATA_RANGE + '/'
 if not os.path.exists(xscore_dir):
     os.makedirs(xscore_dir)
 
-W_dir = './W/' + constants.DATA_RANGE + '/'
-if not os.path.exists(W_dir):
-    os.makedirs(W_dir)
+w_dir = './data/w/' + constants.DATA_RANGE + '/'
+if not os.path.exists(w_dir):
+    os.makedirs(w_dir)
 
 
 # Load the Matlab module
 start_time = time.time()
 eng = matlab.engine.start_matlab();
-#eng.cd('../matlab/standard_nmf/');
-eng.cd('../matlab/discnmf_code/');
+# eng.cd('../matlab/standard_nmf/');
+# eng.cd('../matlab/discnmf_code/');
 elapsed_time = time.time() - start_time;
 logging.info('matlab loading time: %.3f s', elapsed_time);
 
@@ -67,20 +67,22 @@ def del_stored_topics():
 		if name.endswith('_topics') == True:
 			db.counters.delete_one({'_id':name})
 
-def readGlobalVoca(word_map, bag_words, stem_bag_words):
+def read_voca(word_map, bag_words, stem_bag_words):
 
 	voca_file = open(global_voca_path, 'r', encoding='UTF8')
 	voca_hash_file = open(global_voca_path+'_hash', 'r', encoding='UTF8')
-
+	logging.debug('voca path: %s', global_voca_path)
+	
 	idx = 1
-	list_voca = collections.OrderedDict()
-	voca = voca_file.readlines()
-	for line in voca:
+	res_voca = collections.OrderedDict()
+	for line in voca_file.readlines():
 		v = line.split('\t')
 		bag_words[v[0]] = int(v[1])
 		word_map[v[0]] = idx
-		list_voca[idx] = v[0]
+		res_voca[idx] = v[0]
 		idx += 1
+
+	logging.info('vocabulary size: %d', idx)
 
 	# idx = 0
 	# for key, value in bag_words.items():
@@ -89,13 +91,16 @@ def readGlobalVoca(word_map, bag_words, stem_bag_words):
 	# 	print("%s, %d" % (key, int(value)))
 	# 	idx += 1
 
-	voca_hash = voca_hash_file.readlines()
-	for line in voca_hash:
+	idx = 1
+	for line in voca_hash_file.readlines():
 		v = line.split('\t')
 		if v[0] not in stem_bag_words:
 			stem_bag_words[v[0]] = collections.OrderedDict()
 
 		stem_bag_words[v[0]][v[1]] = int(v[2])
+		idx += 1
+
+	logging.info('vocabulary hashfile size: %d', idx)
 
 	# idx = 0
 	# for key, value in stem_bag_words.items():
@@ -108,161 +113,165 @@ def readGlobalVoca(word_map, bag_words, stem_bag_words):
 	voca_file.close()
 	voca_hash_file.close()
 
-	return list_voca
+	return res_voca
 
-def readLocalVoca(tile_name, word_map, bag_words):
+def read_mtx(mtx):
 
-	voca_file_name = tile_name.replace('mtx_', 'voca_')
-	local_voca_file = open(neighbor_mtx_dir+voca_file_name, 'r', encoding='UTF8')
+	v = mtx.split('_')	# [0]: mtx, [1]: year, [2]: day_of_year, [3]: level, [4]: x, [5]: y
 
-	idx = 1
-	list_voca = collections.OrderedDict()
-	voca = local_voca_file.readlines()
-	for line in voca:
-		v = line.split('\t')
-		bag_words[v[0]] = int(v[1])
-		word_map[v[0]] = idx
-		list_voca[idx] = v[0]
-		idx += 1
+	x = int(v[4])
+	y = int(v[5])
 
-	local_voca_file.close()
+	pos = v[4]+'_'+v[5]
 
-	return list_voca
+	neighbor_names = []
 
-def readLocalDoc(tile_name):
-	doc_file_name = tile_name.replace('mtx_', 'docmap_')
-	local_doc_file = open(neighbor_mtx_dir+doc_file_name, 'r', encoding='UTF8')
-
-	list_doc = collections.OrderedDict()
-	docs = local_doc_file.readlines()
-	idx = 1
-	for doc in docs:
-		list_doc[idx] = doc
-		idx += 1
-
-	local_doc_file.close()
-
-	return list_doc
-
-# def readTermDocMtx(need_neighbor_mtx):
-
-# 	if need_neighbor_mtx == True:
-# 		mtx_file = open(neighbor_mtx_dir + tile_name, 'r', encoding='UTF8')
-# 	else:
-# 		mtx_file = open(neighbor_mtx_dir + tile_name.replace('mtx_', 'nmtx_'), 'r', encoding='UTF8')
+	temp_name = mtx.replace(pos, '')
+	neighbor_names.append(temp_name+str(x+0)+'_'+str(y+0)) # it's me
 	
-# 	lines = mtx_file.readlines()
+	neighbor_names.append(temp_name+str(x+1)+'_'+str(y+1))
+	neighbor_names.append(temp_name+str(x+1)+'_'+str(y+0))
+	neighbor_names.append(temp_name+str(x+1)+'_'+str(y-1))
+	neighbor_names.append(temp_name+str(x+0)+'_'+str(y+1))
 
-# 	tile_mtx = [];
-# 	for line in lines:
-# 		v = line.split('\t')
-# 		item = np.array([v[0], v[1], v[2]], dtype=np.int32)
-# 		tile_mtx = np.append(tile_mtx, item, axis=0)
+	neighbor_names.append(temp_name+str(x+0)+'_'+str(y-1))
+	neighbor_names.append(temp_name+str(x-1)+'_'+str(y+1))
+	neighbor_names.append(temp_name+str(x-1)+'_'+str(y+0))
+	neighbor_names.append(temp_name+str(x-1)+'_'+str(y-1))
 
-# 	mtx_file.close()
+	nmtx = []
 
-# 	logging.info("#lines: %s", len(lines))
-# 	tile_mtx = np.array(tile_mtx, dtype=np.int32).reshape(len(lines), 3)
+	line_cnt = 0
+	center_count = 0
+	for idx, each in enumerate(neighbor_names):
+		each_path = mtx_dir + each
+		if os.path.exists(each_path) == False:
+			continue
+		
+		with open(each_path) as each_file:
+			isnt_center = 0 if idx == 0 else 1
+			# each_mtx = []
+			
+			for line in each_file.readlines():
+				line = line.strip()
+				v = line.split('\t')
 
-# 	return tile_mtx
+				item = np.array([int(v[0]), int(v[1]), int(v[2]), int(isnt_center)], dtype=np.int32)
+				# item = np.array([float(v[0]), float(v[1]), float(v[2]), float(isnt_center)], dtype=np.double)
+				nmtx = np.append(nmtx, item, axis=0)
 
-def readTermDocMtx(mtx, nmtx):
+				# neighbor_mtx.append([int(v[0]), int(v[1]), int(v[2]), idx])
+				line_cnt += 1
+				if idx == 0: 
+					center_count += 1
+			
+	nmtx = np.array(nmtx, dtype=np.int32).reshape(line_cnt, 4)
+	return nmtx, center_count
 
-	mtx_file = open(neighbor_mtx_dir + tile_name, 'r', encoding='UTF8')
+def create_w(mtx, v, num_topics, num_words):
 
-	lines = mtx_file.readlines()
+	eng.cd('../matlab/standard_nmf/')
+	w = eng.function_runme(mtx, v, num_topics, num_words, nargout=1)
 
-	tile_mtxs = [];
+	# print (W)
+	# 	W_array =np.asarray(W)
+	# 	for each in W_array:
+	# 		print(each)
 
-	mtx_dict = collections.OrderedDict()
-	for nid in range(0, 9):
-		mtx_dict[nid] = []
+	w_name = tile_name.repace('mtx_', 'w_')
+	with open(w_dir+w_name, 'w', encoding='UTF8') as f:
+		f.write(str(w)+'\n')
 
-	for line in lines:
-		v = line.split('\t')
-		mtx_dict[int(v[3])].append(line)
+def create_topics(mtx, xcls_value, v, num_topics, num_words, opmode):
 
-	for nid in range(0, 9):
+	eng.cd('../matlab/discnmf_code/')
+	[topics_list, w_scores, t_scores, x_score] = eng.function_run_extm(mtx, xcls_value, v, num_topics, num_words, nargout=4)
 
-		temp_mtx = []
-		for each in mtx_dict[nid]:
-			v = each.split('\t')
-			item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
-			temp_mtx = np.append(temp_mtx, item, axis=0)
-		temp_mtx = np.array(temp_mtx, dtype=np.double).reshape(len(mtx_dict[nid]), 3)
+	topics = np.asarray(topics_list)
+	topics = np.reshape(topics, (num_topics, num_words))
 
-		if nid == 0:
-			mtx = temp_mtx
-		else:
-			nmtx.append(temp_mtx)
+	word_scores = np.asarray(w_scores);
+	word_scores = np.reshape(word_scores, (num_topics, num_words))
 
-	mtx_file.close()
+	topic_scores = np.asarray(t_scores)
+	# xls_scores = np.asarry(x_scores)
 
-	logging.info("#lines: %s", len(lines))
+	prefix = 'stopics_' if opmode == constants.OPMODE_SPATIAL_MTX else 'ttopics_'
+	topic_name = tile_name.replace('mtx_', prefix)
+	logging.info('file_name: %s', topic_dir+topic_name)
+	topic_file = open(topic_dir+topic_name+'_'+str(exclusiveness), 'a', encoding='UTF8')
 
-	return mtx, nmtx
+	topic_id = 0;
+	for topic in topics:
+		
+		topic_file.write(str(topic_scores[topic_id,0]) + '\n')
+
+		for rank, word in enumerate(topic): 
+
+			word_score = word_scores[topic_id, rank];				
+			
+			temp_count=0;
+			temp_word="";
+			s_count=0
+
+			g_word = g_voca[word]
+
+			res_word = ''
+			for key, value in stem_bag_words[g_word].items():
+				res_word = key
+				break
+
+			word_cnt = bag_words[word]
+
+			topic_file.write(str(res_word) + '\t' + str(word_cnt) + '\t' + str(word_score) + '\n')
+			#logging.info(str(rank) + '\t' + str(res_word) + '\t' + str(word_score) + '\n')
+
+		topic_id += 1;
+  
+	topic_file.close()
+
+	prefix = 'sxscore_' if opmode == constants.OPMODE_SPATIAL_MTX else 'txscore_'
+	x_score_name = tile_name.replace('mtx_', prefix)
+	logging.info('file_name: %s', xscore_dir+x_score_name)
+	with open(xscore_dir+x_score_name, 'w', encoding='UTF8') as f:
+		f.write(str(xls_score) + '\n')	
+
+	return 
 
 logging.info('loading vocabulary...');
 s_time_voca = time.time()
 
-stem_bag_words_g = collections.OrderedDict()
-bag_words_g = collections.OrderedDict()
-word_map_g = collections.OrderedDict()
+stem_bag_words = collections.OrderedDict()
+bag_words = collections.OrderedDict()
+word_map = collections.OrderedDict()
 
-list_voca_g = readGlobalVoca(word_map_g, bag_words_g, stem_bag_words_g)
+g_voca = read_voca(word_map, bag_words, stem_bag_words)
 
 elapsed_time = time.time() - s_time_voca;
 logging.info('Done: loading vocabulary: %.3f s', elapsed_time);
 
-_, _, filenames = next(walk(neighbor_mtx_dir), (None, None, []))
+_, _, filenames = next(walk(mtx_dir), (None, None, []))
 
 logging.info('Run NMF for all tiles...');
 mtx_tile_list = (mtx_tile for mtx_tile in filenames if mtx_tile.startswith('mtx_') == True)
 
-# logging.info('The number of matrices: %d', sum(1 for x in mtx_tile_list))
-
 passed_cnt = 0
 for tile_name in mtx_tile_list:
 
+	print(tile_name)
+
 	v = tile_name.split('_')
-	if int(v[3]) < 13:
+	if int(v[3]) != 13:
 		continue;
-
-	logging.info('Load vocabulary for %s', tile_name);
-	start_time_detail = time.time()
-
-	# read local voca
-	bag_words_l = collections.OrderedDict()
-	word_map_l = collections.OrderedDict()
-	# doc_map_l = collections.OrderedDict()
-
-	list_voca_l = readLocalVoca(tile_name, word_map_l, bag_words_l)
-
-	logging.info('Vocabulary size: %d', len(list_voca_l))
-
-	elapsed_time = time.time() - start_time_detail;
-	logging.info('Done: loading vocabulary: %.3f s', elapsed_time);
-
-	logging.info('Load document for %s', tile_name);
-	start_time_detail = time.time()
-
-	list_doc_l = readLocalDoc(tile_name)
-
-	logging.info('Doc size: %d', len(list_doc_l))
-	
-	logging.info('Loading document for %s...', tile_name);
-	elapse_time = time.time() - start_time_detail;	
 
 	logging.info('Loading Term-Doc. Matrices for %s...', tile_name);
 	start_time_detail = time.time()
 
-	# read single term-doc matrix
-	tile_mtx = []
-	tile_nmtx = []
-	[tile_mtx, tile_nmtx] = readTermDocMtx(tile_mtx, tile_nmtx)
+	# read term-doc matrices including neighbor tiles
+	tile_mtx, center_cnt = read_mtx(tile_name)
 
-	if len(tile_mtx) < constants.MIN_ROW_FOR_TOPIC_MODELING:
-		logging.debug('# of row is too small(%d). --> continue', len(tile_mtx))
+	if center_cnt < constants.MIN_ROW_FOR_TOPIC_MODELING:
+		logging.debug('# of row is too small(%d). --> continue', center_cnt)
 		passed_cnt += 1
 		continue
 
@@ -271,88 +280,27 @@ for tile_name in mtx_tile_list:
 
 	logging.info('Running the Topic Modeling for %s...', tile_name);
 	start_time_detail = time.time()
-	A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
-	# N = matlab.double(tile_nmtx.tolist()) # sparse function in function_run_extm().
-	N = []
-	for each in tile_nmtx:
-		if each == []:
-			N.append(each)
-		else:
-			N.append(each.tolist())\
+	# A = matlab.double(tile_mtx.tolist()) # sparse function in function_runme() only support double type.
+	# A = []
+	# A.append(matlab.int32(tile_mtx.tolist()))
+	A = tile_mtx.tolist()
 
-	#change list_voca_1 to list 
-	voca_list = []
-	for key, value in list_voca_l.items():
+	#change vocabulary type from dict to list 
+	voca = []
+	for key, value in g_voca.items():
 		temp = [key,value]
-		voca_list.append(temp)
+		voca.append(temp)
 
 	x_score = 0
 
+	# create_w(A, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K)
+
+	# store topics in DB	
+
 	for exclusiveness in range(0, 6):
 
-		# [topics_list, w_scores, t_scores] = eng.function_runme(A, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-		#[topics_list, w_scores, t_scores, x_score] = eng.function_run_extm(A, N, exclusiveness/5, list_voca_l, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-		[topics_list, w_scores, t_scores, W] = eng.function_run_extm(A, N, exclusiveness/5, voca_list, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-		print (W)
-		W_array =np.asarray(W)
-		for each in W_array:
-			print(each)
-	
-
-		topics = np.asarray(topics_list);
-		topics = np.reshape(topics, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
-
-		word_scores = np.asarray(w_scores);
-		word_scores = np.reshape(word_scores, (constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K));
-
-		topic_scores = np.asarray(t_scores);
-
-		W_name = tile_name.repace('', '')
-		with open(W_dir+W_name, 'W', encoding='UTF8') as f:
-			f.write(str(W)+'\n')
-
-		# store topics in DB		
-
-		# logging.debug(word_scores)
-		# logging.debug(topic_scores)
-		x_score_name = tile_name.replace('mtx_', 'xscore_')
-		logging.info('file_name: %s', xscore_dir+x_score_name)
-		with open(xscore_dir+x_score_name, 'w', encoding='UTF8') as f:
-			f.write(str(x_score) + '\n')
-
-		topic_name = tile_name.replace('mtx_','topics_')
-		logging.info('file_name: %s', topic_dir+topic_name)
-		topic_file = open(topic_dir+topic_name+'_'+str(exclusiveness), 'a', encoding='UTF8')
-		#topic_file = open(topic_dir+topic_name, 'a', encoding='UTF8')
-
-		topic_id = 0;
-		for topic in topics:
-			
-			topic_file.write(str(topic_scores[topic_id,0]) + '\n')
-
-			for rank, word in enumerate(topic): 
-
-				word_score = word_scores[topic_id, rank];				
-				
-				temp_count=0;
-				temp_word="";
-				s_count=0
-
-				g_word = list_voca_g[int(word)]
-
-				res_word = ''
-				for key, value in stem_bag_words_g[g_word].items():
-					res_word = key
-					break
-
-				word_cnt = bag_words_l[word]
-
-				topic_file.write(str(res_word) + '\t' + str(word_cnt) + '\t' + str(word_score) + '\n')
-				#logging.info(str(rank) + '\t' + str(res_word) + '\t' + str(word_score) + '\n')
-
-			topic_id += 1;
-	  
-		topic_file.close()	
+		create_topics(A, exclusiveness/5, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, constants.OPMODE_SPATIAL_MTX)
+		create_topics(A, exclusiveness/5, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, constants.OPMODE_TEMPORAL_MTX)
 
 	elapsed_time_detail = time.time() - start_time_detail
 	logging.info('Done: Running the Topic Modeling for %s, elapse: %.3fms', tile_name, elapsed_time_detail);

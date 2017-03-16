@@ -6,13 +6,13 @@ TWITTER_DATA_PATH=$2
 DB_RAWDATA=salt_rawdata_${DATE}
 DB_COL_RAWDATA=SALT_DB_${DATE}
 
-RAWDATA_DIR=./rawdata/
+RAWDATA_DIR=./data/rawdata/
 RAWDATA_FILE_PATH=${RAWDATA_DIR}raw_${DATE}
-VOCA_DIR=./voca/
+VOCA_DIR=./data/voca/
 VOCA_FILE_PATH=${VOCA_DIR}voca_${DATE}
-MTX_DIR=./mtx/${DATE}/
-NEIGHBOR_MTX_DIR=./mtx_neighbor/${DATE}/
-TOPICS_DIR=./topics/${DATE}/
+MTX_DIR=./data/mtx/${DATE}/
+# NEIGHBOR_MTX_DIR=./data/mtx_neighbor/${DATE}/
+TOPICS_DIR=./data/topics/${DATE}/
 
 START=$(date +%s);
 
@@ -45,13 +45,13 @@ echo ""
 echo "python termdoc_gen_atonce.py ${VOCA_FILE_PATH} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
 python termdoc_gen_atonce.py ${VOCA_FILE_PATH} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
 
-echo ""
-echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
-python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
+# echo ""
+# echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
+# python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
 
 echo ""
-echo "python topic_modeling_module_all.py ${NEIGHBOR_MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}"
-python topic_modeling_module_all.py ${NEIGHBOR_MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}
+echo "python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}"
+python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}
 
 END=$(date +%s);
 

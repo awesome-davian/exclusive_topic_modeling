@@ -22,7 +22,7 @@ conn = pymongo.MongoClient("localhost", 27017)
 arglen = len(sys.argv)
 if arglen != 5:
 	print("Usage: python termdoc_gen_atonce.py [vocabulary_filename] [rawdata_db_name] [rawdata_db_collection_name] [mtx_dir]")
-	print("For example, python termdoc_gen_atonce.py voca_140130 test_rawdata_140130 SALT_DB_140130 ./mtx/")
+	print("For example, python termdoc_gen_atonce.py voca_140130 test_rawdata_140130 SALT_DB_140130 ./data/mtx/")
 	exit(0)
 
 module_name = sys.argv[0]

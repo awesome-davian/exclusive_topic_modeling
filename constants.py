@@ -20,6 +20,9 @@ NEIGHBOR_MTX_DIR = './tile_generator/mtx_neighbor/'
 MTX_DIR = './tile_generator/mtx/'
 XSCORE_DIR = './tile_generator/xscore/'
 
+OPMODE_SPATIAL_MTX = 0
+OPMODE_TEMPORAL_MTX = 0
+
 DEFAULT_NUM_TOPICS = 5
 DEFAULT_NUM_TOP_K = 5
 DEFAULT_EXCLUSIVENESS = 0

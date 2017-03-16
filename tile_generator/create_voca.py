@@ -31,8 +31,8 @@ rawdata_db_name = sys.argv[1]
 collection_name = sys.argv[2]
 vocabulary_filename = sys.argv[3]
 
-if not os.path.exists('./voca/'):
-    os.makedirs('./voca/')
+if not os.path.exists('./data/voca/'):
+    os.makedirs('./data/voca/')
 
 if os.path.exists(vocabulary_filename) is True:
 	logging.info('The Vocabulary file(%s) is already exist. Exit %s.', vocabulary_filename, module_name)
