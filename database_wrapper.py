@@ -360,7 +360,8 @@ class DBWrapper():
 
 		return topics
 	
-
+	def get_key(self,item):
+		return int(item['score'])
 
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
@@ -391,15 +392,18 @@ class DBWrapper():
 						idx += 1
 					else:
 						
-						v = line.split('\t')
-						word = {}
-						word['word'] = str(v[0])
-						word['count'] = int(v[1])
-						word['score'] = float(v[2])
+						if idx <= word_count:
 
-						words.append(word)
+							v = line.split('\t')
+							word = {}
+							word['word'] = str(v[0])
+							word['count'] = int(v[1])
+							word['score'] = float(v[2])
+
+							words.append(word)
 
 						idx += 1
+						# if idx > constants.DEFAULT_NUM_TOP_K:	// it has to be changed 
 						if idx > 10:
 							idx = 0
 							
@@ -414,7 +418,9 @@ class DBWrapper():
 			# set fake data
 			#topics = self.get_fake_topics()
 
-		return topics
+		topics = sorted(topics, key=self.get_key, reverse=True)
+
+		return topics[:topic_count]
 
 	def get_all_topics(self, level, x, y, year, yday_from, yday_to):
 
