@@ -1,4 +1,4 @@
-function [Topics, wtopk_score, topic_score,WC] = function_run_extm(Tdm, Ntdms, exclusiveness, Voca, k, topk)
+function [Topics, wtopk_score, topic_score] = function_run_extm(Tdm, Ntdms, exclusiveness, Voca, k, topk)
     % 0. the term definitions:
     %   - k: how many clusters (the columns in W) shall be used?
     %   - topk: how many topics will be taken in each clusters. 
