@@ -21,12 +21,12 @@ conn = pymongo.MongoClient("localhost", 27017)
 
 arglen = len(sys.argv)
 if arglen != 5:
-	print("Usage: python termdoc_gen_atonce.py [vocabulary_filename] [rawdata_db_name] [rawdata_db_collection_name] [mtx_dir]")
-	print("For example, python termdoc_gen_atonce.py voca_140130 test_rawdata_140130 SALT_DB_140130 ./data/mtx/")
+	print("Usage: python termdoc_gen_atonce.py [voca_dir] [rawdata_db_name] [rawdata_db_collection_name] [mtx_dir]")
+	print("For example, python termdoc_gen_atonce.py voca_140130 test_rawdata_140130 SALT_DB_140130 ./data/131103-131105/mtx/")
 	exit(0)
 
 module_name = sys.argv[0]
-vocabulary_filename = sys.argv[1]
+voca_dir = sys.argv[1]
 rawdata_db_name = sys.argv[2]
 rawdata_col_name = sys.argv[3]
 mtx_dir = sys.argv[4]
@@ -165,8 +165,8 @@ stem_bag_words=collections.OrderedDict()
 bag_words = collections.OrderedDict()
 word_map = collections.OrderedDict()
 
-voca_file = open(vocabulary_filename, 'r', encoding='UTF8')
-voca_hash_file = open(vocabulary_filename+'_hash', 'r', encoding='UTF8')
+voca_file = open(voca_dir+'/voca', 'r', encoding='UTF8')
+voca_hash_file = open(voca_dir+'/voca_hash', 'r', encoding='UTF8')
 
 readVoca()
 

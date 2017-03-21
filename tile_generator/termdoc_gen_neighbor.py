@@ -23,7 +23,7 @@ conn = pymongo.MongoClient("localhost", 27017)
 arglen = len(sys.argv)
 if arglen != 3:
 	print("Usage: python termdoc_gen_neighbor.py [mtx_dir(IN)] [neighbor_mtx_dir(OUT)]")
-	print("For example, python termdoc_gen_neighbor.py ./mtx/130910/ ./mtx_neighbor/130910/")
+	print("For example, python termdoc_gen_neighbor.py ./mtx/130910/ ./data/131103-131105/nmtx/")
 	exit(0)
 
 module_name = sys.argv[0]
@@ -40,9 +40,14 @@ if os.path.exists(neighbor_dir):
 else:
 	os.makedirs(neighbor_dir)
 
+spatial_ndir = neighbor_dir+'spatial/'
+if not os.path.exists(spatial_ndir):
+    os.makedirs(spatial_ndir)
+temporal_ndir = neighbor_dir+'temporal/'
+if not os.path.exists(temporal_ndir):
+    os.makedirs(temporal_ndir)
 
-
-def get_neighbor_mtx(mtx):
+def get_spatial_neighbor_mtx(mtx):
 
 	v = mtx.split('_')	# [0]: mtx, [1]: year, [2]: day_of_year, [3]: level, [4]: x, [5]: y
 
@@ -82,96 +87,80 @@ def get_neighbor_mtx(mtx):
 
 	return neighbor_mtx
 
+def get_temporal_neighbor_mtx(mtx):
+
+	v = mtx.split('_')	# [0]: mtx, [1]: year, [2]: day_of_year, [3]: level, [4]: x, [5]: y
+
+	yday = int(v[2].replace('d',''))
+
+	neighbor_names = []
+	for idx in range(0, constants.TEMPORAL_DATE_RANGE):
+		neighbor_names.append(v[0]+'_'+v[1]+'_d'+str(yday-idx)+'_'+v[3]+'_'+v[4]+'_'+v[5])
+	
+	neighbor_mtx = []
+
+	line_cnt = 0
+	center_count = 0
+	for idx, each in enumerate(neighbor_names):
+		each_path = mtx_dir + each
+		if os.path.exists(each_path) == False:
+			continue
+		
+		with open(each_path) as each_file:
+			
+			for line in each_file:
+				line = line.strip()
+				v = line.split('\t')
+				neighbor_mtx.append([int(v[0]), int(v[1]), int(v[2]), idx])
+
+	return neighbor_mtx
+
 _, _, filenames = next(walk(mtx_dir), (None, None, []))
 tile_size = len(filenames)
+
 for idx, mtx in enumerate(filenames):
 
-	logging.info('[%d/%d]Create the Local Term-Doc-Mtx: %s', idx+1, tile_size, mtx)
+	logging.info('[%d/%d]Create the Neighbor Term-Doc-Mtx: %s', idx+1, tile_size, mtx)
+
+	if mtx.startswith('mtx_') == False:
+		continue
 
 	# get neighbor mtx
-	mtx_neighbor = get_neighbor_mtx(mtx)
-
-	new_bag_words = collections.OrderedDict()
-	new_bag_words_doc = collections.OrderedDict()
-	new_bag_docs = collections.OrderedDict()
-
-	new_word_map = collections.OrderedDict()
-	new_doc_map = collections.OrderedDict()
-
-	new_mtx_me = []
-	new_mtx_neighbor = []
-	
-	# create new bag of words
-	for line in mtx_neighbor:
-
-		# logging.debug('%d\t%d\t%d', line[0], line[1], line[2])
-
-		try:
-			new_bag_words[line[0]] += line[2]
-		except KeyError:
-			new_bag_words[line[0]] = line[2]
-
-		try:
-			new_bag_words_doc[line[0]] += 1
-		except KeyError:
-			new_bag_words_doc[line[0]] = 1
-			
-		new_bag_docs[line[1]] = 1
-
-	# create new voca and word map
-	local_voca_file_name = mtx.replace('mtx', 'voca')
-	local_voca_file = open(neighbor_dir+local_voca_file_name, 'w', encoding='UTF8')
-
-	idx = 1
-	for word_idx_ori in sorted(new_bag_words):
-
-		if new_bag_words_doc[word_idx_ori] < constants.MIN_WORD_FREQUENCY:
-			continue
-
-		# logging.debug('word_idx_ori: %s', str(word_idx_ori))
-		# logging.debug('new_bag_words[%s]: %s', str(word_idx_ori), str(new_bag_words[word_idx_ori]))
-		local_voca_file.write(str(word_idx_ori) + '\t' + str(new_bag_words[word_idx_ori]) + '\n')
-
-		new_word_map[word_idx_ori] = idx
-		idx += 1
-
-	local_voca_file.close()
-
-	local_doc_map_name = mtx.replace('mtx', 'docmap')
-	local_doc_file = open(neighbor_dir+local_doc_map_name, 'w', encoding='UTF8')
-	idx = 1
-	for doc_idx_ori in sorted(new_bag_docs):
-
-		local_doc_file.write(str(doc_idx_ori) + '\n')
-		new_doc_map[doc_idx_ori] = idx
-		idx += 1
-
-	local_doc_file.close()
-
-	# create new term-doc matrix
-	# mtx_neighbor_name = mtx.replace('mtx', 'nmtx')
-	# mtx_me_file = open(neighbor_dir+mtx, 'w', encoding='UTF8')
-	# mtx_neighbor_file = open(neighbor_dir+mtx_neighbor_name, 'w', encoding='UTF8')
+	mtx_neighbor = get_spatial_neighbor_mtx(mtx)
 
 	for each in mtx_neighbor:
 		try:
-			with open(neighbor_dir+mtx, 'a', encoding='UTF8') as f:
-				f.write(str(new_word_map[each[0]]) + '\t' + str(new_doc_map[each[1]]) + '\t' + str(each[2]) + '\t' + str(each[3]) + '\n')
+			with open(spatial_ndir+mtx, 'a', encoding='UTF8') as f:
+				f.write(str(each[0]) + '\t' + str(each[1]) + '\t' + str(each[2]) + '\t' + str(each[3]) + '\n')
 		except KeyError:
 			continue;
 
-		# if len(each) != 3:
-		# 	try:
-		# 		new_mtx_me.append([new_word_map[each[0]], new_doc_map[each[1]], each[2]])
-		# 		mtx_me_file.write(str(new_word_map[each[0]]) + '\t' + str(new_doc_map[each[1]]) + '\t' + str(each[2]) + '\n')
-		# 	except KeyError:
-		# 		continue
-		# else:
-		# 	try:
-		# 		new_mtx_neighbor.append([new_word_map[each[0]], new_doc_map[each[1]], each[2]])
-		# 		mtx_neighbor_file.write(str(new_word_map[each[0]]) + '\t' + str(new_doc_map[each[1]]) + '\t' + str(each[2]) + '\n')
-		# 	except KeyError:
-		# 		continue
+	mtx_neighbor = get_temporal_neighbor_mtx(mtx)
 
-	# mtx_neighbor_file.close()
-	# mtx_me_file.close()
+	for each in mtx_neighbor:
+		try:
+			with open(temporal_ndir+mtx, 'a', encoding='UTF8') as f:
+				f.write(str(each[0]) + '\t' + str(each[1]) + '\t' + str(each[2]) + '\t' + str(each[3]) + '\n')
+		except KeyError:
+			continue;	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

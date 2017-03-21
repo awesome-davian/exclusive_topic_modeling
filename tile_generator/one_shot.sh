@@ -6,13 +6,11 @@ TWITTER_DATA_PATH=$2
 DB_RAWDATA=salt_rawdata_${DATE}
 DB_COL_RAWDATA=SALT_DB_${DATE}
 
-RAWDATA_DIR=./data/rawdata/
-RAWDATA_FILE_PATH=${RAWDATA_DIR}raw_${DATE}
-VOCA_DIR=./data/voca/
-VOCA_FILE_PATH=${VOCA_DIR}voca_${DATE}
-MTX_DIR=./data/mtx/${DATE}/
-# NEIGHBOR_MTX_DIR=./data/mtx_neighbor/${DATE}/
-TOPICS_DIR=./data/topics/${DATE}/
+RAWDATA_DIR=./data/${DATE}/rawdata/
+VOCA_DIR=./data/${DATE}/voca/
+MTX_DIR=./data/${DATE}/mtx/
+NEIGHBOR_MTX_DIR=./data/${DATE}/nmtx/
+TOPICS_DIR=./data/${DATE}/topics/
 
 START=$(date +%s);
 
@@ -30,28 +28,28 @@ then
 	python mongoimport.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${TWITTER_DATA_PATH}
 
 	echo ""
-	echo "python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_FILE_PATH}"
-	python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_FILE_PATH}
+	echo "python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_DIR}"
+	python export_rawdata.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${RAWDATA_DIR}
 else
 	echo ""
 	echo "Do not import rawdata because the argv[2](rawdata path) is not exist."
 fi
 
 echo ""
-echo "python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_FILE_PATH}"
-python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_FILE_PATH}
+echo "python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}"
+python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}
 
 echo ""
-echo "python termdoc_gen_atonce.py ${VOCA_FILE_PATH} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
-python termdoc_gen_atonce.py ${VOCA_FILE_PATH} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
+echo "python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
+python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
+
+echo ""
+echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
+python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
 
 # echo ""
-# echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
-# python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
-
-echo ""
-echo "python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}"
-python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_FILE_PATH} ${TOPICS_DIR}
+# echo "python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_DIR} ${TOPICS_DIR}"
+# python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_DIR} ${TOPICS_DIR}
 
 END=$(date +%s);
 

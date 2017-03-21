@@ -14,11 +14,11 @@ DEFAULT_MONGODB_PORT = 27017
 
 DATA_RANGE = '131103-131105'
 
-GLOBAL_VOCA_FILE_PATH = './tile_generator/voca/voca_' + DATA_RANGE
-GLOBAL_DOC_FILE_PATH = './tile_generator/rawdata/raw_' + DATA_RANGE
-NEIGHBOR_MTX_DIR = './tile_generator/mtx_neighbor/'
-MTX_DIR = './tile_generator/mtx/'
-XSCORE_DIR = './tile_generator/xscore/'
+GLOBAL_VOCA_FILE_PATH = './tile_generator/data/voca/voca_' + DATA_RANGE
+GLOBAL_DOC_FILE_PATH = './tile_generator/data/rawdata/raw_' + DATA_RANGE
+NEIGHBOR_MTX_DIR = './tile_generator/data/mtx_neighbor/'
+MTX_DIR = './tile_generator/data/mtx/'
+XSCORE_DIR = './tile_generator/data/xscore/'
 
 OPMODE_SPATIAL_MTX = 0
 OPMODE_TEMPORAL_MTX = 0
@@ -26,6 +26,8 @@ OPMODE_TEMPORAL_MTX = 0
 DEFAULT_NUM_TOPICS = 5
 DEFAULT_NUM_TOP_K = 5
 DEFAULT_EXCLUSIVENESS = 0
+TEMPORAL_DATE_RANGE = 5
+EXCLUSIVE_RANGE = 6
 
 MIN_ROW_FOR_TOPIC_MODELING = 30
 MIN_WORD_FREQUENCY = 10
