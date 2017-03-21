@@ -386,7 +386,7 @@ class DBWrapper():
 
 				if len(lines) > 0:
 
-					idx = 0
+					num_topics = 0
 					for line in lines:
 						logging.debug(line)
 
@@ -394,10 +394,12 @@ class DBWrapper():
 
 						if len(v) == 1:
 							
-							if idx > 0:
+							if num_topics > 0:
 								topic['words'] = words
 								topic['exclusiveness']=exclusiveness
 								topics.append(topic)
+
+							num_topics += 1
 
 							topic = {}
 							words = []
@@ -410,8 +412,6 @@ class DBWrapper():
 							word['score'] = float(v[2])
 
 							words.append(word)
-
-							# if idx > constants.DEFAULT_NUM_TOP_K:	// it has to be changed 
 					
 					topic['words'] = words
 					topic['exclusiveness']=exclusiveness
