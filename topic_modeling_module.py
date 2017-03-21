@@ -85,218 +85,85 @@ class TopicModelingModule():
 
 		return neighbor;
 
+	def get_docs_including_word(self, level, x, y, year, yday, word_list):
 
-	# def get_doc_idx_include_word(self, term_doc_mtx, word_list, voca_hash, voca):
-
-	# 	doc_lists=[]
-
-	# 	for word in word_list:
-
-	# 		stem_word ="";
-	# 		word_id=0;
-
-	#         #find stemmed word form voca-hashmap
-	# 		for each in voca_hash:
-	# 			if word==each['word']:
-	# 				stem_word=each['stem']
-	# 				break;
-	# 		#logging.info(stem_word)
-
-	# 		#get stemmed word id from voca 			
-	# 		for idx, each in enumerate(voca):
-	# 		 	if stem_word==each['stem']:
-	# 		 		word_id=idx+1 
-	# 		 		break;
-	# 		#logging.info(word_id);
-
-	#         #get doc list for tem_doc.mtx
-	# 		doc_list=[]
-	# 		for each in term_doc_mtx:
-	# 			if each[0]==word_id:
-	# 				doc_list.append(each[1])
-
-	# 		#logging.info(doc_list)	
-	# 		doc_lists.append(doc_list)
-
-	# 	logging.info(doc_lists)	
-
-	# 	return doc_lists;
-
-	def get_doc_idx_include_word(self, level, x, y, date, word_list):
-
-		doc_lists=[]
+		doc_lists=collections.OrderedDict()
 
 		map_idx_to_word, map_word_to_idx, bag_words, stem_bag_words = self.db.read_voca()
 
-		date = datetime.fromtimestamp(int(int(date)/1000))
-		year = date.timetuple().tm_year
-		day_of_year = date.timetuple().tm_yday
+		termdoc_dir = constants.MTX_DIR
+		file_name  = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
-		termdoc_dir = constants.MTX_DIR + constants.DATA_RANGE + '/'
-		file_name  = 'mtx_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		word_idxs = []
+		for w in word_list:
+			stemmed = porter_stemmer.stem(w)
+			word_idxs.append(map_word_to_idx[stemmed])
+
 
 		with open(termdoc_dir + file_name, 'r', encoding='UTF8') as f:
 			lines=f.readlines()
-			for word in word_list:
-				stem_word=porter_stemmer.stem(word)
+			for line in lines:
+				v = line.split('\t')
+				word_idx = int(v[0])
+				doc_idx = int(v[1])
+				for w in word_idxs:
+					if doc_idx == w:
+						doc_lists[doc_idx] = 1
+						# doc_lists.append(doc_idx)
+						break;
 
-				for line in lines:
-					v = line.split('\t')
-					word_idx = int(v[0])
-					doc_idx = int(v[1])
-					if(map_word_to_idx[stem_word]==word_idx):
-						doc_lists.append(doc_idx)
 
-		logging.info(doc_lists)
+			# # duplicate date can be appended so i changed the algorithm like above.
+			# for word in word_list:
+			# 	stem_word=porter_stemmer.stem(word)
+
+			# 	for line in lines:
+			# 		v = line.split('\t')
+			# 		word_idx = int(v[0])
+			# 		doc_idx = int(v[1])
+			# 		if(map_word_to_idx[stem_word]==word_idx):
+			# 			doc_lists.append(doc_idx)
+
+		# logging.info(doc_lists)
 
 		return doc_lists
 
-	def make_sub_term_doc_matrix(self, level, x, y, date, include_word_list, exclude_word_list):
+	def make_sub_term_doc_matrix(self, level, x, y, year, yday, date, include_word_list, exclude_word_list):
 
-		exclude_doc_list = self.get_doc_idx_include_word(level, x, y, date, include_word_list)
-		include_doc_list = self.get_doc_idx_include_word(level, x, y, date, exclude_word_list)
-		term_doc_mtx = self.getTermDocMtx(level, x, y, date)
+		map_idx_to_word, map_word_to_idx, bag_words, stem_bag_words = self.db.read_voca()
+
+		include_docs = self.get_docs_including_word(level, x, y, year, yday, include_word_list)
+		exclude_docs = self.get_docs_including_word(level, x, y, year, yday, exclude_word_list)
+		# term_doc_mtx = self.getTermDocMtx(level, x, y, date)
+		mtx = self.db.read_spatial_mtx(constants.MTX_DIR, year, yday, level, x, y)
 
 		new_tile_mtx=[]
 		word_idx=0;
 
-		if(len(include_word_list)>0):
-			for each in term_doc_mtx:
-				for in_word in include_doc_list:
-					for idx in in_word:
-						if(each[1]==idx):
-							item = np.array([each[0], each[1], each[2]], dtype=np.double);
-							#logging.info(item)
-							new_tile_mtx = np.append(new_tile_mtx, item, axis=0)
+		for each in mtx:
+			flag = True
+			if len(include_docs) > 0 and (each[1] in include_docs):
+				flag = True
+			if len(exclude_docs) > 0 and (each[1] in exclude_docs):
+				flag = False
 
-			new_tile_mtx = np.array(new_tile_mtx, dtype=np.double).reshape(int(np.size(new_tile_mtx)/3), 3)				
-			
-			#logging.info(new_tile_mtx)
+			if flag == True:
+				new_tile_mtx.append([int(each[0]), int(each[1]), int(each[2]), int(each[3])])
 
-			if(len(exclude_word_list)>0):
-				for ex_word in exclude_word_list:
-					#logging.info(ex_word)
-					stem_word = porter_stemmer.stem(ex_word)												
-					for each in new_tile_mtx:
-						if(each[0]==map_idx_to_word[stem_word]):
-						 	new_tile_mtx=np.delete(new_tile_mtx, word_idx-1, axis=0)
-
-		else:
-			for ex_word in exclude_doc_list:
-				for element in ex_word:
-					for each in term_doc_mtx:
-						if(each[1] == element):
-							logging.info(element)
-							continue;
-						item=np.array([each[0], each[1], each[2]], dtype=np.double);
-						new_tile_mtx = np.append(new_tile_mtx, item, axis=0)
-
-	
-
-		new_tile_mtx = np.array(new_tile_mtx, dtype=np.double).reshape(int(np.size(new_tile_mtx)/3), 3)				 	
+		new_tile_mtx = np.array(new_tile_mtx, dtype=np.int32).reshape(int(np.size(new_tile_mtx)/4), 4)
 
 		return new_tile_mtx;
 
-
-	# def make_sub_term_doc_matrix2(self, term_doc_mtx, include_word_list, exclude_word_list, voca_hash, voca):
-
-	# 	start_time_make_sub=time.time()
-
-
-	# 	exclude_doc_list=self.get_doc_idx_include_word(term_doc_mtx, exclude_word_list, voca_hash, voca)
-	# 	include_doc_list=self.get_doc_idx_include_word(term_doc_mtx, include_word_list, voca_hash, voca)
-
-	# 	new_tile_mtx=[]
-	# 	word_idx=0;
-
-	# 	if(len(include_word_list)>0):
-	# 		for each in term_doc_mtx:
-	# 			for in_word in include_doc_list:
-	# 				for idx in in_word:
-	# 					if(each[1]==idx):
-	# 						item = np.array([each[0], each[1], each[2]], dtype=np.double);
-	# 						#logging.info(item)
-	# 						new_tile_mtx = np.append(new_tile_mtx, item, axis=0)
-
-	# 		new_tile_mtx = np.array(new_tile_mtx, dtype=np.double).reshape(int(np.size(new_tile_mtx)/3), 3)				
-			
-	# 		#logging.info(new_tile_mtx)
-
-	# 		if(len(exclude_word_list)>0):
-	# 			for ex_word in exclude_word_list:
-	# 				#logging.info(ex_word)
-	# 				for idx, element in enumerate(voca):
-	# 					if(element['stem']==porter_stemmer.stem(ex_word)):
-	# 						word_idx=idx+1
-	# 						break;	
-	# 				#logging.info(word_idx)								
-	# 				for each in new_tile_mtx:
-	# 					if(each[0]==word_idx):
-	# 					 	new_tile_mtx=np.delete(new_tile_mtx, word_idx-1, axis=0)
-
-	# 	else:
-	# 		for ex_word in exclude_doc_list:
-	# 			for element in ex_word:
-	# 				for each in term_doc_mtx:
-	# 					if(each[1] == element):
-	# 						logging.info(element)
-	# 						continue;
-	# 					item=np.array([each[0], each[1], each[2]], dtype=np.double);
-	# 					new_tile_mtx = np.append(new_tile_mtx, item, axis=0)
-
-	
-
-	# 	new_tile_mtx = np.array(new_tile_mtx, dtype=np.double).reshape(int(np.size(new_tile_mtx)/3), 3)				 	
-
-	# 	elapsed_time_make_sub= time.time() - start_time_make_sub
-	# 	logging.info('get_topics -make sub term_doc_mtx Execution time: %.3fms', elapsed_time_make_sub)
-	
-	# 	logging.debug(new_tile_mtx)
-
-	# 	return new_tile_mtx;
-    
-
-
-	def run_topic_modeling(self, level, x, y, exclusiveness, num_clusters, num_keywords, voca):
+		
+	def run_topic_modeling(self, mtx, level, x, y, xcls_value, num_clusters, num_keywords, voca):
 		
 		start_time = time.time()
 
-		logging.debug('run_topic_modeling(%d, %d, %d, %.2f)', level, x, y, exclusiveness);
-
-		tile_id = self.get_tile_id(level, x, y);
-		neighbor_ids = self.get_neighbor_ids(level, x, y);
-
-		logging.debug(neighbor_ids)
-
-		tile_mtx = self.db.get_term_doc_matrix(tile_id);
-		if tile_mtx == []:
-			return [];
-
-		neighbor_mtx = self.db.get_term_doc_matrices(neighbor_ids);
-
-		# print(type(neighbor_mtx));
-		# print(type(neighbor_mtx[0]));
-		# print(type(neighbor_mtx[3]));
-		# print(type(tile_mtx.tolist()));
-		
-		# logging.debug(neighbor_mtx);
-		# logging.debug(tile_mtx);
+		logging.debug('run_topic_modeling(%d, %d, %d, %d)', level, x, y, xcls_value);
 
 		start_time_makeab = time.time()
 
 		A = matlab.double(tile_mtx.tolist());
-
-		B = [];
-		idxa = 0;
-		for each in neighbor_mtx:
-			if each == []: 
-				#logging.debug("found it, idx: " + str(idxa));
-				B.append(each);
-			else:
-				B.append(each.tolist());
-
-			idxa += 1;
-
 
 		elapsed_time_makeab= time.time() - start_time_makeab
 		logging.info('run_topic_modeling -make ab Execution time: %.3fms', elapsed_time_makeab)
@@ -304,17 +171,14 @@ class TopicModelingModule():
 
 		start_time_function_run = time.time()
 
-		# for each in B:
-		# 	print(type(each));
+		map_idx_to_word, map_word_to_idx, bag_words, stem_bag_words = self.db.read_voca()
+		voca = []
+		for key, value in map_idx_to_word.items():
+			temp = [key,value]
+			voca.append(temp)
 
-		# print(type(neighbor_mtx));
-		# print(type(tile_mtx.tolist()));
-
-
-        #[topics_list] = self.eng.function_run_extm(A, B, exclusiveness, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-
-        
-		[topics_list, w_scores, t_scores] = self.eng.function_run_extm(A, B, exclusiveness, voca, num_clusters, num_keywords, nargout=3);
+        #[topics_list] = self.eng.function_run_extm(A, B, xcls_value, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
+		[topics_list, w_scores, t_scores, xscore] = self.eng.function_run_extm(A, xcls_value, voca, num_clusters, num_keywords, nargout=4);
 		topics = np.asarray(topics_list);
 		topics = np.reshape(topics, (num_clusters, num_keywords));
 
@@ -329,70 +193,51 @@ class TopicModelingModule():
 
 		start_time_replace = time.time()
 		# find original word and replace
-		
-		for topic in topics:
-			for word in topic:
-				
-				s_count=0
-				temp_word = "";
-				temp_count=0;
 
-				for each in db['vocabulary_hashmap'].find():
-					if((word==each['stem']) and (s_count==0)):
-						temp_word=each['word']
-						temp_count=each['count']
-						#logging.info('the word is :  %s  %s...', temp_word, each['stem'])
-					#if(word==each['stem']):
-					if((word==each['stem']) and (s_count!=0)):
-						if(each['count']>temp_count):
-							temp_count=each['count']
-							temp_word=each['word']
-					s_count+=1	
-				#logging.debug('the result is %s   %s', word, temp_word)		
-				word=temp_word
+		ret_topics = []
+		topic_id = 0;
+		for topic in topics:
+
+			ret_topic = {}
+			ret_topic['score'] = topic_scores[topic_id, 0]
+			ret_words = []
+			for rank, word in enumerate(topic):
+
+				word_score = word_scores[topic_id, rank]
+
+				temp_count = 0
+				temp_word = ''
+				s_count = 0
+
+				res_word = ''
+				for key, value in stem_bag_words[word].items():
+					res_word = key
+					break
+
+				word_cnt = bag_words[word]
+
+				ret_word = {}
+				ret_word['word'] = res_word
+				ret_word['score'] = word_score
+				ret_word['count'] = word_cnt
+				ret_words.append(ret_word)
+
+			ret_topic['words'] = ret_words
+			ret_topics.append(ret_topic)
+			topic_id += 1
+
+
 		elapsed_time_replace= time.time() - start_time_replace
 		logging.info('run_topic_modeling -replace Execution time: %.3fms', elapsed_time_replace)
-		# update at 8th February, 2017 - the formation starts here.
 
-	#	tile = self.db[tile_name]
-		rettopics = []
-		for i in range(0,num_clusters):
-
-			tpc = {}
-			# topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i})['topic_score'];
-			tpc['score'] = topic_scores[i,0]
-			# 1. starting from topic_scores
-			
-			# 2. 
-			words = [];
-			for i1 in range(0,num_keywords):
-				# topic.append(each['word']);
-						word = {};
-						word['word'] = topics[i,i1]
-						word['scoret'] = word_scores[i,i1]
-						words.append(word)
-
-					# topic['words'] = words;
-			tpc['words'] = words;
-
-			rettopics.append(tpc);
-
-
-		# end. 
-
-		elapsed_time= time.time() - start_time
-		logging.info('run_topic_modeling  Execution time: %.3fms', elapsed_time)
-	
-
-		return rettopics;
+		return ret_topics
 
 	def get_ondemand_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words):
 
 		ondemand_topics=[]
 
-		#new_tile_mtx = make_sub_term_doc_matrix(level, x, y, date, include_words, exclude_words)
-
-		#ondemand_topics = run_topic_modeling()
+		sub_mtx = make_sub_term_doc_matrix(level, x, y, year, yday, include_words, exclude_words)
+		ondemand_topics = run_topic_modeling(sub_mtx, level, x, y, exclusiveness, topic_count, word_count)
 
 		return ondemand_topics;
 
@@ -430,35 +275,22 @@ class TopicModelingModule():
 		# result['exclusiveness_score'] = self.db.get_xscore(level, x, y, year, yday)
 
 		topics = []
-		# check if it needs a precomputed tile data.
-		# if exclusiveness == 0 :  
-		# 	# get precomputed tile data       			
-		# 	tile_mtx = self.db.get_term_doc_matrix(tile_id);
-		# 	self.make_sub_term_doc_matrix(tile_mtx,include_words,exclude_words, voca_hash, voca)
-			
-		# 	topics = self.db.get_precomputed_topics(level, x, y, topic_count, word_count, voca_hash, voca);
-						
-		# else :
-
-		# 	topics = self.run_topic_modeling(level, x, y, exclusiveness, topic_count, word_count, voca);
 		
-		
-
-		#---------------------------------------------------------------------
 		# if include or exclude exist 
+		logging.info('len(include_words): %d, len(exclude_words): %d',len(include_words), len(exclude_words))
 
-		# if len(include_words)==0 and len(exclude_words) ==0:
+		if len(include_words)==0 and len(exclude_words) ==0:
 			
-		# 	topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
-		# 	logging.info('sdone get_topics')
+			topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
+			logging.info('done get_topics')
 
-		# else:
+		else:
 
-		# 	topics =self.get_ondemand_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words)
-		# 	logging.info('doone ondemand_topics')
+			topics = self.get_ondemand_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words)
+			logging.info('done ondemand_topics')
 
 
-		topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
+		# topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
 		result['topic'] = topics;
 
@@ -715,6 +547,7 @@ class TopicModelingModule():
 
 		result = []
 
+		idx = 0
 		for ydate in range(yday_from, yday_to+1):
 
 			# get heatmap list from db
@@ -728,18 +561,21 @@ class TopicModelingModule():
 			tile['level'] = level
 			xcls_scores['tile'] = tile
 
-			xcls_scores['exclusiveness'] = []
+			xcls_scores['exclusiveness_score'] = []
 			xcls_score = {}
 			xcls_score['value'] = exclusiveness_score
 
-			date = datetime(year=year, month=mon, day=mday)
+
+
+			date = datetime(year=year, month=mon, day=(mday+idx))
 			date_str = date.strftime("%d-%m-%Y")
 			logging.debug('date_str: %s', date_str)
 			xcls_score['date'] = date_str
 
-			xcls_scores['exclusiveness'].append(xcls_score)
+			xcls_scores['exclusiveness_score'].append(xcls_score)
 
 			result.append(xcls_scores)
+			idx += 1
 
 		return result
 

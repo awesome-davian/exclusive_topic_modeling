@@ -59,7 +59,7 @@ function [W,H,iter,REC]=nmf(A,k,varargin)
 	params.addParamValue('method'        ,'anls_bpp',@(x) ischar(x) );
 	params.addParamValue('tol'           ,1e-3      ,@(x) isscalar(x) & x > 0);
 	params.addParamValue('min_iter'      ,20        ,@(x) isscalar(x) & x > 0);
-	params.addParamValue('max_iter'      ,500      ,@(x) isscalar(x) & x > 0);
+	params.addParamValue('max_iter'      ,25      ,@(x) isscalar(x) & x > 0);
 	params.addParamValue('max_time'      ,1e6       ,@(x) isscalar(x) & x > 0);
 	params.addParamValue('init'          ,struct([]),@(x) isstruct(x));
 	params.addParamValue('verbose'       ,1         ,@(x) isscalar(x) & x >= 0);

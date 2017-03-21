@@ -20,8 +20,8 @@ conn = pymongo.MongoClient("localhost", 27017)
 
 arglen = len(sys.argv)
 if arglen != 4:
-	print("Usage: python create_voca.py [rawdata_db_name] [collection_name] [vocabulary_file]")
-	print("For example, python create_voca.py test_rawdata_140130 SALT_DB_140130 ./voca/voca_140130")
+	print("Usage: python create_voca.py [rawdata_db_name] [collection_name] [vocabulary_directory_path]")
+	print("For example, python create_voca.py test_rawdata_140130 SALT_DB_140130 ./data/131103-131105/voca/")
 	exit(0)
 
 # logging.info('Run create_voca.py %s %s %s', sys.argv[1], sys.argv[2], sys.argv[3])
@@ -29,14 +29,14 @@ if arglen != 4:
 module_name = sys.argv[0]
 rawdata_db_name = sys.argv[1]
 collection_name = sys.argv[2]
-vocabulary_filename = sys.argv[3]
+vocabulary_dir = sys.argv[3]
 
-if not os.path.exists('./voca/'):
-    os.makedirs('./voca/')
-
-if os.path.exists(vocabulary_filename) is True:
-	logging.info('The Vocabulary file(%s) is already exist. Exit %s.', vocabulary_filename, module_name)
+if os.path.exists(vocabulary_dir) is True:
+	logging.info('The Vocabulary file(%s) is already exist. Exit %s.', vocabulary_dir, module_name)
 	exit(1)
+
+if not os.path.exists(vocabulary_dir):
+    os.makedirs(vocabulary_dir)
 
 rawdata_db = conn[rawdata_db_name]
 rawdata_col = rawdata_db[collection_name]
@@ -163,8 +163,8 @@ for doc in rawdata_col.find():
 elapsed_time = time.time() - start_time
 logging.info('Done: Stemming. Execution time: %.3fs', elapsed_time)
 
-voca_file = open(vocabulary_filename, 'w', encoding='UTF8')
-voca_hash_file = open(vocabulary_filename+'_hash', 'w', encoding='UTF8')
+voca_file = open(vocabulary_dir+'voca', 'w', encoding='UTF8')
+voca_hash_file = open(vocabulary_dir+'voca_hash', 'w', encoding='UTF8')
 
 for word in sorted(bag_words):
 

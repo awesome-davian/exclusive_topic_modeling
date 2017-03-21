@@ -134,7 +134,7 @@ class DBWrapper():
 		start_time=time.time()
 
 		rel_docs = collections.OrderedDict()
-		with open(constants.MTX_DIR + constants.DATA_RANGE + '/total_mtx', 'r', encoding='UTF8') as f:
+		with open(constants.MTX_DIR + 'total_mtx', 'r', encoding='UTF8') as f:
 			lines = f.readlines()
 			for line in lines:
 				v = line.split('\t')
@@ -184,7 +184,7 @@ class DBWrapper():
 
 	def get_xscore(self, level, x, y, year, yday):
 
-		xscore_dir = constants.XSCORE_DIR + constants.DATA_RANGE + '/'
+		xscore_dir = constants.SPATIAL_XSCORE_DIR
 		file_name = topic_file_name = 'xscore_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 		score = 0.0
@@ -192,15 +192,17 @@ class DBWrapper():
 			with open(xscore_dir + file_name, 'r', encoding='UTF8') as f:
 				score = float(f.readline())
 		except FileNotFoundError:
+			logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
 			#score = -1.0
-			score = random.uniform(0, 1)
+			#score = random.uniform(0, 1)
+			score = 0.0
 
 		return score
 
 	def get_W(self, level, x, y, year, yday):
 
-		W_dir = './W/' + constants.DATA_RANGE + '/'
-		file_name = W_file_name = 'W_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		W_dir = constants.W_PATH
+		file_name = W_file_name = 'w_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 		try:
 			with open(W_dir + file_name, 'r', encoding='UTF8') as f:
@@ -372,7 +374,7 @@ class DBWrapper():
 
 		exclusiveness = int(exclusiveness)
 
-		datapath = './tile_generator/topics/'+constants.DATA_RANGE+'/'
+		datapath = constants.SPATIAL_TOPIC_PATH
 		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
 
 		topics = []
@@ -380,21 +382,28 @@ class DBWrapper():
 		try: 
 			with open(datapath+topic_file_name, 'r') as f:
 				
-				topic = {}
-				words = []
-
 				lines = f.readlines()
-				idx = 0
-				for line in lines:
-					line = line.strip()
-					if idx == 0:
-						topic['score'] = float(line)
-						idx += 1
-					else:
-						
-						if idx <= word_count:
 
-							v = line.split('\t')
+				if len(lines) > 0:
+
+					idx = 0
+					for line in lines:
+						logging.debug(line)
+
+						v = line.split('\t')
+
+						if len(v) == 1:
+							
+							if idx > 0:
+								topic['words'] = words
+								topic['exclusiveness']=exclusiveness
+								topics.append(topic)
+
+							topic = {}
+							words = []
+
+							topic['score'] = float(v[0])
+						else:
 							word = {}
 							word['word'] = str(v[0])
 							word['count'] = int(v[1])
@@ -402,19 +411,14 @@ class DBWrapper():
 
 							words.append(word)
 
-						idx += 1
-						# if idx > constants.DEFAULT_NUM_TOP_K:	// it has to be changed 
-						if idx > 10:
-							idx = 0
-							
-							topic['words'] = words
-							topic['exclusiveness']=exclusiveness
-							topics.append(topic)
-
-							topic = {}
-							words = []
+							# if idx > constants.DEFAULT_NUM_TOP_K:	// it has to be changed 
+					
+					topic['words'] = words
+					topic['exclusiveness']=exclusiveness
+					topics.append(topic)				
+						
 		except FileNotFoundError:
-			logging.debug('%s is not exist.', topic_file_name)
+			logging.debug('%s is not exist.', (datapath+topic_file_name))
 			# set fake data
 			#topics = self.get_fake_topics()
 
@@ -424,94 +428,59 @@ class DBWrapper():
 
 	def get_all_topics(self, level, x, y, year, yday_from, yday_to):
 
-
-
 		return
 
-	def get_precomputed_topics(self, level, x, y ,topic_count, word_count, voca_hash, voca):
+	def read_spatial_mtx(self, directory, mtx):
 
-		logging.debug('get_precomputed_topics(%d, %d, %d)', level, x, y);
+		v = mtx.split('_')
 
-		topics = [];
+		res, center_cnt = self.read_spatial_mtx(directory, int(v[1]), int(v[2]), int(v[3]), int(v[4]), int(v[5]))
 
-		start_time=time.time()
+		return res, center_cnt
 
-		for tile_name in self.db.collection_names():
+	def read_spatial_mtx(self, directory, year, yday, level, x, y):
 
-			if tile_name.endswith('_topics') == False:
-				continue;
+		pos = str(x)+'_'+str(y)
 
-			#logging.debug(tile_name)
+		neighbor_names = []
 
-			tile_info = tile_name.split('_');
+		temp_name = mtx.replace(pos, '')
+		neighbor_names.append(temp_name+str(x+0)+'_'+str(y+0)) # it's me
+		
+		neighbor_names.append(temp_name+str(x+1)+'_'+str(y+1))
+		neighbor_names.append(temp_name+str(x+1)+'_'+str(y+0))
+		neighbor_names.append(temp_name+str(x+1)+'_'+str(y-1))
+		neighbor_names.append(temp_name+str(x+0)+'_'+str(y+1))
 
-			tile_x = tile_info[constants.POS_X];
-			tile_y = tile_info[constants.POS_Y];
-			tile_level = tile_info[constants.POS_LEVEL];
+		neighbor_names.append(temp_name+str(x+0)+'_'+str(y-1))
+		neighbor_names.append(temp_name+str(x-1)+'_'+str(y+1))
+		neighbor_names.append(temp_name+str(x-1)+'_'+str(y+0))
+		neighbor_names.append(temp_name+str(x-1)+'_'+str(y-1))
 
+		nmtx = []
 
-			# if tile_name.find(str(tile_id)) > 0:
-			if int(tile_x) == x and int(tile_y) == y and int(tile_level) == level:
-				logging.debug('found, %s', tile_name);
+		line_cnt = 0
+		center_count = 0
+		for idx, each in enumerate(neighbor_names):
+			each_path = directory + each
+			if os.path.exists(each_path) == False:
+				continue
+			
+			with open(each_path) as each_file:
+				isnt_center = 0 if idx == 0 else 1
+				# each_mtx = []
+				
+				for line in each_file.readlines():
+					
+					v = line.split('\t')
 
-				tile = self.db[tile_name]
-				for i in range(0,topic_count):
+					item = [int(v[0]), int(v[1]), int(v[2]), int(isnt_center)]
+					# item = np.array([float(v[0]), float(v[1]), float(v[2]), float(isnt_center)], dtype=np.double)
+					nmtx.append(item)
 
-					topic = {};
-					topic['score'] = tile.find_one({'topic_id':constants.TOPIC_ID_MARGIN_FOR_SCORE+i+1})['topic_score'];
+					# neighbor_mtx.append([int(v[0]), int(v[1]), int(v[2]), idx])
+					line_cnt += 1
+					if idx == 0: 
+						center_count += 1
 
-					words = [];
-
-					start_time_find_info=time.time()
-
-					for idx, each in enumerate(tile.find({'topic_id': i+1}).sort('rank',pymongo.ASCENDING)):
-						word={}
-						word['word'] = each['word']
-						word['score'] = each['score']
-						
-						#start_time_find_count=time.time()
-
-					    #find stemmed word form voca-hashmap
-						for each in voca_hash:
-							if word['word']==each['word']:
-								stem_word=each['stem']
-								break;
-						#logging.info(stem_word)
-
-						#get stemmed word count  from voca 				
-						for each in voca:
-						 	if stem_word==each['stem']:	
-						 		word['count']=each['count']
-						 		break;
-
-
-						# #find count from voca-hash						
-						# for each in voca_hash:
-						# 	if(word['word']==each['word']):
-						# 		word['count']=each['count']
-						# 		break;
-
-						words.append(word)
-
-						#elaspsed_time_find_couunt=time.time()-start_time_find_count
-						#logging.info("Done get count. Execution time: %.3fms", elaspsed_time_find_couunt)
-
-
-						if(idx>=word_count-1):
-							break;
-
-					elaspsed_time_find_info=time.time()-start_time_find_info
-					logging.info("get_precomputed_topics -  find info. Execution time: %.3fms", elaspsed_time_find_info)		
-
-
-
-					topic['words'] = words;
-
-					topics.append(topic);
-
-				break;
-
-		elaspsed_time=time.time() - start_time
-		logging.info("Done get Pre-computed topics. Execution time: %.3fms", elaspsed_time)	
-
-		return topics;
+		return

@@ -70,6 +70,9 @@ def checkInputValidation(method, contents):
                 if y < 0:
                     error_string = "Invalid tile.y";
 
+            include_words.remove('')
+            exclude_words.remove('')
+
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
 
@@ -164,7 +167,7 @@ def request_get_topics(uuid):
 
     contents = request.get_json(silent=True);
 
-    logging.info('Request from %s: %s', request.remote_addr, contents);
+    logging.info('GET_TOPICS Request from %s: %s', request.remote_addr, contents);
 
     error_string, parameters, exclusiveness, topic_count, word_count, date, include_words, exclude_words, tiles = checkInputValidation('GET_TOPICS', contents);
     if error_string != "Success":
@@ -208,7 +211,7 @@ def request_get_related_docs(uuid):
 
     contents = request.get_json(silent=True);
 
-    logging.info('Request from %s: %s', request.remote_addr, contents);
+    logging.info('GET_RELATED_DOCS Request from %s: %s', request.remote_addr, contents);
 
     error_string, word, level, x, y, date = checkInputValidation('GET_RELATED_DOCS', contents);
     if error_string != "Success":
@@ -262,7 +265,7 @@ def request_run_topic_modeling():
 @app.route('/GET_TILE_DETAIL_INFO/<uuid>', methods=['POST'])
 def request_get_tile_detail_info(uuid):
 
-    logging.info('Request from %s: %s', request.remote_addr, contents);
+    logging.info('GET_TILE_DETAIL_INFO Request from %s: %s', request.remote_addr, contents);
 
     error_string, date_from, date_to, tile = checkInputValidation('GET_TILE_DETAIL_INFO', contents);
     if error_string != "Success":
@@ -294,7 +297,7 @@ def request_get_heatmap(uuid):
 
     contents = request.get_json(silent=True);
 
-    logging.info('Request from %s: %s', request.remote_addr, contents);
+    logging.info('GET_HEATMAP Request from %s: %s', request.remote_addr, contents);
 
     error_string, date_from, date_to, tiles = checkInputValidation('GET_HEATMAP', contents);
     if error_string != "Success":
