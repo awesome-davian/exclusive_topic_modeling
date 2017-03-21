@@ -70,8 +70,8 @@ def checkInputValidation(method, contents):
                 if y < 0:
                     error_string = "Invalid tile.y";
 
-            include_words.remove('')
-            exclude_words.remove('')
+            # include_words.remove('')
+            # exclude_words.remove('')
 
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
