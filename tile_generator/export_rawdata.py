@@ -6,7 +6,6 @@ import constants
 import numpy as np
 import collections
 import logging, logging.config
-import util
 from datetime import datetime 
 
 import constants
