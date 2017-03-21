@@ -134,7 +134,7 @@ class DBWrapper():
 		start_time=time.time()
 
 		rel_docs = collections.OrderedDict()
-		with open(constants.MTX_DIR + constants.DATA_RANGE + '/total_mtx', 'r', encoding='UTF8') as f:
+		with open(constants.MTX_DIR + 'total_mtx', 'r', encoding='UTF8') as f:
 			lines = f.readlines()
 			for line in lines:
 				v = line.split('\t')
@@ -184,7 +184,7 @@ class DBWrapper():
 
 	def get_xscore(self, level, x, y, year, yday):
 
-		xscore_dir = constants.XSCORE_DIR + constants.DATA_RANGE + '/'
+		xscore_dir = constants.SPATIAL_XSCORE_DIR
 		file_name = topic_file_name = 'xscore_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 		score = 0.0
@@ -192,15 +192,17 @@ class DBWrapper():
 			with open(xscore_dir + file_name, 'r', encoding='UTF8') as f:
 				score = float(f.readline())
 		except FileNotFoundError:
+			logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
 			#score = -1.0
-			score = random.uniform(0, 1)
+			#score = random.uniform(0, 1)
+			score = 0.0
 
 		return score
 
 	def get_W(self, level, x, y, year, yday):
 
-		W_dir = './W/' + constants.DATA_RANGE + '/'
-		file_name = W_file_name = 'W_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		W_dir = constants.W_PATH
+		file_name = W_file_name = 'w_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 		try:
 			with open(W_dir + file_name, 'r', encoding='UTF8') as f:
@@ -372,7 +374,7 @@ class DBWrapper():
 
 		exclusiveness = int(exclusiveness)
 
-		datapath = './tile_generator/data/'+constants.DATA_RANGE+'/topics/'
+		datapath = constants.SPATIAL_TOPIC_PATH
 		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
 
 		topics = []
@@ -380,21 +382,28 @@ class DBWrapper():
 		try: 
 			with open(datapath+topic_file_name, 'r') as f:
 				
-				topic = {}
-				words = []
-
 				lines = f.readlines()
-				idx = 0
-				for line in lines:
-					line = line.strip()
-					if idx == 0:
-						topic['score'] = float(line)
-						idx += 1
-					else:
-						
-						if idx <= word_count:
 
-							v = line.split('\t')
+				if len(lines) > 0:
+
+					idx = 0
+					for line in lines:
+						logging.debug(line)
+
+						v = line.split('\t')
+
+						if len(v) == 1:
+							
+							if idx > 0:
+								topic['words'] = words
+								topic['exclusiveness']=exclusiveness
+								topics.append(topic)
+
+							topic = {}
+							words = []
+
+							topic['score'] = float(v[0])
+						else:
 							word = {}
 							word['word'] = str(v[0])
 							word['count'] = int(v[1])
@@ -402,19 +411,14 @@ class DBWrapper():
 
 							words.append(word)
 
-						idx += 1
-						# if idx > constants.DEFAULT_NUM_TOP_K:	// it has to be changed 
-						if idx > 10:
-							idx = 0
-							
-							topic['words'] = words
-							topic['exclusiveness']=exclusiveness
-							topics.append(topic)
-
-							topic = {}
-							words = []
+							# if idx > constants.DEFAULT_NUM_TOP_K:	// it has to be changed 
+					
+					topic['words'] = words
+					topic['exclusiveness']=exclusiveness
+					topics.append(topic)				
+						
 		except FileNotFoundError:
-			logging.debug('%s is not exist.', topic_file_name)
+			logging.debug('%s is not exist.', (datapath+topic_file_name))
 			# set fake data
 			#topics = self.get_fake_topics()
 
@@ -467,7 +471,7 @@ class DBWrapper():
 				# each_mtx = []
 				
 				for line in each_file.readlines():
-					line = line.strip()
+					
 					v = line.split('\t')
 
 					item = [int(v[0]), int(v[1]), int(v[2]), int(isnt_center)]

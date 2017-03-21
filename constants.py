@@ -2,7 +2,7 @@
 # v0.2.x.x : Protocol test in progress
 # v0.3.x.x : GET_RELATED_TOPIC protocol added
 # v0.5.x.x : Protocol test complete
-VERSION = 'v0.3.0.5_Mar13'	# get related docs complete
+VERSION = 'v0.5.0.1_Mar21'	# get related docs complete
 
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
@@ -14,11 +14,15 @@ DEFAULT_MONGODB_PORT = 27017
 
 DATA_RANGE = '131103-131105'
 
-GLOBAL_VOCA_FILE_PATH = './tile_generator/data/voca/voca_' + DATA_RANGE
-GLOBAL_DOC_FILE_PATH = './tile_generator/data/rawdata/raw_' + DATA_RANGE
-NEIGHBOR_MTX_DIR = './tile_generator/data/mtx_neighbor/'
-MTX_DIR = './tile_generator/data/mtx/'
-XSCORE_DIR = './tile_generator/data/xscore/'
+GLOBAL_VOCA_FILE_PATH = './tile_generator/data/'+DATA_RANGE+'/voca/voca'
+GLOBAL_DOC_FILE_PATH = './tile_generator/data/'+DATA_RANGE+'/rawdata/raw_tweets'
+NEIGHBOR_MTX_DIR = './tile_generator/data/'+DATA_RANGE+'/mtx_neighbor/'
+MTX_DIR = './tile_generator/data/'+DATA_RANGE+'/mtx/'
+SPATIAL_XSCORE_DIR = './tile_generator/data/'+DATA_RANGE+'/xscore/spatial/'
+TEMPORAL_XSCORE_DIR = './tile_generator/data/'+DATA_RANGE+'/xscore/temporal/'
+SPATIAL_TOPIC_PATH = './tile_generator/data/'+DATA_RANGE+'/topics/spatial/'
+TEMPORAL_TOPIC_PATH = './tile_generator/data/'+DATA_RANGE+'/topics/temporal/'
+W_PATH = './tile_generator/data/'+DATA_RANGE+'/w/'
 
 OPMODE_SPATIAL_MTX = 0
 OPMODE_TEMPORAL_MTX = 0

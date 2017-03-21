@@ -91,7 +91,7 @@ class TopicModelingModule():
 
 		map_idx_to_word, map_word_to_idx, bag_words, stem_bag_words = self.db.read_voca()
 
-		termdoc_dir = constants.MTX_DIR + constants.DATA_RANGE + '/'
+		termdoc_dir = constants.MTX_DIR
 		file_name  = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 		word_idxs = []
@@ -135,16 +135,16 @@ class TopicModelingModule():
 		include_docs = self.get_docs_including_word(level, x, y, year, yday, include_word_list)
 		exclude_docs = self.get_docs_including_word(level, x, y, year, yday, exclude_word_list)
 		# term_doc_mtx = self.getTermDocMtx(level, x, y, date)
-		mtx = self.db.read_spatial_mtx(constants.MTX_DIR+constants.DATA_RANGE + '/', year, yday, level, x, y)
+		mtx = self.db.read_spatial_mtx(constants.MTX_DIR, year, yday, level, x, y)
 
 		new_tile_mtx=[]
 		word_idx=0;
 
 		for each in mtx:
 			flag = True
-			if len(include_docs) > 0 && (each[1] in include_docs):
+			if len(include_docs) > 0 and (each[1] in include_docs):
 				flag = True
-			if len(exclude_docs) > 0 && (each[1] in exclude_docs):
+			if len(exclude_docs) > 0 and (each[1] in exclude_docs):
 				flag = False
 
 			if flag == True:
@@ -277,6 +277,8 @@ class TopicModelingModule():
 		topics = []
 		
 		# if include or exclude exist 
+		logging.info('len(include_words): %d, len(exclude_words): %d',len(include_words), len(exclude_words))
+
 		if len(include_words)==0 and len(exclude_words) ==0:
 			
 			topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
@@ -545,6 +547,7 @@ class TopicModelingModule():
 
 		result = []
 
+		idx = 0
 		for ydate in range(yday_from, yday_to+1):
 
 			# get heatmap list from db
@@ -558,18 +561,21 @@ class TopicModelingModule():
 			tile['level'] = level
 			xcls_scores['tile'] = tile
 
-			xcls_scores['exclusiveness'] = []
+			xcls_scores['exclusiveness_score'] = []
 			xcls_score = {}
 			xcls_score['value'] = exclusiveness_score
 
-			date = datetime(year=year, month=mon, day=mday)
+
+
+			date = datetime(year=year, month=mon, day=(mday+idx))
 			date_str = date.strftime("%d-%m-%Y")
 			logging.debug('date_str: %s', date_str)
 			xcls_score['date'] = date_str
 
-			xcls_scores['exclusiveness'].append(xcls_score)
+			xcls_scores['exclusiveness_score'].append(xcls_score)
 
 			result.append(xcls_scores)
+			idx += 1
 
 		return result
 
