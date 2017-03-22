@@ -361,9 +361,17 @@ class DBWrapper():
 			topics.append(topic)
 
 		return topics
+
+	def get_most_freq_word(self, stemmed_word):
+		
+		stemmed_list = list(self.stem_bag_words[stemmed_word].items())
+
+		word = stemmed_list[0][0]
+
+		return word
 	
 	def get_key(self,item):
-		return int(item['score'])
+		return float(item['score'])
 
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
@@ -403,15 +411,22 @@ class DBWrapper():
 
 							topic = {}
 							words = []
+							append_cnt = 0
 
 							topic['score'] = float(v[0])
 						else:
-							word = {}
-							word['word'] = str(v[0])
-							word['count'] = int(v[1])
-							word['score'] = float(v[2])
 
-							words.append(word)
+							if append_cnt < word_count:
+
+								freq_word = self.get_most_freq_word(str(v[0]))
+
+								word = {}
+								word['word'] = freq_word
+								word['count'] = int(v[1])
+								word['score'] = float(v[2])
+
+								words.append(word)
+								append_cnt += 1
 					
 					topic['words'] = words
 					topic['exclusiveness']=exclusiveness
