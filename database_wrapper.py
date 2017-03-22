@@ -364,9 +364,8 @@ class DBWrapper():
 
 	def get_most_freq_word(self, stemmed_word):
 		
-		stemmed_list = list(self.stem_bag_words[stemmed_word].items())
-
 		try:
+			stemmed_list = list(self.stem_bag_words[stemmed_word].items())
 			word = stemmed_list[0][0]
 		except KeyError:
 			word = ''
