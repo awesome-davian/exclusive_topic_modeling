@@ -366,7 +366,10 @@ class DBWrapper():
 		
 		stemmed_list = list(self.stem_bag_words[stemmed_word].items())
 
-		word = stemmed_list[0][0]
+		try:
+			word = stemmed_list[0][0]
+		except KeyError:
+			word = ''
 
 		return word
 	
