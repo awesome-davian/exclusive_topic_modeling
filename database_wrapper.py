@@ -363,8 +363,13 @@ class DBWrapper():
 		return topics
 
 	def get_most_freq_word(self, stemmed_word):
+
 		
-		stemmed_list = list(self.stem_bag_words[stemmed_word].items())
+		try:
+			stemmed_list = list(self.stem_bag_words[stemmed_word].items())
+			word = stemmed_list[0][0]
+		except KeyError:
+			word = ''
 
 		word = stemmed_list[0][0]
 
@@ -396,7 +401,7 @@ class DBWrapper():
 
 					num_topics = 0
 					for line in lines:
-						logging.debug(line)
+						#logging.debug(line)
 
 						v = line.split('\t')
 
@@ -419,6 +424,7 @@ class DBWrapper():
 							if append_cnt < word_count:
 
 								freq_word = self.get_most_freq_word(str(v[0]))
+								#freq_word = str(v[0])
 
 								word = {}
 								word['word'] = freq_word

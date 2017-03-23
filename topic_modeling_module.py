@@ -481,9 +481,10 @@ class TopicModelingModule():
 
 		return mtx, nmtx
 
-	def get_tile_detail_info(self, level, x, y, time_from, time_to):
+	def get_tile_detail_info(self, level, x, y, date_from, date_to):
 
-		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, time_from, time_to)
+		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, date_from, date_to)
+
 
 		# convert the unixtime to ydate
 		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
@@ -507,20 +508,21 @@ class TopicModelingModule():
 		time_graph = []
 		all_topics = []
 		for ydate in range(yday_from, yday_to+1):
-			item = []
-			exclusiveness_score = self.get_xscore(level, x, y, year, ydate)
+			item = {}
+			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)  #fix 
 			item['score'] = exclusiveness_score
 			item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 			time_graph.append(item)
 
-			item = []
+			item = {}
 			item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 			topics = []
 			for xvalue in range(0, 6):
 				topic = {}
 				topic['exclusiveness'] = xvalue
-				topic['topic'] = self.db.get_topics(level, x, y, ydate, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
+				topic['topic'] = self.db.get_topics(level, x, y, year, ydate, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
 				topics.append(topic)
+
 
 			item['topics'] = topics
 			all_topics.append(item)

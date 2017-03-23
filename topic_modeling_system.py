@@ -70,8 +70,8 @@ def checkInputValidation(method, contents):
                 if y < 0:
                     error_string = "Invalid tile.y";
 
-            # include_words.remove('')
-            # exclude_words.remove('')
+            include_words.remove('')
+            exclude_words.remove('')
 
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
@@ -209,14 +209,28 @@ def request_get_topics(uuid):
 @app.route('/GET_RELATED_DOCS/<uuid>', methods=['POST'])
 def request_get_related_docs(uuid):
 
-    contents = request.get_json(silent=True);
+    logging.info(request);
 
-    logging.info('GET_RELATED_DOCS Request from %s: %s', request.remote_addr, contents);
+    #logging.info(request.form.get("word"));
 
-    error_string, word, level, x, y, date = checkInputValidation('GET_RELATED_DOCS', contents);
-    if error_string != "Success":
-        logging.error('ERROR_BAD_REQUEST: %s', error_string);
-        return error_string, status.HTTP_400_BAD_REQUEST;
+    word = request.form.get("word");
+    level = request.form.get("level");
+    x = request.form.get("x");
+    y = request.form.get("y");
+    date = request.form.get("date");
+
+    #logging.info(word, level, x, y ,date );  -->make error
+    logging.info(type(word));
+
+
+    #contents = request.get_json();
+
+    # logging.info('GET_RELATED_DOCS Request from %s: %s', request.remote_addr, contents);
+
+    # error_string, word, level, x, y, date = checkInputValidation('GET_RELATED_DOCS', contents);
+    # if error_string != "Success":
+    #     logging.error('ERROR_BAD_REQUEST: %s', error_string);
+    #     return error_string, status.HTTP_400_BAD_REQUEST;
 
     # run topic modeling for each tile
     docs = [];
@@ -265,23 +279,40 @@ def request_run_topic_modeling():
 @app.route('/GET_TILE_DETAIL_INFO/<uuid>', methods=['POST'])
 def request_get_tile_detail_info(uuid):
 
-    logging.info('GET_TILE_DETAIL_INFO Request from %s: %s', request.remote_addr, contents);
+    # logging.info('GET_TILE_DETAIL_INFO Request from %s: %s', request.remote_addr, contents);
 
-    error_string, date_from, date_to, tile = checkInputValidation('GET_TILE_DETAIL_INFO', contents);
-    if error_string != "Success":
-        logging.error('ERROR_BAD_REQUEST: %s', error_string);
-        return error_string, status.HTTP_400_BAD_REQUEST;
+    # error_string, date_from, date_to, tile = checkInputValidation('GET_TILE_DETAIL_INFO', contents);
+    # if error_string != "Success":
+    #     logging.error('ERROR_BAD_REQUEST: %s', error_string);
+    #     return error_string, status.HTTP_400_BAD_REQUEST;
 
-    logging.debug('date_from: %d', date_from);
-    logging.debug('date_to: %d', date_to);
-    logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
+    # logging.debug('date_from: %d', date_from);
+    # logging.debug('date_to: %d', date_to);
+    # logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
 
-    output = []
+    # output = []
     
-    level = tile['level']
-    x = tile['x']
-    y = tile['y']
+    # level = tile['level']
+    # x = tile['x']
+    # y = tile['y']
 
+    logging.info(request);
+
+    #logging.info(request.json["tile"]);
+    #logging.info(request.json['level']);
+
+
+    level = request.form.get("level");
+    x = request.form.get("x");
+    y = request.form.get("y");
+    time_from = request.form.get("from");
+    time_to = request.form.get("to");
+
+
+    logging.debug(level);
+    logging.debug(time_from);
+
+    outputs = [];
     output = TM.get_tile_detail_info(level, x, y, time_from, time_to);
     outputs.append(output)
 
