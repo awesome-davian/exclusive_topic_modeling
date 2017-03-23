@@ -371,8 +371,6 @@ class DBWrapper():
 		except KeyError:
 			word = ''
 
-		word = stemmed_list[0][0]
-
 		return word
 	
 	def get_key(self,item):
