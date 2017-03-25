@@ -192,7 +192,7 @@ class DBWrapper():
 			with open(xscore_dir + file_name, 'r', encoding='UTF8') as f:
 				score = float(f.readline())
 		except FileNotFoundError:
-			logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
+			#logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
 			#score = -1.0
 			#score = random.uniform(0, 1)
 			score = 0.0
@@ -264,7 +264,7 @@ class DBWrapper():
 
 
 		elapsed_time_get_mtx= time.time() - start_time_get_mtx
-		logging.info('get_topics -get tile_mtx Execution time: %.3fms', elapsed_time_get_mtx)
+		logging.info('get_term_doc_matrices(), Execution time: %.3fms', elapsed_time_get_mtx)
 
 		return tile_mtxs;
 
@@ -391,7 +391,7 @@ class DBWrapper():
 		topics = []
 		
 		try: 
-			with open(datapath+topic_file_name, 'r') as f:
+			with open(datapath+topic_file_name, 'r', encoding='UTF8') as f:
 				
 				lines = f.readlines()
 
@@ -437,7 +437,8 @@ class DBWrapper():
 					topics.append(topic)				
 						
 		except FileNotFoundError:
-			logging.debug('%s is not exist.', (datapath+topic_file_name))
+			#logging.debug('%s is not exist.', (datapath+topic_file_name))
+			pass
 			# set fake data
 			#topics = self.get_fake_topics()
 
