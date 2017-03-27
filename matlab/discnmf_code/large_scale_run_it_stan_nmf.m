@@ -38,8 +38,7 @@ Fr_wds = cell(xto-xfrom+1,yto-yfrom+1);
 
 % Stop Words
 Stop_words = {'http','gt','ye','wa','thi','ny','lt','im','ll','ya','rt','ha','lol','ybgac','ve','destexx','ur','mta','john','kennedi','st','wat','atl',' ',...
-    'dinahjanefollowspre','nj ','york','nk','ili','bx','idk','doe','rn', '  ','pg','dimezthebulli','wu','citi','moma','wanna','gonna','mixxi'...
-    'tbh','mama','dalla','bbq','pleas','lot','ff','ed','op','je','cu','eli','youu'};
+    'dinahjanefollowspre','nj ','york','nk','ili','bx','idk','doe','rn', '  ','pg','dimezthebulli','wu'};
 
 
 for x = 1 : xto-xfrom+1
@@ -47,7 +46,7 @@ for x = 1 : xto-xfrom+1
         address_string{x,y} = strcat( basic_address_mtx,type,'_',year,'_d',day,'_',level,'_',int2str(xfrom + x -1),'_',int2str(yfrom +y -1 ) );
         if exist( address_string{x,y}, 'file' ) 
             mtx_data{x,y} = load(address_string{x,y});
-            [Topics{x,y},~,~,xcl_score{x,y},Freq_words{x,y}] = function_run_extm(mtx_data{x,y}, 0.8, Stop_words, dict, k, topk);
+            [Topics{x,y},~,~,xcl_score{x,y},Freq_words{x,y}] = func_run_stanNMF_hals(mtx_data{x,y}, Stop_words, dict, k, topk);
             clear mtx_data{x,y}
         else
             xcl_score{x,y} = -1
@@ -69,32 +68,29 @@ colorbar
 for x = 1 : xto-xfrom+1
     for y = 1 : yto-yfrom+1
         if exist( address_string{x,y}, 'file' ) 
-            for z = 1:2
-                Freq_words{x,y}{z} = full(Freq_words{x,y}{z});
-            end
+                Freq_words{x,y}{1} = full(Freq_words{x,y}{1});
         end
     end
 end
-
 
 for x = 1:xto-xfrom+1   
     for  y =  1:yto-yfrom+1  
         if exist( address_string{x,y}, 'file' ) 
             
             text(xto-xfrom+1 - (x-1)-0.45 , yto-yfrom+1 -0.3 - (y-1), {Freq_words{x,y}{1}(1:3)}, 'FontSize', 10,'Color', 'red');
-            text(xto-xfrom+1 - (x-1)-0.25 , yto-yfrom+1 -0.3 - (y-1), {Freq_words{x,y}{2}(1:3)}, 'FontSize', 10,'Color', 'red');
+         %   text(xto-xfrom+1 - (x-1)-0.25 , yto-yfrom+1 -0.3 - (y-1), {Freq_words{x,y}{2}(1:3)}, 'FontSize', 10,'Color', 'red');
             text(xto-xfrom+1 - (x-1) , yto-yfrom+1 -0.3 - (y-1),Topics{x,y}(1:3), 'FontSize', 10,'Color', 'red');
-    %        text(xto-xfrom+1 - (x-1)+0.3 , yto-yfrom+1 -0.3 - (y-1),Sum_swd{x,y}(1:2), 'FontSize', 11,'Color', 'black');
+         %   text(xto-xfrom+1 - (x-1)+0.3 , yto-yfrom+1 -0.3 - (y-1),Sum_swd{x,y}(1:2), 'FontSize', 11,'Color', 'black');
             
             text(xto-xfrom+1 - (x-1)-0.45, yto-yfrom+1 - (y-1),{Freq_words{x,y}{1}(6:8)}, 'FontSize', 10,'Color', 'black');
-            text(xto-xfrom+1 - (x-1)-0.25, yto-yfrom+1 - (y-1), {Freq_words{x,y}{2}(6:8)}, 'FontSize', 10,'Color', 'black');
+         %   text(xto-xfrom+1 - (x-1)-0.25, yto-yfrom+1 - (y-1), {Freq_words{x,y}{2}(6:8)}, 'FontSize', 10,'Color', 'black');
             text(xto-xfrom+1 - (x-1), yto-yfrom+1 - (y-1),Topics{x,y}(6:8), 'FontSize', 10,'Color', 'black');
-     %       text(xto-xfrom+1 - (x-1)+0.3 , yto-yfrom+1 -0.3 - (y-1),Sum_swd{x,y}(1:2), 'FontSize', 11,'Color', 'black');
+         %   text(xto-xfrom+1 - (x-1)+0.3 , yto-yfrom+1 -0.3 - (y-1),Sum_swd{x,y}(1:2), 'FontSize', 11,'Color', 'black');
             
             text(xto-xfrom+1 - (x-1)-0.45, yto-yfrom+1 +0.3 - (y-1),{Freq_words{x,y}{1}(11:13)}, 'FontSize', 10,'Color', 'blue');
-            text(xto-xfrom+1 - (x-1)-0.25, yto-yfrom+1 +0.3 - (y-1), {Freq_words{x,y}{2}(11:13)}, 'FontSize', 10,'Color', 'blue');
+         %   text(xto-xfrom+1 - (x-1)-0.25, yto-yfrom+1 +0.3 - (y-1), {Freq_words{x,y}{2}(11:13)}, 'FontSize', 10,'Color', 'blue');
             text(xto-xfrom+1 - (x-1), yto-yfrom+1 + 0.3 - (y-1),Topics{x,y}(11:13), 'FontSize', 10,'Color', 'blue');
-      %      text(xto-xfrom+1 - (x-1)+0.3 , yto-yfrom+1 -0.3 - (y-1),Sum_swd{x,y}(1:2), 'FontSize', 11,'Color', 'black');
+         %   text(xto-xfrom+1 - (x-1)+0.3 , yto-yfrom+1 -0.3 - (y-1),Sum_swd{x,y}(1:2), 'FontSize', 11,'Color', 'black');
             
  
             

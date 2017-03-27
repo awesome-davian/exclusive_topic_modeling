@@ -29,10 +29,16 @@ class TopicModelingModule():
 		self.nmf = nmf_core
 		self.db = DB
 
-		# logging.info("loading Matlab module...");
-		# self.eng = matlab.engine.start_matlab();
-		# self.eng.cd('./matlab/discnmf_code/');
-		# logging.info("Done: loading Matlab module");
+		logging.info("loading Matlab module...")
+		self.eng = matlab.engine.start_matlab()
+		self.eng.cd('./matlab/discnmf_code/')
+		logging.info("Done: loading Matlab module")
+
+		logging.info("loading Term-doc matrices")
+		self.eng.script_init(nargout=0)
+		logging.info("Done: loading Term-doc matrices")
+
+		# self.eng.function_test('mtx_2013_d309_13_2418_5112',nargout=1)
 
 	def get_tile_id(self, level, x, y):
 
@@ -98,6 +104,7 @@ class TopicModelingModule():
 		for w in word_list:
 			stemmed = porter_stemmer.stem(w)
 			word_idxs.append(map_word_to_idx[stemmed])
+			logging.debug('inword: %s, wordidx: %d', stemmed, map_word_to_idx[stemmed])
 
 
 		with open(termdoc_dir + file_name, 'r', encoding='UTF8') as f:
@@ -155,15 +162,17 @@ class TopicModelingModule():
 		return new_tile_mtx;
 
 		
-	def run_topic_modeling(self, mtx, level, x, y, xcls_value, num_clusters, num_keywords, voca, include_words, exclude_words):
+	def run_topic_modeling(self, mtx_name, xcls_value, num_clusters, num_keywords, include_words, exclude_words):
 		
 		start_time = time.time()
 
-		logging.debug('run_topic_modeling(%d, %d, %d, %d)', level, x, y, xcls_value);
+		logging.debug('run_topic_modeling(%s, %d)', mtx_name, xcls_value);
 
 		start_time_makeab = time.time()
 
-		A = matlab.double(tile_mtx.tolist());
+		# A = matlab.double(mtx.tolist());
+
+		# logging.debug('mtx size: %d', len(A))
 
 		elapsed_time_makeab= time.time() - start_time_makeab
 		logging.info('run_topic_modeling -make ab Execution time: %.3fms', elapsed_time_makeab)
@@ -175,14 +184,21 @@ class TopicModelingModule():
 		voca = []
 		for key, value in map_idx_to_word.items():
 			temp = [key,value]
-			voca.append(temp)
+			# voca.append(temp)
+			voca.append(value)
 
         #[topics_list] = self.eng.function_run_extm(A, B, xcls_value, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
 		# [topics_list, w_scores, t_scores, xscore] = self.eng.function_run_extm(A, xcls_value, voca, num_clusters, num_keywords, nargout=4);
+		exclusiveness_value = xcls_value/5
 				
-		[topics_list, w_scores, t_scores, xscore, freq_words] = self.eng.function_run_extm_inex(A, xcls_value, constants.STOP_WORDS, include_words, exclude_words, voca, num_clusters, num_keywords, nargout=5)
+		[topics_list, w_scores, t_scores] = self.eng.function_run_extm_inex(mtx_name, exclusiveness_value, constants.STOP_WORDS, include_words, exclude_words, voca, num_clusters, num_keywords, nargout=3)
 
+		logging.debug(topics_list)		
+		logging.debug(w_scores)		
+		logging.debug(t_scores)
 
+		if len(topics_list) == 0:
+			return []
 
 		topics = np.asarray(topics_list);
 		topics = np.reshape(topics, (num_clusters, num_keywords));
@@ -190,7 +206,17 @@ class TopicModelingModule():
 		word_scores = np.asarray(w_scores);
 		word_scores = np.reshape(word_scores, (num_clusters, num_keywords));
 
-		topic_scores = np.asarray(t_scores);
+		topic_scores = np.asarray(t_scores[0]);
+
+		# logging.debug(topics_list)
+		# logging.debug(topics)
+
+		# logging.debug(w_scores)
+		# logging.debug(word_scores)
+
+
+		# logging.debug(t_scores)
+		# logging.debug(topic_scores)
 
 		elapsed_time_function_run = time.time() - start_time_function_run
 		logging.info('run_topic_modeling -function_run_extm Execution time: %.3fms', elapsed_time_function_run)
@@ -204,7 +230,7 @@ class TopicModelingModule():
 		for topic in topics:
 
 			ret_topic = {}
-			ret_topic['score'] = topic_scores[topic_id, 0]
+			ret_topic['score'] = topic_scores[topic_id]
 			ret_words = []
 			for rank, word in enumerate(topic):
 
@@ -215,9 +241,13 @@ class TopicModelingModule():
 				s_count = 0
 
 				res_word = ''
-				for key, value in stem_bag_words[word].items():
-					res_word = key
-					break
+				try:
+					for key, value in stem_bag_words[word].items():
+						res_word = key
+						break
+				except KeyError:
+					logging.debug('KeyError: %s', word)
+					continue
 
 				word_cnt = bag_words[word]
 
@@ -239,12 +269,19 @@ class TopicModelingModule():
 
 	def get_ondemand_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words):
 
+		logging.debug('get_ondemand_topics(%d, %d, %d, %d, %d, %d)', level, x, y, year, yday, exclusiveness);
+
+		nmtx_name = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+
 		ondemand_topics=[]
 
 		# sub_mtx = self.make_sub_term_doc_matrix(level, x, y, year, yday, include_words, exclude_words)
 
-		mtx = self.db.read_spatial_mtx(constants.MTX_DIR, year, yday, level, x, y)
-		ondemand_topics = self.run_topic_modeling(mtx, level, x, y, exclusiveness, topic_count, word_count, include_words, exclude_words)
+		#mtx = self.db.read_spatial_mtx(constants.MTX_DIR, year, yday, level, x, y)
+		# ondemand_topics = self.run_topic_modeling(mtx, level, x, y, exclusiveness, topic_count, word_count, include_words, exclude_words)
+		
+		# nmtx_name = 'mtx_2013_d308_12_1209_2556'
+		ondemand_topics = self.run_topic_modeling(nmtx_name, exclusiveness, topic_count, word_count, include_words, exclude_words)
 
 		return ondemand_topics;
 
@@ -546,7 +583,7 @@ class TopicModelingModule():
 
 	def get_heatmaps(self, level, x, y, date_from, date_to):
 
-		logging.debug('get_heatmaps(%d, %d, %d, %d, %d)', level, x, y, date_from, date_to)
+		# logging.debug('get_heatmaps(%d, %d, %d, %d, %d)', level, x, y, date_from, date_to)
 
 		date_from = int(date_from)
 		date_to = int(date_to)
@@ -581,7 +618,7 @@ class TopicModelingModule():
 			xcls_score['value'] = exclusiveness_score
 
 			date_str = date.strftime("%d-%m-%Y")
-			logging.debug('date_str: %s', date_str)
+			# logging.debug('date_str: %s', date_str)
 			xcls_score['date'] = date_str
 
 			xcls_scores['exclusiveness_score'].append(xcls_score)
