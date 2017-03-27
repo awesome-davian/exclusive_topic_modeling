@@ -319,7 +319,7 @@ def request_get_tile_detail_info(uuid):
     for output in outputs:
         logging.debug('output: %s', output)
 
-    json_data = json.dumps(outputs);
+    json_data = json.dumps(output);
 
     return json_data 
 
