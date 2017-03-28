@@ -39,15 +39,19 @@ Fr_wds = cell(xto-xfrom+1,yto-yfrom+1);
 % Stop Words
 Stop_words = {'http','gt','ye','wa','thi','ny','lt','im','ll','ya','rt','ha','lol','ybgac','ve','destexx','ur','mta','john','kennedi','st','wat','atl',' ',...
     'dinahjanefollowspre','nj ','york','nk','ili','bx','idk','doe','rn', '  ','pg','dimezthebulli','wu','citi','moma','wanna','gonna','mixxi'...
-    'tbh','mama','dalla','bbq','pleas','lot','ff','ed','op','je','cu','eli','youu'};
+    'tbh','mama','dalla','bbq','pleas','lot'};
 
+% Include, Exclude Words
+In_words = {'nyc'};
+Ex_words = {}
 
 for x = 1 : xto-xfrom+1
     for y = 1 : yto-yfrom+1
         address_string{x,y} = strcat( basic_address_mtx,type,'_',year,'_d',day,'_',level,'_',int2str(xfrom + x -1),'_',int2str(yfrom +y -1 ) );
         if exist( address_string{x,y}, 'file' ) 
             mtx_data{x,y} = load(address_string{x,y});
-            [Topics{x,y},~,~,xcl_score{x,y},Freq_words{x,y}] = function_run_extm(mtx_data{x,y}, 0.8, Stop_words, dict, k, topk);
+            [Topics{x,y},~,~,xcl_score{x,y},Freq_words{x,y}] = function_run_extm_inex(mtx_data{x,y}, 0.8, Stop_words, In_words,...
+                                                                        Ex_words,dict, k, topk);
             clear mtx_data{x,y}
         else
             xcl_score{x,y} = -1
