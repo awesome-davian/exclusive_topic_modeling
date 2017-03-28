@@ -314,14 +314,12 @@ def request_get_tile_detail_info(uuid):
     logging.debug(level);
     logging.debug(time_from);
 
-    outputs = [];
+    
     output = TM.get_tile_detail_info(level, x, y, time_from, time_to);
-    outputs.append(output)
+    
+    logging.debug('output: %s', output)
 
-    for output in outputs:
-        logging.debug('output: %s', output)
-
-    json_data = json.dumps(outputs);
+    json_data = json.dumps(output);
 
     return json_data 
 

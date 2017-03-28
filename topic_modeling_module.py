@@ -534,19 +534,13 @@ class TopicModelingModule():
 
 		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, date_from, date_to)
 
+		date_from = int(date_from)
+		date_to = int(date_to)
 
-		# convert the unixtime to ydate
-		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
-		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
-
-		year = date_from.timetuple().tm_year
-		mon = date_from.timetuple().tm_mon
-		mday = date_from.timetuple().tm_mday
-
-		yday_from = date_from.timetuple().tm_yday
-		yday_to = date_to.timetuple().tm_yday
+		date_intv = 86400000
 
 		result = {};
+		
 		tile = {};
 		tile['x'] = x;
 		tile['y'] = y; 
@@ -556,13 +550,26 @@ class TopicModelingModule():
 
 		time_graph = []
 		all_topics = []
-		for ydate in range(yday_from, yday_to+1):
-			item = {}
-			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)  #fix 
-			item['score'] = exclusiveness_score
-			item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 
-			if item['score'] > 0.0:
+		date_unix = date_from
+
+		while True:
+			if date_unix > date_to:
+				break
+
+			date = datetime.fromtimestamp(int(date_unix/1000))
+			year = date.timetuple().tm_year	
+			mon = date.timetuple().tm_mon
+			mday = date.timetuple().tm_mday
+			yday = date.timetuple().tm_yday
+
+			date_unix += date_intv
+
+			exclusiveness_score = self.db.get_xscore(level, x, y, year, yday)  #fix 
+			if exclusiveness_score > 0.0:
+				item = {}
+				item['score'] = exclusiveness_score
+				item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 				time_graph.append(item)
 
 			item = {}
@@ -571,7 +578,7 @@ class TopicModelingModule():
 			for xvalue in range(0, 6):
 				topic = {}
 				topic['exclusiveness'] = xvalue
-				topic['topic'] = self.db.get_topics(int(level), int(x), int(y), year, ydate, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
+				topic['topic'] = self.db.get_topics(int(level), int(x), int(y), year, yday, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
 
 				if len(topic['topic']) > 0:
 					topics.append(topic)
