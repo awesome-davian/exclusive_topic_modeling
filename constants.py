@@ -12,7 +12,7 @@ DEFAULT_MONGODB_PORT = 27017
 # DB_NAME_MTX = 'SALT_DB_mtx' + DB_NAME_POSTFIX
 # DB_NAME_TOPICS = 'SALT_DB_topics' + DB_NAME_POSTFIX
 
-DATA_RANGE = '131020-131110'
+DATA_RANGE = '131103-131105'
 
 GLOBAL_VOCA_FILE_PATH = './tile_generator/data/'+DATA_RANGE+'/voca/voca'
 GLOBAL_DOC_FILE_PATH = './tile_generator/data/'+DATA_RANGE+'/rawdata/raw_tweets'
