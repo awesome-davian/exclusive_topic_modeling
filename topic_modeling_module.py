@@ -8,6 +8,7 @@ import sys
 from nltk import PorterStemmer
 import time
 from datetime import datetime
+from operator import itemgetter
 
 
 porter_stemmer=PorterStemmer();
@@ -468,6 +469,10 @@ class TopicModelingModule():
 				if len(total_docs) > constants.MAX_RELATED_DOCS:
 					break
 
+
+
+		total_docs_sorted = sorted(total_docs[:constants.MAX_RELATED_DOCS], key=itemgetter('created_at'), reverse=True)
+
 		result = {}
 		tile = {}
 		tile['x'] = x
@@ -476,7 +481,7 @@ class TopicModelingModule():
 
 		result['tile'] = tile
 
-		result['documents'] = total_docs[:constants.MAX_RELATED_DOCS]
+		result['documents'] = total_docs_sorted[:constants.MAX_RELATED_DOCS]
 
 		elapsed_time=time.time()-start_time
 		logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
