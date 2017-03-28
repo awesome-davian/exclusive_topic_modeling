@@ -70,8 +70,10 @@ def checkInputValidation(method, contents):
                 if y < 0:
                     error_string = "Invalid tile.y";
 
-            include_words.remove('')
-            exclude_words.remove('')
+            if '' in include_words:
+                include_words.remove('')
+            if '' in exclude_words:
+                exclude_words.remove('')
 
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
@@ -337,8 +339,8 @@ def request_get_heatmap(uuid):
 
     logging.debug('date_from: %d', date_from);
     logging.debug('date_to: %d', date_to);
-    for tile in tiles:
-        logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
+    # for tile in tiles:
+    #     logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
 
     heatmap_list = []
     for tile in tiles:
@@ -349,8 +351,8 @@ def request_get_heatmap(uuid):
         for heatmap in heatmaps:
             heatmap_list.append(heatmap)
 
-    for heatmap in heatmap_list:
-        logging.debug('heatmap: %s', heatmap)
+    # for heatmap in heatmap_list:
+    #     logging.debug('heatmap: %s', heatmap)
 
     json_data = json.dumps(heatmap_list);
 
