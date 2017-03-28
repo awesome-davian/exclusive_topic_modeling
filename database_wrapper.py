@@ -1,4 +1,3 @@
-import os
 import logging
 import pymongo
 import constants
@@ -455,23 +454,17 @@ class DBWrapper():
 
 		v = mtx.split('_')
 
-		# remove d from v[2]
-		year = int(v[1])
-		yday = int(v[2][1:])
-		level = int(v[3])
-		x = int(v[4])
-		y = int(v[5])
+		res, center_cnt = self.read_spatial_mtx(directory, int(v[1]), int(v[2]), int(v[3]), int(v[4]), int(v[5]))
 
-		res = self.read_spatial_mtx(directory, year, yday, level, x, y)
-
-		return res
+		return res, center_cnt
 
 	def read_spatial_mtx(self, directory, year, yday, level, x, y):
 
+		pos = str(x)+'_'+str(y)
+
 		neighbor_names = []
 
-		temp_name = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_'
-
+		temp_name = mtx.replace(pos, '')
 		neighbor_names.append(temp_name+str(x+0)+'_'+str(y+0)) # it's me
 		
 		neighbor_names.append(temp_name+str(x+1)+'_'+str(y+1))
@@ -483,9 +476,6 @@ class DBWrapper():
 		neighbor_names.append(temp_name+str(x-1)+'_'+str(y+1))
 		neighbor_names.append(temp_name+str(x-1)+'_'+str(y+0))
 		neighbor_names.append(temp_name+str(x-1)+'_'+str(y-1))
-
-		for each in neighbor_names:
-			logging.debug('path: %s', each)
 
 		nmtx = []
 
@@ -504,16 +494,13 @@ class DBWrapper():
 					
 					v = line.split('\t')
 
-					# item = [int(v[0]), int(v[1]), int(v[2]), int(isnt_center)]
-					# nmtx.append(item)
-					item = np.array([float(v[0]), float(v[1]), float(v[2]), float(isnt_center)], dtype=np.double)
-					nmtx = np.append(nmtx, item, axis=0)
+					item = [int(v[0]), int(v[1]), int(v[2]), int(isnt_center)]
+					# item = np.array([float(v[0]), float(v[1]), float(v[2]), float(isnt_center)], dtype=np.double)
+					nmtx.append(item)
 
 					# neighbor_mtx.append([int(v[0]), int(v[1]), int(v[2]), idx])
 					line_cnt += 1
 					if idx == 0: 
 						center_count += 1
 
-		nmtx = np.array(nmtx, dtype=np.double).reshape(line_cnt, 4)
-
-		return nmtx
+		return

@@ -70,10 +70,8 @@ def checkInputValidation(method, contents):
                 if y < 0:
                     error_string = "Invalid tile.y";
 
-            if '' in include_words:
-                include_words.remove('')
-            if '' in exclude_words:
-                exclude_words.remove('')
+            include_words.remove('')
+            exclude_words.remove('')
 
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
@@ -321,7 +319,7 @@ def request_get_tile_detail_info(uuid):
     for output in outputs:
         logging.debug('output: %s', output)
 
-    json_data = json.dumps(output);
+    json_data = json.dumps(outputs);
 
     return json_data 
 
@@ -339,8 +337,8 @@ def request_get_heatmap(uuid):
 
     logging.debug('date_from: %d', date_from);
     logging.debug('date_to: %d', date_to);
-    # for tile in tiles:
-    #     logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
+    for tile in tiles:
+        logging.debug('x: %s, y: %s, level: %s', tile['x'], tile['y'], tile['level']);
 
     heatmap_list = []
     for tile in tiles:
@@ -351,8 +349,8 @@ def request_get_heatmap(uuid):
         for heatmap in heatmaps:
             heatmap_list.append(heatmap)
 
-    # for heatmap in heatmap_list:
-    #     logging.debug('heatmap: %s', heatmap)
+    for heatmap in heatmap_list:
+        logging.debug('heatmap: %s', heatmap)
 
     json_data = json.dumps(heatmap_list);
 
@@ -367,4 +365,4 @@ if __name__ == '__main__':
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
-    app.run(host='0.0.0.0', port='5002')
+    app.run(host='0.0.0.0', port='5001')

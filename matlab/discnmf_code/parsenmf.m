@@ -1,14 +1,11 @@
-function [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,TopicScore,Wtopk_num ] = parsenmf(W,H,vocab,topk)
+function [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,TopicScore ] = parsenmf(W,H,vocab,glob_voca,topk)
     %W is of size mxk
     %H is of size kxn
-    Wtopk_num = [];
+    
     k = size(W,2);      % k <- num of topics
-    Wtopk=cell(min([size(W,1) topk*2]),k); % create empty matrix of size, topk x k, for storing
-    Wtopk_idx = zeros(min([size(W,1) topk*2]),k);
-    % Wtopk_score = cell(min([size(W,1) topk*2]),k);
-    Wtopk_score = zeros(min([size(W,1) topk*2]),k);
-
-
+    Wtopk=cell(min([size(W,1) topk]),k); % create empty matrix of size, topk x k, for storing
+    Wtopk_idx = zeros(min([size(W,1) topk]),k);
+    Wtopk_score = cell(min([size(W,1) topk]),k);
     
     n = size(H,2);      % n <- num of documents
     Htopk=zeros(min([topk size(W,2)]),n); % zeroes of k x 512
@@ -19,12 +16,10 @@ function [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,TopicScore,Wtopk_num ] = pa
     for i=1:k
         [sorted_w,idx]=sort(W(:,i),'descend');
         sum_w(i) = sum(W(:,i));
-        for j=1:topk*2
-            Wtopk{j,i}=vocab{ idx(j) };
-            Wtopk_num(j,i) = idx(j);
+        for j=1:topk
+            Wtopk{j,i}=glob_voca{1}(vocab(idx(j)));
             Wtopk_idx(j,i) = idx(j);
-            % Wtopk_score{j,i} = sorted_w(j)/sum_w(i);
-            Wtopk_score(j,i) = sorted_w(j)/sum_w(i);
+            Wtopk_score{j,i} = sorted_w(j)/sum_w(i);
         end
     end
 
@@ -54,4 +49,3 @@ function [ Wtopk,Htopk,DocTopk,Wtopk_idx,Wtopk_score,TopicScore,Wtopk_num ] = pa
         DocTopk(:,j) = idx(1:min([topk size(H,2)]));
     end
 end
-
