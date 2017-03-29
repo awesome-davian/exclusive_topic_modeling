@@ -115,7 +115,7 @@ class TopicModelingModule():
 				word_idx = int(v[0])
 				doc_idx = int(v[1])
 				for w in word_idxs:
-					if doc_idx == w:
+					if word_idx == w:
 						doc_lists[doc_idx] = 1
 						# doc_lists.append(doc_idx)
 						break;
@@ -163,7 +163,6 @@ class TopicModelingModule():
 		return new_tile_mtx;
 
 		
-
 	def run_topic_modeling(self, mtx_name, xcls_value, num_clusters, num_keywords, include_words, exclude_words):
 		
 		start_time = time.time()
@@ -190,7 +189,6 @@ class TopicModelingModule():
 			voca.append(value)
 
         #[topics_list] = self.eng.function_run_extm(A, B, xcls_value, voca, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, nargout=3);
-
 		# [topics_list, w_scores, t_scores, xscore] = self.eng.function_run_extm(A, xcls_value, voca, num_clusters, num_keywords, nargout=4);
 		exclusiveness_value = xcls_value/5
 				
@@ -278,15 +276,13 @@ class TopicModelingModule():
 
 		ondemand_topics=[]
 
-
 		# sub_mtx = self.make_sub_term_doc_matrix(level, x, y, year, yday, include_words, exclude_words)
 
 		#mtx = self.db.read_spatial_mtx(constants.MTX_DIR, year, yday, level, x, y)
 		# ondemand_topics = self.run_topic_modeling(mtx, level, x, y, exclusiveness, topic_count, word_count, include_words, exclude_words)
 		
 		# nmtx_name = 'mtx_2013_d308_12_1209_2556'
-
-		ondemand_topics = self.run_topic_modeling(nmtx_name, exclusiveness, topic_count, word_count, include_words, exclude_words);
+		ondemand_topics = self.run_topic_modeling(nmtx_name, exclusiveness, topic_count, word_count, include_words, exclude_words)
 
 		return ondemand_topics;
 
@@ -330,7 +326,7 @@ class TopicModelingModule():
 
 		if len(include_words)==0 and len(exclude_words) ==0:
 			
-			topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
+			topics = self.db.get_topics(int(level), int(x), int(y), year, yday, topic_count, word_count, exclusiveness);
 			logging.info('done get_topics')
 
 		else:
@@ -556,19 +552,13 @@ class TopicModelingModule():
 
 		logging.debug('get_tile_detail_info(%s, %s, %s, %s, %s)', level, x, y, date_from, date_to)
 
+		date_from = int(date_from)
+		date_to = int(date_to)
 
-		# convert the unixtime to ydate
-		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
-		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
-
-		year = date_from.timetuple().tm_year
-		mon = date_from.timetuple().tm_mon
-		mday = date_from.timetuple().tm_mday
-
-		yday_from = date_from.timetuple().tm_yday
-		yday_to = date_to.timetuple().tm_yday
+		date_intv = 86400000
 
 		result = {};
+		
 		tile = {};
 		tile['x'] = x;
 		tile['y'] = y; 
@@ -578,29 +568,43 @@ class TopicModelingModule():
 
 		time_graph = []
 		all_topics = []
-		idx = 0
-		for ydate in range(yday_from, yday_to+1):
-			#logging.info(ydate);
-			item = {}
-			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)  #fix 
-			item['score'] = exclusiveness_score
-			item['date'] = datetime(year=year, month=mon, day=(mday+idx)).strftime("%d-%m-%Y")
-			time_graph.append(item)
+
+		date_unix = date_from
+
+		while True:
+			if date_unix > date_to:
+				break
+
+			date = datetime.fromtimestamp(int(date_unix/1000))
+			year = date.timetuple().tm_year	
+			mon = date.timetuple().tm_mon
+			mday = date.timetuple().tm_mday
+			yday = date.timetuple().tm_yday
+
+			date_unix += date_intv
+
+			exclusiveness_score = self.db.get_xscore(level, x, y, year, yday)  #fix 
+			if exclusiveness_score > 0.0:
+				item = {}
+				item['score'] = exclusiveness_score
+				item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
+				time_graph.append(item)
 
 			item = {}
-			item['date'] = datetime(year=year, month=mon, day=(mday+idx)).strftime("%d-%m-%Y")
+			item['date'] = datetime(year=year, month=mon, day=mday).strftime("%d-%m-%Y")
 			topics = []
 			for xvalue in range(0, 6):
 				topic = {}
 				topic['exclusiveness'] = xvalue
-				topic['topic'] = self.db.get_topics(level, x, y, year, ydate, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
-				topics.append(topic)
+				topic['topic'] = self.db.get_topics(int(level), int(x), int(y), year, yday, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
 
+				if len(topic['topic']) > 0:
+					topics.append(topic)
 
 			item['topics'] = topics
-			all_topics.append(item)
-			idx +=1 
 
+			if len(item['topics']) > 0:
+				all_topics.append(item)
 
 		result['time_grath'] = time_graph
 		result['all_topics'] = all_topics
@@ -611,24 +615,25 @@ class TopicModelingModule():
 
 		# logging.debug('get_heatmaps(%d, %d, %d, %d, %d)', level, x, y, date_from, date_to)
 
-		# convert the unixtime to ydate
-		date_from = datetime.fromtimestamp(int(int(date_from)/1000))
-		date_to = datetime.fromtimestamp(int(int(date_to)/1000))
+		date_from = int(date_from)
+		date_to = int(date_to)
 
-		year = date_from.timetuple().tm_year
-		mon = date_from.timetuple().tm_mon
-		mday = date_from.timetuple().tm_mday
-
-		yday_from = date_from.timetuple().tm_yday
-		yday_to = date_to.timetuple().tm_yday
+		date_intv = 86400000
 
 		result = []
+		date_unix = date_from
+		while True:
+			if date_unix > date_to:
+				break
 
-		idx = 0
-		for ydate in range(yday_from, yday_to+1):
+			date = datetime.fromtimestamp(int(date_unix/1000))
+			year = date.timetuple().tm_year		
+			yday = date.timetuple().tm_yday
+
+			date_unix += date_intv
 
 			# get heatmap list from db
-			exclusiveness_score = self.db.get_xscore(level, x, y, year, ydate)
+			exclusiveness_score = self.db.get_xscore(level, x, y, year, yday)
 
 			xcls_scores = {}
 
@@ -642,9 +647,6 @@ class TopicModelingModule():
 			xcls_score = {}
 			xcls_score['value'] = exclusiveness_score
 
-
-
-			date = datetime(year=year, month=mon, day=(mday+idx))
 			date_str = date.strftime("%d-%m-%Y")
 			# logging.debug('date_str: %s', date_str)
 			xcls_score['date'] = date_str
@@ -652,7 +654,6 @@ class TopicModelingModule():
 			xcls_scores['exclusiveness_score'].append(xcls_score)
 
 			result.append(xcls_scores)
-			idx += 1
 
 		return result
 

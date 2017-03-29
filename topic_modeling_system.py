@@ -314,12 +314,10 @@ def request_get_tile_detail_info(uuid):
     logging.debug(level);
     logging.debug(time_from);
 
-    outputs = [];
+    
     output = TM.get_tile_detail_info(level, x, y, time_from, time_to);
-    outputs.append(output)
-
-    for output in outputs:
-        logging.debug('output: %s', output)
+    
+    logging.debug('output: %s', output)
 
     json_data = json.dumps(output);
 
@@ -367,4 +365,4 @@ if __name__ == '__main__':
     TM = topic_modeling_module.TopicModelingModule(DB)
     TG = tile_generator.TileGenerator(DB)
 
-    app.run(host='0.0.0.0', port='5002')
+    app.run(host='0.0.0.0', port='5001')
