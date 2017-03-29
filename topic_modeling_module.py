@@ -359,6 +359,8 @@ class TopicModelingModule():
 		year = date.timetuple().tm_year
 		day_of_year = date.timetuple().tm_yday
 
+		logging.info(day_of_year);
+
 		logging.debug('get_releated_docs(%s, %s, %s, %s, %d)', level, x, y, word, day_of_year)
 
 		s_word = porter_stemmer.stem(word)
@@ -473,6 +475,21 @@ class TopicModelingModule():
 				if len(total_docs) > constants.MAX_RELATED_DOCS:
 					break
 
+		timearr = [];
+		for doc in total_docs:
+			logging.info(doc['created_at']);
+			date= datetime.fromtimestamp(int(int(doc['created_at'])))
+			logging.info(date);
+			mday = date.timetuple().tm_mday
+			timearr.append(mday);
+
+		#logging.info(timearr);
+
+		timedict = dict((i, timearr.count(i)) for i in timearr); 
+		logging.info(timedict);
+
+
+
 
 
 		total_docs_sorted = sorted(total_docs[:constants.MAX_RELATED_DOCS], key=itemgetter('created_at'), reverse=True)
@@ -486,6 +503,7 @@ class TopicModelingModule():
 		result['tile'] = tile
 
 		result['documents'] = total_docs_sorted[:constants.MAX_RELATED_DOCS]
+		result['timeGraph'] = timedict;
 
 		elapsed_time=time.time()-start_time
 		logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
