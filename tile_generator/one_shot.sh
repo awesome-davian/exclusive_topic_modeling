@@ -42,11 +42,12 @@ python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}
 
 echo ""
 echo "python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
-python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
+python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
+#python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
 
-echo ""
-echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
-python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
+# echo ""
+# echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
+# python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}
 
 # echo ""
 # echo "python topic_modeling_module_all.py ${MTX_DIR} ${VOCA_DIR} ${TOPICS_DIR}"

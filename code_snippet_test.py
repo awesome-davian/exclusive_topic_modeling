@@ -1,3 +1,4 @@
+import os
 import sys
 import pymongo
 import constants
@@ -15,41 +16,63 @@ import numpy as np
 # db = conn[dbname];
 
 #------------------------------------------------------------------------------------------------
+
+def get_files_in_dir(dirname, sort_key, reverse):
+
+	# usage: get_files_in_dir('.', os.path.getsize')
+	
+	dirpath = os.path.abspath(dirname)
+
+	# make a generator for all file paths within dirpath
+	all_files = ( os.path.join(basedir, filename) for basedir, dirs, files in os.walk(dirpath) for filename in files   )
+
+	sorted_files = sorted(all_files, key=sort_key, reverse=reverse)
+
+	# make a generator for tuples of file path and size: ('/Path/to/the.file', 1024)
+	# files_and_sizes = ( (path, os.path.getsize(path)) for path in all_files )
+	# sorted_files_with_size = sorted( files_and_sizes, key = operator.itemgetter(1) )
+
+	return sorted_files
+
+temp = get_files_in_dir('./matlab/standard_nmf/', os.path.getsize, True)
+print(temp)
+
+#------------------------------------------------------------------------------------------------
 # read top 50 line
 
 #max_num = int(sys.argv[2])
-min_num = 50;
-max_num = 100;
+# min_num = 50;
+# max_num = 100;
 
-print('min_num: %d' % min_num)
-print('max_num: %d' % max_num)
-#output_directory = './'
+# print('min_num: %d' % min_num)
+# print('max_num: %d' % max_num)
+# #output_directory = './'
 
-input_file_name = sys.argv[1]
-# output_file_name = input_file_name + '_top' + max_num
-output_file_name = 'top' + str(max_num) + '_'+ input_file_name
+# input_file_name = sys.argv[1]
+# # output_file_name = input_file_name + '_top' + max_num
+# output_file_name = 'top' + str(max_num) + '_'+ input_file_name
 
-input_file = open(input_file_name, 'r')
-output_file = open(output_file_name, 'w')
+# input_file = open(input_file_name, 'r')
+# output_file = open(output_file_name, 'w')
 
-idx = 0;
-for line in input_file:
+# idx = 0;
+# for line in input_file:
 
-	idx += 1;
+# 	idx += 1;
 
-	if idx <= min_num:
-		continue;
+# 	if idx <= min_num:
+# 		continue;
 
-	if idx > max_num:
-		break;
+# 	if idx > max_num:
+# 		break;
 	
-	print('%s' % line.replace('\n',''), file=output_file)
-	print('%d\n%s' % (idx,line))
+# 	print('%s' % line.replace('\n',''), file=output_file)
+# 	print('%d\n%s' % (idx,line))
 	
 
 
-input_file.close()
-output_file.close()
+# input_file.close()
+# output_file.close()
 
 
 
