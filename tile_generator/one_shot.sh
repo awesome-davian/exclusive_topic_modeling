@@ -9,6 +9,7 @@ DB_COL_RAWDATA=SALT_DB_${DATE}
 RAWDATA_DIR=./data/${DATE}/rawdata/
 VOCA_DIR=./data/${DATE}/voca/
 MTX_DIR=./data/${DATE}/mtx/
+W_DIR=./data/${DATE}/w/
 NEIGHBOR_MTX_DIR=./data/${DATE}/nmtx/
 TOPICS_DIR=./data/${DATE}/topics/
 
@@ -41,9 +42,18 @@ echo "python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}"
 python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}
 
 echo ""
-echo "python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
+echo "python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
 python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
 #python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
+
+
+echo ""
+echo "python run_nmf.py"
+python run_xnmf.py ${MTX_DIR} ${W_DIR}
+
+# echo ""
+# echo "python run_xnmf.py"
+# python run_xnmf.py ${MTX_DIR} ${W_DIR}
 
 # echo ""
 # echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"

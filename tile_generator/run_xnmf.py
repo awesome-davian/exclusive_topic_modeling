@@ -12,7 +12,7 @@ import math
 
 def doParWork(pi, l):
 
-	logging.debug('[%d] doParWord(%d, %d): %s', pi, len(l), num_thread, l[0])
+	logging.debug('[%d] doParWord(%d, %d): %s', pi, len(l[idx]), num_thread, l[idx][0])
 
 	# do nmf
 	
@@ -83,7 +83,7 @@ def main():
 
 		sl = divide_list(l, num_thread)
 
-		fs = {exe.submit(doParWork, idx, sl[idx]) for idx in range(0, num_thread)}
+		fs = {exe.submit(doParWork, idx, sl) for idx in range(0, num_thread)}
 
 		logging.info('fs - 2')
 		done, _ = concurrent.futures.wait(fs)
