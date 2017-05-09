@@ -11,17 +11,42 @@ import concurrent.futures
 import multiprocessing.managers as m
 import math
 
-def doParWork(pi, tile_instance):
+import queue
+
+def doStandardNMF(pi, tile_instance):
 
 	# logging.debug('[%d] doParWord(%d, %d): %s', pi, len(l[idx]), num_thread, l[idx][0])
-	logging.debug('[%d] doParWord(%d)', pi, num_thread)
+	#logging.debug('[%d] doParWord(%d)', pi, num_thread)
 
-	tile_sample = tile_instance.get_tile(pi)
+	# tile = tile_instance.get_tile(pi)
 
-	logging.debug('[%d] tile: %s', pi, tile_sample)
+	# logging.debug('[%d] tile: %s', pi, tile)
+
+	while(True):
+		tile = tile_instance.get_tile()
+		
+		if tile == None:
+			break
+
+		logging.debug('[%d]tile: %s', pi, tile)
+		time.sleep(0.1)
+	
 
 	# do nmf
 	
+	return
+
+def doExNMF(pi, tile_instance):
+
+	while(True):
+		tile = tile_instance.get_tile()
+		
+		if tile == None:
+			break
+
+		logging.debug('[%d]tile: %s', pi, tile)
+		time.sleep(0.1)
+
 	return
 
 def get_files_in_dir(dirname, sort_key, reverse):
@@ -77,22 +102,29 @@ num_thread = 40
 l = get_files_in_dir(mtx_dir, os.path.getsize, True)
 sl = divide_list(l, num_thread)
 
-class TC:
+class TileManager:
 	def __init__(self, num_thread):
 		self.text = 'helloworld'
-		self.tiles = []
+		self.tiles = queue.Queue()
 		self.num_thread = num_thread
 
 		return
 
 	def add_tile(self, tilename):
-		self.tiles.append(tilename)
+		# self.tiles.append(tilename)
+		self.tiles.put(tilename)
 
-	def get_tile(self, pid):
-		return self.tiles[pid]
+	def get_tile(self):
+		# return self.tiles[pid]
+
+		# possible to occur the timing issue...
+		if self.tiles.empty():
+			return None
+		else:
+			return self.tiles.get()
 
 
-class TM(m.BaseManager):
+class MultiProcessingManager(m.BaseManager):
 	pass
 
 
@@ -102,12 +134,12 @@ def main():
 	start_time = time.time()
 	logging.info('Run NMF...')
 
-	TM.register("TC", TC)
+	MultiProcessingManager.register("TileManager", TileManager)
 
-	manager = TM()
+	manager = MultiProcessingManager()
 	manager.start()
 
-	t = manager.TC(num_thread)
+	t = manager.TileManager(num_thread)
 
 	# make a generator for all file paths within dirpath
 	dirpath = os.path.abspath(mtx_dir)
@@ -118,17 +150,25 @@ def main():
 		t.add_tile(each)
 
 	with concurrent.futures.ProcessPoolExecutor(max_workers = num_thread) as exe:
-		logging.info('fs - 1')
+		logging.info('standard_nmf - 1')
 
-		# l = get_files_in_dir(mtx_dir, os.path.getsize, True)
+		fs = {exe.submit(doStandardNMF, idx, t) for idx in range(0, num_thread)}
 
-		# sl = divide_list(l, num_thread)
-
-		fs = {exe.submit(doParWork, idx, t) for idx in range(0, num_thread)}
-
-		logging.info('fs - 2')
+		logging.info('standard_nmf - 2')
 		done, _ = concurrent.futures.wait(fs)
-		logging.info('fs - 3')
+		logging.info('standard_nmf - 3')
+
+	for each in sorted_files:
+		t.add_tile(each)
+
+	with concurrent.futures.ProcessPoolExecutor(max_workers = num_thread) as exe:
+		logging.info('ex_nmf - 1')
+
+		fs = {exe.submit(doExNMF, idx, t) for idx in range(0, num_thread)}
+
+		logging.info('ex_nmf - 2')
+		done, _ = concurrent.futures.wait(fs)
+		logging.info('ex_nmf - 3')
 
 
 	elapsed_time = time.time() - start_time

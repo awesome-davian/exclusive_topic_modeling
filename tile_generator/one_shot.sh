@@ -46,14 +46,24 @@ echo "python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDAT
 python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
 #python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
 
-
-echo ""
-echo "python run_nmf.py"
-python run_xnmf.py ${MTX_DIR} ${W_DIR}
-
+# initial version
 # echo ""
-# echo "python run_xnmf.py"
-# python run_xnmf.py ${MTX_DIR} ${W_DIR}
+# echo "python run_nmf_no_schedule.py"
+# python run_nmf_no_schedule.py ${MTX_DIR} ${W_DIR}
+
+# scheduled version
+# echo ""
+# echo "python run_nmf_scheduled.py"
+# python run_nmf_scheduled.py ${MTX_DIR} ${W_DIR}
+
+# pipelined version
+echo ""
+echo "python run_nmf_pipelined.py"
+python run_nmf_pipelined.py ${MTX_DIR} ${W_DIR}
+
+
+#-----------------------------------------------------------------------------------------
+# Previous version
 
 # echo ""
 # echo "python termdoc_gen_neighbor.py ${MTX_DIR} ${NEIGHBOR_MTX_DIR}"
