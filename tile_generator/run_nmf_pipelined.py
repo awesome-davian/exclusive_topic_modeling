@@ -21,7 +21,27 @@ import queue
 from enum import Enum
 
 
-print_all = True
+print_all = False
+
+def run_rank2_nmf(tileid, k):
+	filepath = dirpath + tileid
+	if print_all == True or pi == 1: logging.debug('filepath: %s', filepath)
+
+	# get mtx
+	mtx = []
+	line_cnt = 0
+	with open(filepath, "r") as f:
+		 for line in f.readlines():
+		 	v = line.split('\t')
+
+		 	item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
+			mtx = np.append(mtx, item, axis=0)
+			line_cnt += 1
+
+	mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
+
+	# do nmf here
+
 
 def doPipelinedNMF(pi, task_manager):
 
@@ -40,6 +60,7 @@ def doPipelinedNMF(pi, task_manager):
 
 		if task.state == State.INIT.value:
 			# TODO: Add the rank 2 nmf code here
+			run_rank2_nmf(task.tile, 2)
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - INIT, %s, %s', pi, task.state, is_done)
 			time.sleep(0.1)
 			
@@ -87,6 +108,7 @@ else:
 		os.makedirs(w_dir)
 		pass
 
+dirpath = ""
 num_thread = 40
 
 mutex = Lock()
@@ -164,7 +186,6 @@ class TaskManager:
 
 class MultiProcessingManager(m.BaseManager):
 	pass
-
 
 def main():
 
