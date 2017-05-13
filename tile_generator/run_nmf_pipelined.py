@@ -19,6 +19,7 @@ import pymongo
 
 import queue
 from enum import Enum
+from hier8_net import Hier8_net
 
 
 print_all = False
@@ -33,12 +34,21 @@ def run_rank2_nmf(tileid, k):
 	with open(filepath, "r") as f:
 		 for line in f.readlines():
 		 	v = line.split('\t')
-
 		 	item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
-			mtx = np.append(mtx, item, axis=0)
-			line_cnt += 1
+		 	mtx = np.append(mtx, item, axis=0)
+		 	line_cnt += 1
 
 	mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
+
+	A = sparse.csr_matrix((mtx[:,2], (mtx[:,0], mtx[:,1])), shape=(int(mtx[:,0].max(0)+1), int(mtx[:,1].max(0)+1)))
+	m = np.shape(A)[0]
+	n = np.shape(A)[1]
+	
+	W = np.random.rand(m,2)
+	H = np.random.rand(n,2)
+
+	W, H = Hier8_net.nmfsh_comb_rank2(A, W, H)
+	print(W,H)
 
 	# do nmf here
 
@@ -223,3 +233,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
