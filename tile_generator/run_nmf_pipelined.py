@@ -12,6 +12,7 @@ from multiprocessing import Lock
 import multiprocessing.managers as m
 import math
 import shutil
+import numpy as np
 
 # for creating the term-doc matrix
 from nltk import PorterStemmer
@@ -20,38 +21,10 @@ import pymongo
 import queue
 from enum import Enum
 from hier8_net import Hier8_net
+from scipy import sparse
 
 
 print_all = False
-
-def run_rank2_nmf(tileid, k):
-	filepath = dirpath + tileid
-	if print_all == True or pi == 1: logging.debug('filepath: %s', filepath)
-
-	# get mtx
-	mtx = []
-	line_cnt = 0
-	with open(filepath, "r") as f:
-		 for line in f.readlines():
-		 	v = line.split('\t')
-		 	item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
-		 	mtx = np.append(mtx, item, axis=0)
-		 	line_cnt += 1
-
-	mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
-
-	A = sparse.csr_matrix((mtx[:,2], (mtx[:,0], mtx[:,1])), shape=(int(mtx[:,0].max(0)+1), int(mtx[:,1].max(0)+1)))
-	m = np.shape(A)[0]
-	n = np.shape(A)[1]
-	
-	W = np.random.rand(m,2)
-	H = np.random.rand(n,2)
-
-	W, H = Hier8_net.nmfsh_comb_rank2(A, W, H)
-	print(W,H)
-
-	# do nmf here
-
 
 def doPipelinedNMF(pi, task_manager):
 
@@ -69,15 +42,13 @@ def doPipelinedNMF(pi, task_manager):
 			continue
 
 		if task.state == State.INIT.value:
-			# TODO: Add the rank 2 nmf code here
-			run_rank2_nmf(task.tile, 2)
+			task.run_rank2_nmf(pi)
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - INIT, %s, %s', pi, task.state, is_done)
-			time.sleep(0.1)
 			
 		elif task.state == State.STD.value:
-			#TODO: Add the hier 8 nmf code here
+			task.run_hier8_neat(pi)
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - STD, %s, %s', pi, task.state, is_done)
-			time.sleep(0.1)
+			#time.sleep(0.1)
 			
 		elif task.state == State.EX.value:
 			#TODO: do nothing
@@ -129,6 +100,7 @@ State = Enum('State', 'INIT STD EX NONE')
 class Task(object):
 	def __init__(self, tile, state):
 		self.tile = tile
+
 		self.state = state
 		return
 
@@ -144,6 +116,78 @@ class Task(object):
 	def inc(self):
 		self.state += 1
 		return self
+
+	def run_rank2_nmf(self, pi):
+		
+		filepath = dirpath + self.tile
+		if print_all == True or pi == 1: logging.debug('filepath: %s', filepath)
+
+		# get mtx
+		mtx = []
+		line_cnt = 0
+		with open(filepath, "r") as f:
+			for line in f.readlines():
+				v = line.strip().split('\t')
+
+				if line_cnt == 0:
+					if print_all == True or pi == 1: logging.debug('v: %s', v)
+
+				item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
+				mtx = np.append(mtx, item, axis=0)
+				line_cnt += 1
+
+		mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
+
+		# do nmf here
+		A = sparse.csr_matrix((mtx[:,2], (mtx[:,0], mtx[:,1])), shape=(int(mtx[:,0].max(0)+1), int(mtx[:,1].max(0)+1)))
+		m = np.shape(A)[0]
+		n = np.shape(A)[1]
+
+		#print('m,n shape: ',m,n)
+		
+		W = np.random.rand(m,2)
+		H = np.random.rand(n,2)
+
+		#print('W and H shape: ', np.shape(W), np.shape(H))
+
+		W, H = Hier8_net().nmfsh_comb_rank2(A, W, H)
+		#print('W and H shape: ', np.shape(W), np.shape(H))
+		#print('result: ', W,H)
+
+
+		if print_all == True or pi == 1: logging.debug('[%d] run_rank2_nmf() - End', pi)
+
+		return
+
+	def run_hier8_neat(self,pi):
+
+		k_value = 4
+
+		filepath = dirpath + self.tile
+		if print_all == True or pi == 1: logging.debug('filepath: %s', filepath)
+
+		# get mtx
+		mtx = []
+		line_cnt = 0
+		with open(filepath, "r") as f:
+			for line in f.readlines():
+				v = line.strip().split('\t')
+
+				if line_cnt == 0:
+					if print_all == True or pi == 1: logging.debug('v: %s', v)
+
+				item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
+				mtx = np.append(mtx, item, axis=0)
+				line_cnt += 1
+
+		mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
+
+		A = sparse.csr_matrix((mtx[:,2], (mtx[:,0], mtx[:,1])), shape=(int(mtx[:,0].max(0)+1), int(mtx[:,1].max(0)+1)))
+
+		W = Hier8_net().hier8_net(A, k_value)
+
+		return
+
 
 class TaskManager:
 
@@ -168,7 +212,7 @@ class TaskManager:
 		with mutex:
 			if not self.work_queue.empty():
 				self.idx += 1
-				logging.debug('get_task, idx: %d', self.idx)
+				# logging.debug('get_task, idx: %d', self.idx)
 				return self.work_queue.get(), False
 			else:
 				if self.is_done == True:
