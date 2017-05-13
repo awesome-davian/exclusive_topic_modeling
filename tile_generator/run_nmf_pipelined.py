@@ -39,17 +39,17 @@ def doPipelinedNMF(pi, task_manager):
 			continue
 
 		if task.state == State.INIT.value:
-			# TODO:
+			# TODO: Add the rank 2 nmf code here
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - INIT, %s, %s', pi, task.state, is_done)
 			time.sleep(0.1)
 			
 		elif task.state == State.STD.value:
-			#TODO:
+			#TODO: Add the hier 8 nmf code here
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - STD, %s, %s', pi, task.state, is_done)
 			time.sleep(0.1)
 			
 		elif task.state == State.EX.value:
-			#TODO:
+			#TODO: do nothing
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - EX, %s, %s', pi, task.state, is_done)
 			time.sleep(0.1)
 		
