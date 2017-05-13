@@ -173,7 +173,8 @@ def doParWork(pi, rawdata):
 				# mtx_file.close()
 				# time_insert += time.time() - s_time_insert;
 
-				for level in range(9, 14):
+				# for level in range(9, 14):
+				for level in range(constants.LEVEL_RANGE_START, constants.LEVEL_RANGE_END+1):
 
 					[x, y] = getMercatorPoint(lon, lat, level)
 					tilename = 'mtx_' + str(year) + '_d' + str(day_of_year) + '_' + str(level) + '_' + str(x) + '_' + str(y)

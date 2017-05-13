@@ -24,7 +24,6 @@ fi
 
 if [ -z != ${TWITTER_DATA_PATH} ];
 then
-
 	echo ""
 	echo "python mongoimport.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${TWITTER_DATA_PATH}"
 	python mongoimport.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${TWITTER_DATA_PATH}
@@ -37,14 +36,17 @@ else
 	echo "Do not import rawdata because the argv[2](rawdata path) is not exist."
 fi
 
-echo ""
-echo "python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}"
-python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}
+# echo ""
+# echo "python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}"
+# python create_voca.py ${DB_RAWDATA} ${DB_COL_RAWDATA} ${VOCA_DIR}
 
-echo ""
-echo "python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
-python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
-#python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}
+# echo ""
+# echo "python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR}"
+# python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR} #--> multi thread with par
+# python termdoc_gen_atonce.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${MTX_DIR} #--> single thread
+
+#-----------------------------------------------------------------------------------------
+# New version
 
 # initial version
 # echo ""
@@ -58,7 +60,7 @@ python termdoc_gen_atonce_par.py ${VOCA_DIR} ${DB_RAWDATA} ${DB_COL_RAWDATA} ${M
 
 # pipelined version
 echo ""
-echo "python run_nmf_pipelined.py"
+echo "python run_nmf_pipelined.py" ${MTX_DIR} ${W_DIR}
 python run_nmf_pipelined.py ${MTX_DIR} ${W_DIR}
 
 
