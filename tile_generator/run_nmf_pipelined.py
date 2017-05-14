@@ -32,7 +32,7 @@ def doPipelinedNMF(pi, task_manager):
 
 	while(True):
 		
-		task, is_done = task_manager.get_task()
+		task, is_done = task_manager.get_task(pi)
 		if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - start task, %s, %s', pi, task.state, is_done)
 		if is_done == True:
 			break
@@ -45,20 +45,22 @@ def doPipelinedNMF(pi, task_manager):
 			task.run_rank2_nmf(pi)
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - INIT, %s, %s', pi, task.state, is_done)
 			
-		elif task.state == State.STD.value:
-			task.run_hier8_neat(pi)
-			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - STD, %s, %s', pi, task.state, is_done)
-			#time.sleep(0.1)
+		elif task.state == State.STD_COMPLETE.value:
+			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - STD_COMPLETE - start, %s, %s', pi, task.state, is_done)
+			if task_manager.is_neighbor_ready(pi, task.tile):
+				task.run_hier8_neat(pi)
+			else:
+				task.put_task(pi, task)
 			
-		elif task.state == State.EX.value:
-			#TODO: do nothing
-			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - EX, %s, %s', pi, task.state, is_done)
-			time.sleep(0.1)
+		elif task.state == State.EX_COMPLETE.value:
+			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - EX_COMPLETE, %s, %s', pi, task.state, is_done)
 		
-		task_manager.end_task(task)
+		task_manager.end_task(pi, task)
 		
 		if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - done task, %s, %s', pi, task.state, is_done)
 	
+	if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - All done', pi)
+
 	return
 
 
@@ -94,13 +96,12 @@ num_thread = 40
 
 mutex = Lock()
 
-State = Enum('State', 'INIT STD EX NONE')
+State = Enum('State', 'INIT STD_COMPLETE EX_COMPLETE NONE')
 #State = Enum('State', 'INIT_STATE STD_INPROGRESS STD_COMPLETE EX_INPROGRESS EX_COMPLETE')
 
 class Task(object):
 	def __init__(self, tile, state):
 		self.tile = tile
-
 		self.state = state
 		return
 
@@ -130,11 +131,14 @@ class Task(object):
 				v = line.strip().split('\t')
 
 				if line_cnt == 0:
-					if print_all == True or pi == 1: logging.debug('v: %s', v)
+					if print_all == True or pi == 1: logging.debug('[%d] v: %s', pi, v)
 
 				item = np.array([float(v[0]), float(v[1]), float(v[2])], dtype=np.double)
 				mtx = np.append(mtx, item, axis=0)
 				line_cnt += 1
+
+				# This is just for quick test.
+				# break
 
 		mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
 
@@ -154,12 +158,11 @@ class Task(object):
 		#print('W and H shape: ', np.shape(W), np.shape(H))
 		#print('result: ', W,H)
 
-
 		if print_all == True or pi == 1: logging.debug('[%d] run_rank2_nmf() - End', pi)
 
 		return
 
-	def run_hier8_neat(self,pi):
+	def run_hier8_neat(self, pi):
 
 		k_value = 4
 
@@ -193,7 +196,7 @@ class TaskManager:
 
 	def __init__(self, num_thread, tiles):
 		
-		self.tile_ids = collections.OrderedDict()
+		self.tiles = collections.OrderedDict()
 		self.work_queue = queue.PriorityQueue()
 		self.num_tiles = len(tiles)
 		self.num_std_done = 0
@@ -201,13 +204,23 @@ class TaskManager:
 		self.idx = 0
 
 		with mutex:
-			for each in tiles:
-				task = Task(each, State.INIT.value)
+			for tile in tiles:
+				tile_id = tile.strip().split('/')[-1]
+				self.tiles[tile_id] = collections.OrderedDict()
+				self.tiles[tile_id]['LEFT'] = 0
+				self.tiles[tile_id]['RIGHT'] = 0
+				self.tiles[tile_id]['UP'] = 0
+				self.tiles[tile_id]['DOWN'] = 0
+				self.tiles[tile_id]['STATE'] = State.INIT.value
+
+				task = Task(tile, State.INIT.value)
 				self.work_queue.put(task)
+
+		self.set_neighbor()
 			
 		return
 
-	def get_task(self):
+	def get_task(self, pi):
 		
 		with mutex:
 			if not self.work_queue.empty():
@@ -220,12 +233,25 @@ class TaskManager:
 				else:
 					return Task('', State.NONE.value), False
 
-	def end_task(self, task):
+	def put_task(self, pi, task):
+		with mutex:	
+			self.work_queue.put(task)
+
+	def end_task(self, pi, task):
+
+		if print_all == True or pi == 1: logging.debug('[%d] end_task() - IN, %s', pi, task.state)
 
 		new_task = task.inc()
+		
+		tile_id = task.tile.strip().split('/')[-1]
+
+		with mutex:
+			self.tiles[tile_id]['STATE'] = new_task.state
+
+		# Put new task in the workerqueue
 		# logging.debug('new_task.state: %d', new_task.state)
-		if new_task.state <= State.EX.value:
-			if new_task.state == State.STD.value:
+		if new_task.state <= State.EX_COMPLETE.value:
+			if new_task.state == State.STD_COMPLETE.value:
 				self.num_std_done += 1
 			with mutex:
 				# logging.debug('before size: %d', self.work_queue.qsize())
@@ -235,8 +261,73 @@ class TaskManager:
 		if self.num_std_done == self.num_tiles:
 			self.is_done = True
 
+		if print_all == True or pi == 1: logging.debug('[%d] end_task() - 2, %s', pi, task.state)
+
 		return
 
+	def set_neighbor(self):
+
+		with mutex:
+			for tile, value in self.tiles.items():
+
+				neighbor = 0
+
+				t = tile.split('_')
+
+				pre = t[0]
+				year = t[1]
+				yday = [2]
+				lv = [3]
+				x = int(t[4])
+				y = int(t[5])
+
+				# left:right:top:bottom neighbor
+				left  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x-1) + '_' + str(y)
+				right  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x+1) + '_' + str(y)
+				up  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y-1)
+				down  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y+1)
+				
+				if left in self.tiles:
+					self.tiles[tile]['LEFT'] = 1
+				if right in self.tiles:
+					self.tiles[tile]['RIGHT'] = 1
+				if up in self.tiles:
+					self.tiles[tile]['UP'] = 1
+				if down in self.tiles:
+					self.tiles[tile]['DOWN'] = 1
+		return
+
+	def is_neighbor_ready(self, pi, tile):
+
+		if print_all == True or pi == 1: logging.debug('[%d] is_neighbor_ready() - IN, %s', pi, tile)
+
+		tile_id = tile.strip().split('/')[-1]
+		if print_all == True or pi == 1: logging.debug('[%d] tile id: %s', pi, tile_id)
+		t = tile_id.strip().split('_')
+		if print_all == True or pi == 1: logging.debug('[%d] t: %s', pi, t)
+
+		pre = t[0]
+		year = t[1]
+		yday = [2]
+		lv = [3]
+		x = int(t[4])
+		y = int(t[5])
+
+		left  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x-1) + '_' + str(y)
+		right = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x+1) + '_' + str(y)
+		up   = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y-1)
+		down  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y+1)
+		
+		if left in self.tiles and self.tiles[left]['STATE'] < State.STD_COMPLETE.value:
+			return False
+		if right in self.tiles and self.tiles[right]['STATE'] < State.STD_COMPLETE.value:
+			return False
+		if up in self.tiles and self.tiles[up]['STATE'] < State.STD_COMPLETE.value:
+			return False
+		if down in self.tiles and self.tiles[down]['STATE'] < State.STD_COMPLETE.value:
+			return False
+
+		return True
 
 class MultiProcessingManager(m.BaseManager):
 	pass
@@ -277,5 +368,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
