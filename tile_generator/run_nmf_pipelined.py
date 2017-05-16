@@ -14,10 +14,6 @@ import math
 import shutil
 import numpy as np
 
-# for creating the term-doc matrix
-from nltk import PorterStemmer
-import pymongo
-
 import queue
 from enum import Enum
 from hier8_net import Hier8_net
@@ -42,13 +38,15 @@ def doPipelinedNMF(pi, task_manager):
 			continue
 
 		if task.state == State.INIT.value:
-			task.run_rank2_nmf(pi)
+			# task.run_rank2_nmf(pi)
+			time.sleep(0.1)
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - INIT, %s, %s', pi, task.state, is_done)
 			
 		elif task.state == State.STD_COMPLETE.value:
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - STD_COMPLETE - start, %s, %s', pi, task.state, is_done)
 			if task_manager.is_neighbor_ready(pi, task.tile):
-				task.run_hier8_neat(pi)
+				# task.run_hier8_neat(pi)
+				time.sleep(0.1)
 			else:
 				task.put_task(pi, task)
 			
@@ -65,9 +63,6 @@ def doPipelinedNMF(pi, task_manager):
 
 
 logging.config.fileConfig('logging.conf')
-
-porter_stemmer=PorterStemmer()
-do_stemming = False
 
 arglen = len(sys.argv)
 if arglen != 3:
@@ -276,8 +271,8 @@ class TaskManager:
 
 				pre = t[0]
 				year = t[1]
-				yday = [2]
-				lv = [3]
+				yday = t[2]
+				lv = t[3]
 				x = int(t[4])
 				y = int(t[5])
 
