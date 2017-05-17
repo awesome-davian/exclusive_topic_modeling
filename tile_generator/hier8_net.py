@@ -9,7 +9,8 @@ from numpy import random
 class Hier8_net():
 
     def __init__(self):
-        print('start hier8')
+        #print('start hier8')
+        m = 0; 
 
     def hier8_net(self,A,k): 
 
@@ -46,14 +47,14 @@ class Hier8_net():
         W = np.random.rand(np.size(term_subset),2)
         H = np.random.rand(n,2)
 
-        print('hier8')
+        #print('hier8')
 
         if(np.size(term_subset) == m):
             W, H = self.nmfsh_comb_rank2(A, W ,H )
-            print('done')
+            #print('done')
         else : 
             W_tmp, H = self.nmfsh_comb_rank2(A[term_subset,:], W, H)
-            print('done rank2')
+            #print('done rank2')
             W = np.zeros((m,2))
             W[term_subset,:] = W_tmp
 
@@ -69,24 +70,24 @@ class Hier8_net():
             else: 
                 leaves = np.where(is_leaf==1)[0]
                 #leaves = np.array(leaves)
-                print('leaves')
-                print(leaves)
+                #print('leaves')
+                #print(leaves)
                 temp_priority = priorities[leaves]
-                print('temp_priority', temp_priority)
-                print('priorities', priorities)
+                #print('temp_priority', temp_priority)
+                #print('priorities', priorities)
                 #min_priority = np.minimum(temp_priority[temp_priority>0])
                 #print('min_priority' + min_priority)
                 split_node = leaves[split_node]
                 is_leaf[split_node] = 0 
-                print('split_node')
-                print(split_node)
+                #print('split_node')
+                #print(split_node)
                 W = W_buffer[split_node]
                 H = H_buffer[split_node]
                 split_subset = clusters[split_node]
                 new_nodes = np.array([result_used, result_used+1])
                 tree[0,split_node] = new_nodes[0]
                 tree[1,split_node] = new_nodes[1]
-                print('new nodes', new_nodes)
+                #print('new nodes', new_nodes)
 
             result_used = result_used + 2
             max_val, cluster_subset =  H.T.max(0), H.T.argmax(0)  
@@ -109,12 +110,12 @@ class Hier8_net():
 
             subset = clusters[new_nodes[0]]
             subset, W_buffer_one, H_buffer_one, priority_one = self.trial_split(trial_allowance, unbalance, min_priority, A, subset, W[:,0])
-            print('done trial_split')
+            #print('done trial_split')
             clusters[new_nodes[0]] = subset
             W_buffer.append(W_buffer_one)
             H_buffer.append(H_buffer_one)
             priorities[new_nodes[0]] = priority_one
-            print('priority_one', priority_one)
+            #print('priority_one', priority_one)
 
             subset = clusters[new_nodes[1]]
             subset, W_buffer_one, H_buffer_one, priority_one = self.trial_split(trial_allowance, unbalance, min_priority, A, subset, W[:,1])
@@ -123,7 +124,7 @@ class Hier8_net():
             H_buffer.append(H_buffer_one)
             priorities[new_nodes[1]] = priority_one
 
-            print('qwe')
+            #print('qwe')
 
         #print(Ws)
         #print(np.shape(Ws))
@@ -153,7 +154,7 @@ class Hier8_net():
             length_cluster2 = len(temp2)
 
             if(np.minimum(length_cluster1, length_cluster2) < unbalance * len(cluster_subset)):
-                print('dasda')
+                #print('dasda')
                 min_val = np.minimum(length_cluster1,length_cluster2)
                 if (length_cluster1 - length_cluster2 >=0):
                     idx_small = 0
@@ -308,7 +309,7 @@ class Hier8_net():
         W = Winit 
         H = Hinit.T
 
-        print('nmfsh_comb_rank2')
+        #print('nmfsh_comb_rank2')
 
 
         left = H.dot(H.T)
@@ -318,7 +319,7 @@ class Hier8_net():
 
         for i in range(0,1000):
             if(nla.matrix_rank(left)<2):
-                print('The matrix H is singular')
+                #print('The matrix H is singular')
                 W = np.zeors((m,2))
                 H = np.zeros((2,n))
                 U, S, V = nla.svd(A,1)

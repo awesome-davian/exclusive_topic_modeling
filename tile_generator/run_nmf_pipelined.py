@@ -38,15 +38,15 @@ def doPipelinedNMF(pi, task_manager):
 			continue
 
 		if task.state == State.INIT.value:
-			# task.run_rank2_nmf(pi)
-			time.sleep(0.1)
+			task.run_rank2_nmf(pi)
+			#time.sleep(0.1)
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - INIT, %s, %s', pi, task.state, is_done)
 			
 		elif task.state == State.STD_COMPLETE.value:
 			if print_all == True or pi == 1: logging.debug('[%d] doPipelinedNMF() - STD_COMPLETE - start, %s, %s', pi, task.state, is_done)
 			if task_manager.is_neighbor_ready(pi, task.tile):
-				# task.run_hier8_neat(pi)
-				time.sleep(0.1)
+				task.run_hier8_neat(pi)
+				#time.sleep(0.1)
 			else:
 				task.put_task(pi, task)
 			
@@ -137,27 +137,79 @@ class Task(object):
 
 		mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
 
+
 		# do nmf here
 		A = sparse.csr_matrix((mtx[:,2], (mtx[:,0], mtx[:,1])), shape=(int(mtx[:,0].max(0)+1), int(mtx[:,1].max(0)+1)))
 		m = np.shape(A)[0]
 		n = np.shape(A)[1]
 
-		#print('m,n shape: ',m,n)
-		
 		W = np.random.rand(m,2)
 		H = np.random.rand(n,2)
 
-		#print('W and H shape: ', np.shape(W), np.shape(H))
 
 		W, H = Hier8_net().nmfsh_comb_rank2(A, W, H)
-		#print('W and H shape: ', np.shape(W), np.shape(H))
-		#print('result: ', W,H)
+		
+		W = np.array(W)
 
+		#dirpath_w = os.path.abspath(w_dir)
+		w_element = self.tile.replace('mtx_','w_')
+		w_element = self.tile.replace('mtx','w')
+		#filepath_w = dirpath_w + w_element
+
+
+		with open(w_element, 'w', encoding='UTF8') as f:
+			for line in W:
+				str1 = ''.join(str(e)+'\t' for e in line)
+				f.write(str1+'\n')
+		#logging.debug('done rank2')
+
+		
 		if print_all == True or pi == 1: logging.debug('[%d] run_rank2_nmf() - End', pi)
 
 		return
 
 	def run_hier8_neat(self, pi):
+
+
+	
+		w_element = self.tile.replace('mtx_','w_')
+		w_element = self.tile.replace('mtx','w')
+		logging.debug('start next process')
+
+		W = []
+		line_cnt = 0
+		with open(w_element, "r") as f:
+			for line in f.readlines():
+				v = line.strip().split('\t')
+				if line_cnt == 0:
+					if print_all == True or pi == 1: logging.debug('[%d] v: %s', pi, v)
+				item = np.array([float(v[0]), float(v[1])], dtype=np.double)
+				W = np.append(W, item, axis=0)
+				line_cnt += 1
+		
+		W = np.array(mtx, dtype=np.double).reshape(line_cnt, 2)
+
+		tile_idx = w_element.split('/')[10]
+		t = tile_idx.split('_')
+
+		pre = t[0]
+		year = t[1]
+		yday = t[2]
+		lv = t[3]
+		x = int(t[4])
+		y = int(t[5])
+
+		# left:right:top:bottom neighbor
+		left  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x-1) + '_' + str(y)
+		right  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x+1) + '_' + str(y)
+		up  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y-1)
+		down  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y+1)
+
+		w_element_right = self.tile.replace(tile_idx,left)
+		logging.debug(w_element_right)
+
+		#TODO: get W form neighbor
+		
 
 		k_value = 4
 
@@ -165,6 +217,7 @@ class Task(object):
 		if print_all == True or pi == 1: logging.debug('filepath: %s', filepath)
 
 		# get mtx
+
 		mtx = []
 		line_cnt = 0
 		with open(filepath, "r") as f:
@@ -303,8 +356,8 @@ class TaskManager:
 
 		pre = t[0]
 		year = t[1]
-		yday = [2]
-		lv = [3]
+		yday = t[2]
+		lv = t[3]
 		x = int(t[4])
 		y = int(t[5])
 
@@ -335,6 +388,7 @@ def main():
 
 	# make a generator for all file paths within dirpath
 	dirpath = os.path.abspath(mtx_dir)
+
 	all_files = ( os.path.join(basedir, filename) for basedir, dirs, files in os.walk(dirpath) for filename in files   )
 	tiles = sorted(all_files, key=os.path.getsize, reverse=True)	
 
