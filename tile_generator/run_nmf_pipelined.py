@@ -143,13 +143,19 @@ class Task(object):
 		m = np.shape(A)[0]
 		n = np.shape(A)[1]
 
-		W = np.random.rand(m,2)
-		H = np.random.rand(n,2)
+		W_org = np.random.rand(m,2)
+		H_org = np.random.rand(n,2)
 
+		#logging.debug(np.shape(A))
+		#logging.debug(filepath)
+		# logging.debug(np.shape(W))
+		# logging.debug(np.shape(H))
 
-		W, H = Hier8_net().nmfsh_comb_rank2(A, W, H)
+		W, H = Hier8_net().nmfsh_comb_rank2_2(A, W_org, H_org)
 		
 		W = np.array(W)
+
+		logging.debug(np.shape(W))
 
 		#dirpath_w = os.path.abspath(w_dir)
 		w_element = self.tile.replace('mtx_','w_')
@@ -170,26 +176,14 @@ class Task(object):
 
 	def run_hier8_neat(self, pi):
 
-
+		dirpath_w = os.path.abspath(w_dir)
 	
 		w_element = self.tile.replace('mtx_','w_')
 		w_element = self.tile.replace('mtx','w')
 		logging.debug('start next process')
 
-		W = []
-		line_cnt = 0
-		with open(w_element, "r") as f:
-			for line in f.readlines():
-				v = line.strip().split('\t')
-				if line_cnt == 0:
-					if print_all == True or pi == 1: logging.debug('[%d] v: %s', pi, v)
-				item = np.array([float(v[0]), float(v[1])], dtype=np.double)
-				W = np.append(W, item, axis=0)
-				line_cnt += 1
-		
-		W = np.array(mtx, dtype=np.double).reshape(line_cnt, 2)
-
 		tile_idx = w_element.split('/')[10]
+		#logging.debug(tile_idx)
 		t = tile_idx.split('_')
 
 		pre = t[0]
@@ -205,18 +199,38 @@ class Task(object):
 		up  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y-1)
 		down  = str(pre) + '_' + str(year) + '_' + str(yday) + '_' + str(lv) + '_' + str(x) + '_' + str(y+1)
 
-		w_element_right = self.tile.replace(tile_idx,left)
-		logging.debug(w_element_right)
+		w_element_left = dirpath_w + str('/')+str(left)
+		w_element_right = dirpath_w+ str('/')+str(right)
+		w_element_up = dirpath_w + str('/')+str(up)
+		w_element_down = dirpath_w + str('/')+str(down)
 
-		#TODO: get W form neighbor
+
+		W = []
+		line_cnt = 0
+		with open(w_element, "r") as f:
+			for line in f.readlines():
+				v = line.strip().split('\t')
+				if line_cnt == 0:
+					if print_all == True or pi == 1: logging.debug('[%d] v: %s', pi, v)
+				item = np.array([float(v[0]), float(v[1])], dtype=np.double)
+				W = np.append(W, item, axis=0)
+				line_cnt += 1
+		
+		W = np.array(W, dtype=np.double).reshape(line_cnt, 2)
+		W_2 = np.array(W, dtype=np.double).reshape(line_cnt, 2)
+		W_3 = np.array(W, dtype=np.double).reshape(line_cnt, 2)
+
+		W_tot = np.concatenate((W,W_2,W_3), axis = 1)
+		logging.debug(np.shape(W_tot))
 		
 
-		k_value = 4
+		k_value = 8
 
 		filepath = dirpath + self.tile
 		if print_all == True or pi == 1: logging.debug('filepath: %s', filepath)
-
 		# get mtx
+
+		logging.debug(filepath)
 
 		mtx = []
 		line_cnt = 0
@@ -232,10 +246,14 @@ class Task(object):
 				line_cnt += 1
 
 		mtx = np.array(mtx, dtype=np.double).reshape(line_cnt, 3)
+		logging.debug(np.shape(mtx))
 
 		A = sparse.csr_matrix((mtx[:,2], (mtx[:,0], mtx[:,1])), shape=(int(mtx[:,0].max(0)+1), int(mtx[:,1].max(0)+1)))
+		#logging.debug(np.shape(A))
+		#At = A * 0.8
 
-		W = Hier8_net().hier8_net(A, k_value)
+		W_final = Hier8_net().hier8_net(A, 4, 100)
+		logging.debug(np.shape(W_final))
 
 		return
 

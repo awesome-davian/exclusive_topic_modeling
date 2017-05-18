@@ -1,3 +1,4 @@
+import logging, logging.config
 import numpy as np
 import scipy.sparse as sps
 import scipy.optimize as opt
@@ -6,13 +7,15 @@ import time
 import json
 from numpy import random
 
+
 class Hier8_net():
 
     def __init__(self):
-        #print('start hier8')
-        m = 0; 
 
-    def hier8_net(self,A,k): 
+        #print('start hier8')
+        m = 0;
+
+    def hier8_net(self,A,k, iteration): 
 
        # print(np.where(np.sum(A[:,0]))
 
@@ -49,11 +52,14 @@ class Hier8_net():
 
         #print('hier8')
 
+
+
+
         if(np.size(term_subset) == m):
-            W, H = self.nmfsh_comb_rank2(A, W ,H )
+            W, H = self.nmfsh_comb_rank2(A, W ,H, iteration )
             #print('done')
         else : 
-            W_tmp, H = self.nmfsh_comb_rank2(A[term_subset,:], W, H)
+            W_tmp, H = self.nmfsh_comb_rank2(A[term_subset,:], W, H, iteration)
             #print('done rank2')
             W = np.zeros((m,2))
             W[term_subset,:] = W_tmp
@@ -70,8 +76,7 @@ class Hier8_net():
             else: 
                 leaves = np.where(is_leaf==1)[0]
                 #leaves = np.array(leaves)
-                #print('leaves')
-                #print(leaves)
+                #print('leaves: ',leaves)
                 temp_priority = priorities[leaves]
                 #print('temp_priority', temp_priority)
                 #print('priorities', priorities)
@@ -79,8 +84,7 @@ class Hier8_net():
                 #print('min_priority' + min_priority)
                 split_node = leaves[split_node]
                 is_leaf[split_node] = 0 
-                #print('split_node')
-                #print(split_node)
+                #print('split_node: ',split_node)            
                 W = W_buffer[split_node]
                 H = H_buffer[split_node]
                 split_subset = clusters[split_node]
@@ -123,17 +127,19 @@ class Hier8_net():
             W_buffer.append(W_buffer_one)
             H_buffer.append(H_buffer_one)
             priorities[new_nodes[1]] = priority_one
+            #logging.debug('done one cicle')
 
-            #print('qwe')
 
         #print(Ws)
         #print(np.shape(Ws))
-        return Ws
+        return Ws 
               #  else:    
               #      min_priority = min(temp_priority[temp_priority>0])
 
 
     def  trial_split(self, trial_allowance, unbalance, min_priority, A, subset, W_parent):
+
+        #logging.debug('trial_split')
 
         trial = 0
         subset = np.array(subset)[0]
@@ -154,7 +160,6 @@ class Hier8_net():
             length_cluster2 = len(temp2)
 
             if(np.minimum(length_cluster1, length_cluster2) < unbalance * len(cluster_subset)):
-                #print('dasda')
                 min_val = np.minimum(length_cluster1,length_cluster2)
                 if (length_cluster1 - length_cluster2 >=0):
                     idx_small = 0
@@ -191,6 +196,8 @@ class Hier8_net():
 
     def actual_split(self, A, subset, W_parent):
 
+        #logging.debug('actual_split')
+
         m = np.shape(A)[0]
         n = np.shape(A)[1]
         #print(np.size(subset))
@@ -214,8 +221,8 @@ class Hier8_net():
             A_subset = A[term_subset][:,subset]; 
             W = random.rand(len(term_subset),2)
             H = random.rand(len(subset),2)
-            W, H = self.nmfsh_comb_rank2(A_subset, W, H)
-            print(np.shape(H))
+            W, H = self.nmfsh_comb_rank2(A_subset, W, H, 200)
+            #print(np.shape(H))
             max_val, cluster_subset =  H.T.max(0), H.T.argmax(0)  
             W_buffer_one = np.zeros((m,2))
             W_buffer_one[term_subset,:] = W 
@@ -229,6 +236,8 @@ class Hier8_net():
         return cluster_subset, W_buffer_one, H_buffer_one, priority_one
 
     def compute_priority(self, W_parent, W_child):
+
+        #logging.debug('compute_priority')
 
 
         #print('compute_priority')
@@ -269,6 +278,8 @@ class Hier8_net():
 
     def NDCG_part(self, ground, test, weight, weight_part):
 
+        #logging.debug('NDCG_part')
+
         #print('NDCG_part')
         #print('ground', ground)
         sorted1, seq_idx = np.sort(ground), np.argsort(ground)
@@ -298,7 +309,193 @@ class Hier8_net():
                 
 
 
-    def nmfsh_comb_rank2(self,A, Winit, Hinit):
+    def nmfsh_comb_rank2(self,A, Winit, Hinit, iteration):
+
+            
+        m = np.shape(A)[0]
+        n = np.shape(A)[1]
+        tol = 1e-4
+        vec_norm = 2.0
+        normW = True
+
+        W = Winit 
+        H = Hinit.T
+
+        #print('nmfsh_comb_rank2')
+
+        #logging.debug('nmfsh_comb_rank2')
+
+
+
+        left = H.dot(H.T)
+        right = A.dot(H.T)
+
+        #print(np.shape(left), np.shape(right))
+        #print('shape of A:' ,np.shape(A))
+
+        for i in range(0,iteration):
+            if(nla.matrix_rank(left)<2):
+                #print('The matrix H is singular')
+                W = np.zeros((m,2))
+                H = np.zeros((2,n))
+                # U, S, V = scipy.linalg.svd(A)
+             
+                # if(np.sum(U)<0):
+                #     U = - U 
+                #     V = - V 
+                # W[:,0] = U 
+                # H[0,:] = V.T 
+
+      
+            W = self.anls_entry_rank2_precompute(left,right,W);
+
+            #print('W shape', np.shape(W))
+            norms_W = np.sqrt(np.sum(np.square(W)))
+            W = W/norms_W
+            left = W.T.dot(W)
+            right = A.T.dot(W)
+            #print(np.shape(A), np.shape(right))
+
+            H = self.anls_entry_rank2_precompute(left, right, H.T).T
+            gradH = left.dot(H) - right.T 
+            left = H.dot(H.T)
+            right = A.dot(H.T)
+
+            gradW = W.dot(left) - right
+
+
+        if vec_norm !=0:
+            if normW :
+                norms = np.sum(np.power(W,vec_norm), axis=0)*(1/vec_norm)
+
+                #logging.debug(norms)
+                #norms = np.matrix(norms)
+                H[:,0] = H[:,0] * norms[0]
+                H[:,1] = H[:,1] * norms[1]
+                #logging.debug('qwewq')
+
+                if(norms[0] != 0):
+                    #logging.debug('divide')
+                    W[:,0] = W[:,0] / norms[0]
+
+                if(norms[1] != 0):
+                    #logging.debug('22432')
+                    W[:,1] = W[:,1] / norms[1]
+                
+                #logging.debug('sada')
+
+                #W[:,1] = W[:,1] / norms[1]
+            else :
+                norms = np.sum(np.power(H,vec_norm),axis = 0)*(1/vec_norm)
+                #norms = np.matrix(norms)
+                H[:,0] = H[:,0] * norms[0]
+                H[:,1] = H[:,1] * norms[1]
+
+                if(norms[0] != 0):
+                    W[:,0] = W[:,0] / norms[0]
+              
+                if(norms[1] != 0):
+                    W[:,1] = W[:,1] / norms[1] 
+
+        H = H.T
+
+        #logging.debug(np.shape(H))
+             
+
+
+        return (W,H)
+
+
+
+    def anls_entry_rank2_precompute(self, left, right, H):
+
+
+        n = np.shape(right)[0]
+
+        solve_either = np.zeros((n,2)) 
+        if(left[0,0] !=0):
+            solve_either[:,0] =  right[:,0] / left[0,0]
+        else:
+            solve_either[:,0] = right[:,0]
+        if(left[1,1] !=0):
+            solve_either[:,1] =  right[:,1] / left[1,1]
+        else:
+            solve_either[:,1] = right[:,1]
+
+
+        #solve_either[:,0] = right[:,0] * (1/left[0,0])
+        #solve_either[:,1] = right[:,1] * (1/left[1,1])
+
+        #print('solve_either: ', solve_either)
+
+        cosine_either = np.zeros((n,2))
+        cosine_either[:,0] = np.multiply(solve_either[:,0] , np.sqrt(left[0,0]))
+        cosine_either[:,1] = np.multiply(solve_either[:,1] , np.sqrt(left[1,1]))
+
+        choose_first = (cosine_either[:,0] >= cosine_either[:,1])
+
+        #print('choose_first', choose_first)
+        #print(solve_either[:,1])
+        #print(solve_either[choose_first,1])
+
+
+        solve_either[choose_first,1] = 0
+        solve_either[~choose_first,0] = 0
+
+        #print('solve_either after: ',solve_either)
+
+
+        if ( abs(left[0,0]) >= abs(left[0,1])):
+
+            t = 0
+            
+            if(left[0,0]!=0):
+               t = left[1,0]/left[0,0];     
+
+
+            #t = left[1,0]/left[0,0];
+            a2 = left[0,0] + t*left[1,0];
+            b2 = left[0,1] + t*left[1,1];
+            d2 = left[1,1] - t*left[0,1];
+
+            e2 = right[:,0] + t * right[:,1]
+            f2 = right[:,1] - t * right[:,0]
+
+        else:
+            ct = 0 
+
+            if(left[1,0]!=0):
+                ct = left[1,0]/left[1,0];
+
+            #ct = left[0,0] / left[1,0]
+            a2 = left[1,0] + ct * left[0,0]
+            b2 = left[1,1] + ct * left[0,1]
+            d2 = -left[0,1] + ct * left[1,1]
+
+            e2 = right[:,1] + ct * right[:,0]
+            f2 = -right[:,0] + ct * right[:,1]
+
+        if (d2!=0):
+            H[:,1] = f2 /d2
+        if(a2!=0):
+            H[:,0] = (e2-b2*H[:,1])/a2   
+
+
+
+        # H[:,1] = f2 * (1/d2)
+        # H[:,0] = (e2-b2*H[:,1])*(1/a2)    
+
+
+        use_either = ~np.all(H>0, axis=1)
+
+        #print('use_either:', np.shape(use_either))
+        H[use_either,:] = solve_either[use_either,:]
+
+
+        return H
+
+
+    def nmfsh_comb_rank2_2(self,A, Winit, Hinit):
             
         m = np.shape(A)[0]
         n = np.shape(A)[1]
@@ -330,7 +527,7 @@ class Hier8_net():
                 H[0,:] = V.T 
 
       
-            W = self.anls_entry_rank2_precompute(left,right,W);
+            W = self.anls_entry_rank2_precompute_2(left,right,W);
 
             #print('W shape', np.shape(W))
             norms_W = np.sqrt(np.sum(np.square(W)))
@@ -339,7 +536,7 @@ class Hier8_net():
             right = A.T.dot(W)
             #print(np.shape(A), np.shape(right))
 
-            H = self.anls_entry_rank2_precompute(left, right, H.T).T
+            H = self.anls_entry_rank2_precompute_2(left, right, H.T).T
             gradH = left.dot(H) - right.T 
             left = H.dot(H.T)
             right = A.dot(H.T)
@@ -371,7 +568,7 @@ class Hier8_net():
 
 
 
-    def anls_entry_rank2_precompute(self, left, right, H):
+    def anls_entry_rank2_precompute_2(self, left, right, H):
 
 
         n = np.shape(right)[0]
@@ -419,4 +616,3 @@ class Hier8_net():
 
 
         return H
-
