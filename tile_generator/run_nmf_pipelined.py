@@ -151,7 +151,7 @@ class Task(object):
 		# logging.debug(np.shape(W))
 		# logging.debug(np.shape(H))
 
-		W, H = Hier8_net().nmfsh_comb_rank2_2(A, W_org, H_org)
+		W, H = Hier8_net().nmfsh_comb_rank2(A, W_org, H_org,100)
 		
 		W = np.array(W)
 

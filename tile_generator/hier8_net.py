@@ -141,6 +141,8 @@ class Hier8_net():
 
         #logging.debug('trial_split')
 
+        m = np.shape(A)[0]
+
         trial = 0
         subset = np.array(subset)[0]
         subset_backup = subset 
@@ -189,7 +191,7 @@ class Hier8_net():
 
             subset = subset_backup
             W_buffer_one = np.zeros((m,2))
-            H_buffer_one = np.zeros(len(subset,2))
+            H_buffer_one = np.zeros(len(subset),2)
             priority_one = -2
 
         return subset, W_buffer_one, H_buffer_one, priority_one
@@ -517,7 +519,7 @@ class Hier8_net():
         for i in range(0,1000):
             if(nla.matrix_rank(left)<2):
                 #print('The matrix H is singular')
-                W = np.zeors((m,2))
+                W = np.zeros((m,2))
                 H = np.zeros((2,n))
                 U, S, V = nla.svd(A,1)
                 if(np.sum(U)<0):
