@@ -1,6 +1,15 @@
 # Exclusive Topic Modeling
 Compute exclusive topic modeling with reference to surrounding tiles.
 
+# Dependencies
+```
+pip install Flask
+pip install Flask-API
+pip install pymongo
+pip install numpy
+matlab.engine
+```
+
 ## Usage
 
 ### Tile Generator
