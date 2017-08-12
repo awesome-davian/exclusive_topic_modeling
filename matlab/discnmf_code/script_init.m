@@ -1,6 +1,6 @@
 clear all;
 
-range = '131103-131105'
+range = '131103'
 spatial_nmtx_dir = sprintf('/scratch/salt/exclusive_topic_modeling/tile_generator/data/%s/nmtx/spatial/', range)
 
 dir_data = dir(spatial_nmtx_dir);

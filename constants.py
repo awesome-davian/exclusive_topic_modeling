@@ -2,7 +2,8 @@
 # v0.2.x.x : Protocol test in progress
 # v0.3.x.x : GET_RELATED_TOPIC protocol added
 # v0.5.x.x : Protocol test complete
-VERSION = 'v0.7.0.1_Mar25'
+# v0.9.x.x : Glyph diagram
+VERSION = 'v0.9.0.1_Aug.2017'
 
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
@@ -12,9 +13,9 @@ DEFAULT_MONGODB_PORT = 27017
 # DB_NAME_MTX = 'SALT_DB_mtx' + DB_NAME_POSTFIX
 # DB_NAME_TOPICS = 'SALT_DB_topics' + DB_NAME_POSTFIX
 
-#DATA_RANGE = '131103-131105'
+DATA_RANGE = '131103-131105'
 #DATA_RANGE = '131020-131110'
-DATA_RANGE = '131103'
+# DATA_RANGE = '131103'
 LEVEL_RANGE_START = 9
 LEVEL_RANGE_END = 13
 

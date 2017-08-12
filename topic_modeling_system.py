@@ -127,6 +127,32 @@ def checkInputValidation(method, contents):
             error_string = 'KeyError: ' + e.args[0];
         return error_string, int(date_from), int(date_to), tiles
 
+    elif method == 'GET_GEOPOINT':
+        try:
+            
+            date = contents['parameters']['date']
+            word = contents['parameters']['word']
+            tiles = contents['tiles']
+            for tile in tiles:
+                level = -1;
+                x = -1;
+                y = -1;
+
+                level = tile['level'];
+                x = tile['x']
+                y = tile['y']
+                
+                if level < 9 or level > 13:
+                    error_string = "Invalid tile.level";
+                if x < 0:
+                    error_string = "Invalid tile.x";
+                if y < 0:
+                    error_string = "Invalid tile.y";
+
+        except KeyError as e:
+            error_string = 'KeyError: ' + e.args[0];
+        return error_string, int(date), word, tiles
+
     elif method == 'GET_TILE_DETAIL_INFO':
         try:
             date_from = contents['date']['from']
@@ -150,7 +176,7 @@ def checkInputValidation(method, contents):
 
         except KeyError as e:
             error_string = 'KeyError: ' + e.args[0];
-        return error_string, int(date_from), int(date_to), tiles       
+        return error_string, int(date), tiles
 
     return error_string;
 
@@ -201,10 +227,12 @@ def request_get_topics(uuid):
         topics.append(topic);
 
     # verify that the calculation is correct using log.
-    for topic in topics:
-        logging.debug('topic: %s', topic)
+    # for topic in topics:
+    #     logging.debug('topic: %s', topic)
 
     json_data = json.dumps(topics);
+
+    logging.info('GET_TOPICS Response: %s', json_data)
 
     return json_data;
 
@@ -354,6 +382,43 @@ def request_get_heatmap(uuid):
 
     json_data = json.dumps(heatmap_list);
 
+    logging.info('GET_HEATMAP Response: %s', json_data)
+
+    return json_data 
+
+@app.route('/GET_GEOPOINT/<uuid>', methods=['POST'])
+def request_get_geopoint(uuid):
+
+    contents = request.get_json(silent=True);
+
+    logging.info('GET_GEOPOINT Request from %s: %s', request.remote_addr, contents);
+
+    error_string, date, word, tiles = checkInputValidation('GET_GEOPOINT', contents);
+    if error_string != "Success":
+        logging.error('ERROR_BAD_REQUEST: %s', error_string)
+        return error_string, status.HTTP_400_BAD_REQUEST
+
+    logging.debug('date: %d', date)
+    logging.debug('word: %s', word)
+
+    point_list = []
+    for tile in tiles:
+        logging.debug('tile: %s', tile)
+
+        level = tile['level']
+        x = tile['x']
+        y = tile['y']
+        geo_points = TM.get_geopoint(level, x, y, date, word)
+        for point in geo_points:
+            point_list.append(point)
+
+    # for heatmap in heatmap_list:
+    #     logging.debug('heatmap: %s', heatmap)
+
+    json_data = json.dumps(point_list)
+
+    logging.info('Response: %s', json_data)
+ 
     return json_data 
 
 if __name__ == '__main__':

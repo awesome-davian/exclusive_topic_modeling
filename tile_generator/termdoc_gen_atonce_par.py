@@ -12,6 +12,9 @@ import math
 from datetime import datetime 
 import concurrent.futures
 import math
+from multiprocessing import Lock
+
+mutex = Lock()
 
 def truncate_word(word):
 	start = 0
@@ -168,9 +171,10 @@ def doParWork(pi, rawdata):
 				time_find += time.time() - s_time_find;
 
 				# s_time_insert = time.time()
-				# mtx_file = open(mtx_dir + 'total_mtx', 'w', encoding='UTF8')
-				# mtx_file.write(str(word_idx) + '\t' + str(doc['_id']) + '\t' + str(bag_words_one[word]) + '\n')
-				# mtx_file.close()
+				with mutex:
+					mtx_file = open(mtx_dir + 'total_mtx', 'a', encoding='UTF8')
+					mtx_file.write(str(word_idx) + '\t' + str(doc['_id']) + '\t' + str(bag_words_one[word]) + '\n')
+					mtx_file.close()
 				# time_insert += time.time() - s_time_insert;
 
 				# for level in range(9, 14):

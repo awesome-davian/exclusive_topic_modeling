@@ -4,7 +4,7 @@ import pymongo
 import constants
 import numpy as np
 import time
-from datetime import datetime 
+from datetime import datetime
 import collections
 import random
 
@@ -14,7 +14,7 @@ def getTwitterDate(date):
 	if len(date) == 30:
 		# date_format = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
 		date_format = "%a %b %d %H:%M:%S %z %Y"
-		
+
 	else:
 		# date_format = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 		date_format = "%Y-%m-%dT%H:%M:%S.000Z"
@@ -25,12 +25,13 @@ def getTwitterDate(date):
 class DBWrapper():
 
 	def __init__(self):
-		
+
 		self.map_idx_to_word, self.map_word_to_idx, self.bag_words, self.stem_bag_words = self.read_voca()
 		self.map_idx_to_doc = self.read_docs()
 		self.map_related_docs = self.read_related_docs()
+		self.map_tdm = self.read_term_doc_matrices()
 
-		return;
+		return
 
 	def get_global_docs_map_idx_to_doc(self):
 		return self.map_idx_to_doc
@@ -52,10 +53,17 @@ class DBWrapper():
 
 		map_idx_to_doc = collections.OrderedDict()
 		docs = docs_file.readlines()
-		
+
 		for idx, doc in enumerate(docs):
 
 			v = doc.split('\t')
+
+			# v[0]: index
+			# v[1]: date
+			# v[2]: lon
+			# v[3]: lat
+			# v[4]: author
+			# v[5]: text
 
 			# doc_time = getTwitterDate(v[1])
 			# #year = doc_time.timetuple().tm_year
@@ -63,6 +71,12 @@ class DBWrapper():
 
 			map_idx_to_doc[idx+1] = collections.OrderedDict()
 			map_idx_to_doc[idx+1] = [v[1], v[2], v[3], v[4], v[5]]
+
+			# map_idx_to_doc[0]: date
+			# map_idx_to_doc[1]: lon
+			# map_idx_to_doc[2]: lat
+			# map_idx_to_doc[3]: author
+			# map_idx_to_doc[4]: text
 
 			# try:
 			# 	if len(map_idx_to_doc[idx][day_of_year]) == 0:
@@ -74,8 +88,8 @@ class DBWrapper():
 
 		docs_file.close()
 
-		elapsed_time= time.time() - start_time
-		logging.info('read_docs(). Elapsed time: %.3fms', elapsed_time)	
+		elapsed_time = time.time() - start_time
+		logging.info('read_docs(). Elapsed time: %.3fms', elapsed_time)
 
 		return map_idx_to_doc
 
@@ -83,7 +97,7 @@ class DBWrapper():
 
 		start_time = time.time()
 
-		stem_bag_words =collections.OrderedDict()
+		stem_bag_words = collections.OrderedDict()
 		bag_words = collections.OrderedDict()
 		map_word_to_idx = collections.OrderedDict()
 
@@ -95,9 +109,10 @@ class DBWrapper():
 		voca = voca_file.readlines()
 		for line in voca:
 			v = line.split('\t')
+
 			bag_words[v[0]] = int(v[1])
 			map_word_to_idx[v[0]] = idx
-			map_idx_to_word[idx]=v[0]
+			map_idx_to_word[idx] = v[0]
 			idx += 1
 
 		# idx = 0
@@ -126,13 +141,13 @@ class DBWrapper():
 		voca_file.close()
 		voca_hash_file.close()
 
-		elapsed_time= time.time() - start_time
-		logging.info('read_voca(). Elapsed time: %.3fms', elapsed_time)	
+		elapsed_time = time.time() - start_time
+		logging.info('read_voca(). Elapsed time: %.3fms', elapsed_time)
 
 		return map_idx_to_word, map_word_to_idx, bag_words, stem_bag_words
 
 	def read_related_docs(self):
-		start_time=time.time()
+		start_time = time.time()
 
 		rel_docs = collections.OrderedDict()
 		with open(constants.MTX_DIR + 'total_mtx', 'r', encoding='UTF8') as f:
@@ -178,8 +193,8 @@ class DBWrapper():
 				# 		logging.info(doc)
 				# 	exit(0)
 
-		elapsed_time= time.time() - start_time
-		logging.info('get_related_docs_map(). Elapsed time: %.3fms', elapsed_time)	
+		elapsed_time = time.time() - start_time
+		logging.info('read_related_docs(). Elapsed time: %.3fms', elapsed_time)
 
 		return rel_docs
 
@@ -188,17 +203,28 @@ class DBWrapper():
 		xscore_dir = constants.SPATIAL_XSCORE_DIR
 		file_name = topic_file_name = 'xscore_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
-		score = 0.0
+		east = 0.0
+		west = 0.0
+		south = 0.0
+		north = 0.0
+		
 		try:
 			with open(xscore_dir + file_name, 'r', encoding='UTF8') as f:
-				score = float(f.readline())
+				east = float(f.readline())
+				west = random.uniform(0, 1)
+				south = random.uniform(0, 1)
+				north = random.uniform(0, 1)
+				# TODO: need to be modified to get 4 direction heatmap
 		except FileNotFoundError:
 			#logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
 			#score = -1.0
 			#score = random.uniform(0, 1)
-			score = 0.0
+			east = 0.0
+			west = 0.0
+			south = 0.0
+			north = 0.0
 
-		return score
+		return east, west, south, north
 
 	def get_W(self, level, x, y, year, yday):
 
@@ -210,8 +236,8 @@ class DBWrapper():
 				logging.info('get W')
 		except FileNotFoundError:
 			logging.info('not found')
-		
-		return W 
+
+		return W
 
 	def connect(self, ip, port):
 		# self.conn = pymongo.MongoClient(ip, port);
@@ -221,91 +247,173 @@ class DBWrapper():
 
 	# The APIs for Topic Modeling Module
 	def get_term_doc_matrix(self, id):
-		
-		start_time=time.time()
 
-		logging.debug('id: %s', id)
-		tile_mtx = [];
+		start_time = time.time()
+
+		logging.debug('get_term_dic_matrix(), id: %s', id)
+		tile_mtx = []
 		for tile_name in self.db.collection_names():
 
 			if tile_name.endswith('_mtx') == False:
-				continue;
+				continue
 
 			if tile_name.find(str(id)) < 0:
-				continue;
+				continue
 
-			logging.info(tile_name);
+			logging.info(tile_name)
 
-			tile_mtx_db = self.db[tile_name];
-			
+			tile_mtx_db = self.db[tile_name]
+
 			for each in tile_mtx_db.find():
-				item = np.array([each['term_idx'], each['doc_idx'], each['freq']], dtype=np.double);
-				tile_mtx = np.append(tile_mtx, item, axis=0);
-				
+				item = np.array([each['term_idx'], each['doc_idx'], each['freq']], dtype=np.double)
+				tile_mtx = np.append(tile_mtx, item, axis=0)
+
 			tile_mtx = np.array(tile_mtx, dtype=np.double).reshape(tile_mtx_db.count(), 3)
 
-			break;
+			break
 
 		logging.debug(tile_mtx)
 
-		elapsed_time=time.time() - start_time
-		logging.info('get term_doc_matrix Execution time : %.3fms' , elapsed_time)
+		elapsed_time = time.time() - start_time
+		logging.info('get term_doc_matrix Execution time : %.3fms', elapsed_time)
 
-
-		return tile_mtx;	
+		return tile_mtx
 
 	def get_term_doc_matrices(self, ids):
-		
-		start_time_get_mtx=time.time()
 
-		tile_mtxs = [];
+		start_time_get_mtx = time.time()
+
+		tile_mtxs = []
 
 		for tile_id in ids:
-			tile_mtxs.append(self.get_term_doc_matrix(tile_id));
+			tile_mtxs.append(self.get_term_doc_matrix(tile_id))
 
-
-		elapsed_time_get_mtx= time.time() - start_time_get_mtx
+		elapsed_time_get_mtx = time.time() - start_time_get_mtx
 		logging.info('get_term_doc_matrices(), Execution time: %.3fms', elapsed_time_get_mtx)
 
-		return tile_mtxs;
+		return tile_mtxs
+
+	def get_tdm(self, tileid):
+
+		tdm = []
+		try:
+			tdm = self.map_tdm[tileid]
+		except KeyError as e:
+			tdm = []
+
+		return tdm
+
+	def get_docs(self, word, x, y, level, year, yday):
+
+		docs = []
+
+		try:
+			# word to idx
+			word_idx = self.map_word_to_idx[word]
+
+			# get term-doc matrix
+			tileid = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
+		
+			tdm = self.map_tdm[tileid]
+			
+			tdm = tdm[tdm[:,0]==word_idx]
+
+			# get docs including the word_idx
+			for item in tdm:
+				doc_idx = item[1]
+				doc = self.map_idx_to_doc[doc_idx]
+				docs.append(doc)
+		except KeyError as e:
+			logging.debug('KeyError: %s', e)
+
+
+		return docs
+
+	def read_term_doc_matrices(self):
+
+		start_time = time.time()
+
+		datapath = constants.MTX_DIR
+
+		mtx_all = collections.OrderedDict()
+
+		try: 
+
+			for root, directories, files in os.walk(datapath):
+
+				idx = 0
+				for filename in files:
+										
+					if filename.startswith('mtx_') == True:
+
+						logging.debug('read term-doc matrix(%s)... %d/%d', filename, idx, len(files))
+
+						mtx = np.array([])
+						with open(datapath+filename, 'r', encoding='UTF8') as f:
+							lines = f.readlines()
+							for line in lines:
+								v = line.split('\t')
+								word_idx = v[0]
+								doc_idx = v[1]
+								word_freq = v[2]
+
+								item = np.array([v[0], v[1], v[2]], dtype=np.double)
+								mtx = np.append(mtx, item, axis=0)
+
+							mtx = np.array(mtx, dtype=np.double).reshape(len(lines), 3)
+							mtx_all[filename] = mtx
+					else:
+						logging.debug('read term-doc matrix(%s)... %d/%d --> Passed. Not a valid term-doc matrix', filename, idx, len(files))
+					idx += 1
+
+		except FileNotFoundError:
+			logging.debug('FileNotFoundError!');
+			pass
+
+		logging.debug(mtx_all)
+
+		elapsed_time = time.time() - start_time
+		logging.info('read_term_doc_matrices Execution time : %.3fms', elapsed_time)
+
+		return mtx_all
+
 
 	def get_documents_in_tile(self, zoom_level, tile_id):
 		# todo
-		return "document_list";
+		return "document_list"
 
 	def get_vocabulary(self):
 
-		start_time=time.time()
+		start_time = time.time()
 
 		voca = []
 		for each in self.db['vocabulary'].find():
 			word = {}
-			word['stem'] =each['stem']
-			word['count'] = each['count'];
-			voca.append(word);
+			word['stem'] = each['stem']
+			word['count'] = each['count']
+			voca.append(word)
 
-		elapsed_time=time.time() - start_time
-		logging.info('get voca Execution time : %.3fms' , elapsed_time)
+		elapsed_time = time.time() - start_time
+		logging.info('get voca Execution time : %.3fms', elapsed_time)
 
-		return voca;
+		return voca
 
 	def get_vocabulary_hashmap(self):
 
-		start_time=time.time()
+		start_time = time.time()
 
-		voca_hash= [] 
+		voca_hash = [] 
 		for each in self.db['vocabulary_hashmap'].find():
-			voca_hash_elemet={}
-			voca_hash_elemet['word']=each['word']
-			voca_hash_elemet['stem']=each['stem']
-			voca_hash_elemet['count']=each['count']
+			voca_hash_elemet = {}
+			voca_hash_elemet['word'] = each['word']
+			voca_hash_elemet['stem'] = each['stem']
+			voca_hash_elemet['count'] = each['count']
 			voca_hash.append(voca_hash_elemet)
 
 
-		elapsed_time=time.time() - start_time
-		logging.info('get voca_hash Execution time : %.3fms' , elapsed_time)
-		return voca_hash;	
-	    	
+		elapsed_time = time.time() - start_time
+		logging.info('get voca_hash Execution time : %.3fms', elapsed_time)
+		return voca_hash
 
 	def get_raw_data(self, tile_id):
 
@@ -313,32 +421,32 @@ class DBWrapper():
 
 		logging.debug('tile_id: %s', tile_id)
 
-		raw_data= []
+		raw_data = []
 
 		for tile_name in self.db.collection_names():
 
 			if tile_name.endswith('_raw') == False:
-				continue;
-			
-			if tile_name.find(str(tile_id)) < 0:
-				continue;
-		
-			logging.info(tile_name);
+				continue
 
-			current_raw_db=self.db[tile_name];
+			if tile_name.find(str(tile_id)) < 0:
+				continue
+
+			logging.info(tile_name)
+
+			current_raw_db = self.db[tile_name]
 
 			for each in current_raw_db.find():
-				raw_text= {}
-				raw_text['text']=each['text']
-				raw_text['created_at']=each['created_at']
+				raw_text = {}
+				raw_text['text'] = each['text']
+				raw_text['created_at'] = each['created_at']
 				raw_data.append(raw_text)
 
-			break;
+			break
 
-		elapsed_time=time.time() - start_time
-		logging.info('get_raw_data Execution time : %.3fms' , elapsed_time)
+		elapsed_time = time.time() - start_time
+		logging.info('get_raw_data Execution time : %.3fms', elapsed_time)
 
-		return raw_data;
+		return raw_data
 
 	def get_fake_topics(self):
 
