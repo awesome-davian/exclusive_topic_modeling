@@ -341,6 +341,9 @@ class TopicModelingModule():
 		# if include or exclude exist 
 		logging.info('len(include_words): %d, len(exclude_words): %d',len(include_words), len(exclude_words))
 
+		glyph = self.db.get_tileglyph(int(level), int(x), int(y), year, yday, exclusiveness)
+		result['tile_glyph'] = glyph
+
 		if len(include_words)==0 and len(exclude_words) ==0:
 			
 			topics = self.db.get_topics(int(level), int(x), int(y), year, yday, topic_count, word_count, exclusiveness);
@@ -354,7 +357,7 @@ class TopicModelingModule():
 
 		# topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
-		result['topic'] = topics;
+		result['topic'] = topics
 
 		end_time=time.time() - start_time
 		logging.info('end of get_topics Execution time: %.3fms' , end_time)

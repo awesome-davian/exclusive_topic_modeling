@@ -485,6 +485,33 @@ class DBWrapper():
 	def get_key(self,item):
 		return float(item['score'])
 
+	def get_tileglyph(self, level, x, y, year, yday, exclusiveness):
+		logging.debug('get_tileglyph(%d, %d, %d, %d, %d, %d)', level, x, y, year, yday, exclusiveness);
+
+		# TODO: to be modified.
+		datapath = constants.SPATIAL_TOPIC_PATH
+		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
+
+		glyph = {}
+		try: 
+			with open(datapath+topic_file_name, 'r', encoding='UTF8') as f:
+				
+				lines = f.readlines()
+
+				if len(lines) > 0:	
+					for line in lines:
+						v = line.split('\t')
+						glyph['spatial_score'] = 0.5391	# float(v[1])
+						glyph['temporal_score'] = 0.4327 # float(v[2])
+						break
+
+		except FileNotFoundError:
+			glyph['spatial_score'] = 0.0
+			glyph['temporal_score'] = 0.0
+			pass
+
+		return glyph
+
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
 		logging.debug('get_topics(%d, %d, %d, %d, %d, %d, %d, %d)', level, x, y, year, yday, topic_count, word_count, exclusiveness);
@@ -507,10 +534,17 @@ class DBWrapper():
 				if len(lines) > 0:
 
 					num_topics = 0
+
+					# TODO: pass the first line
+					# is_first = True
 					for line in lines:
 						#logging.debug(line)
 
 						v = line.split('\t')
+
+						# if is_first == True:
+						# 	is_first = False
+						# 	continue
 
 						if len(v) == 1:
 							
@@ -543,6 +577,7 @@ class DBWrapper():
 					
 					topic['words'] = words
 					topic['exclusiveness']=exclusiveness
+					
 					topics.append(topic)				
 						
 		except FileNotFoundError:
