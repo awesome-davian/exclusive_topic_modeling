@@ -3,6 +3,7 @@ import sys
 import pymongo
 import constants
 import numpy as np
+import collections
 
 
 #import constants
@@ -14,6 +15,8 @@ import numpy as np
 # conn = pymongo.MongoClient("localhost", constants.DEFAULT_MONGODB_PORT);
 # dbname = constants.DB_NAME;
 # db = conn[dbname];
+
+
 
 #------------------------------------------------------------------------------------------------
 
@@ -34,8 +37,94 @@ def get_files_in_dir(dirname, sort_key, reverse):
 
 	return sorted_files
 
-temp = get_files_in_dir('./matlab/standard_nmf/', os.path.getsize, True)
-print(temp)
+# temp = get_files_in_dir('./matlab/standard_nmf/', os.path.getsize, True)
+# print(temp)
+
+#------------------------------------------------------------------------------------------------
+def make_daily_mtx(src_dir, des_dir):
+
+	files = get_files_in_dir(src_dir, os.path.getsize, True)
+
+	mtx = collections.OrderedDict()
+
+	for filepath in files:
+
+		v = filepath.split('/')
+		filename = v[len(v)-1]
+		if filename.startswith('mtx_') != True: 
+			continue
+
+		vv = filename.split('_')
+		day = vv[2]
+		day = int(day[1:4])
+
+		lv = int(vv[3])
+
+		if lv == 9:
+			if day not in mtx:
+				mtx[day] = {}
+			mtx[day][filename] = 1
+
+	# print(mtx)
+
+	for idx in mtx:
+		new_file_name = 'dmtx_2013_' + str(idx)
+		with open(des_dir + new_file_name, 'a') as nf:
+			for infile in mtx[idx]:
+				print(infile)
+				with open(src_dir+infile, 'r') as infile:
+					for line in infile:
+						nf.write(line)
+			print('New file(%s) was created' % (nf.name))
+			
+	return 
+
+def make_voca_freq(src_dir, des_dir):
+
+	files = get_files_in_dir(src_dir, os.path.getsize, True)
+
+	idx = 1
+	for filepath in files:
+		v = filepath.split('/')
+		filename = v[len(v)-1]
+
+		vv = filename.split('_')
+		day = int(vv[2])
+
+		
+		vocas = collections.OrderedDict()
+		with open(filepath, 'r') as infile:
+			for line in infile:
+				vvv = line.split('\t')
+				vidx = int(vvv[0])
+				freq = int(vvv[2])
+
+				if vidx not in vocas:
+					vocas[vidx] = 0
+				vocas[vidx] = vocas[vidx] + freq
+
+		new_file_name = 'dvoca_2013_' + str(day)
+		with open(des_dir + new_file_name, 'a') as nf:
+			for item in vocas:
+				nf.write(str(item) + '\t' + str(vocas[item]) + '\n')
+			# print('%d: %d' % (item, vocas[item]))
+
+
+
+		print('Creating the voca-freq file(%s) complete. (%d/%d)' % (filename, idx, len(files)))
+
+		idx += 1
+		
+		# with open()
+
+
+
+source_dir = './tile_generator/data/130810-131110/mtx/'
+target_dir = './tile_generator/data/130810-131110/dmtx/'
+voca_freq_dir = './tile_generator/data/130810-131110/vocafreq/'
+# temp = make_daily_mtx(source_dir, target_dir)
+temp = make_voca_freq(target_dir, voca_freq_dir)
+
 
 #------------------------------------------------------------------------------------------------
 # read top 50 line
