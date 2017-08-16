@@ -30,6 +30,7 @@ class DBWrapper():
 		self.map_idx_to_doc = self.read_docs()
 		self.map_related_docs = self.read_related_docs()
 		self.map_tdm = self.read_term_doc_matrices()
+		# self.map_tdm = {}
 
 		return
 
@@ -295,15 +296,15 @@ class DBWrapper():
 
 		return tile_mtxs
 
-	def get_tdm(self, tileid):
+	# def get_tdm(self, tileid):
 
-		tdm = []
-		try:
-			tdm = self.map_tdm[tileid]
-		except KeyError as e:
-			tdm = []
+	# 	tdm = []
+	# 	try:
+	# 		tdm = self.map_tdm[tileid]
+	# 	except KeyError as e:
+	# 		tdm = []
 
-		return tdm
+	# 	return tdm
 
 	def get_docs(self, word, x, y, level, year, yday):
 
@@ -475,7 +476,6 @@ class DBWrapper():
 
 	def get_most_freq_word(self, stemmed_word):
 
-		
 		try:
 			stemmed_list = list(self.stem_bag_words[stemmed_word].items())
 			word = stemmed_list[0][0]
@@ -513,6 +513,41 @@ class DBWrapper():
 			pass
 
 		return glyph
+
+	def get_word_info(self, word, level, x, y, year, yday):
+		logging.debug('get_word_info(%s, %d, %d, %d, %d, %d)', word, level, x, y, year, yday)
+
+		# TODO: to be modified
+
+		# calculate the frequency
+		freq = 0
+		try:
+			# word to idx
+			word_idx = self.map_word_to_idx[word]
+
+			# get term-doc matrix
+			tileid = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
+		
+			# tdm = self.get_tdm(tileid)
+			tdm = self.map_tdm[tileid]
+			
+			tdm = tdm[tdm[:,0]==word_idx]
+
+			# get docs including the word_idx
+			
+			for item in tdm:
+				freq += int(item[2])
+				
+		except KeyError as e:
+			logging.debug('KeyError: %s', e)
+
+
+		# get tfidf
+
+		# get temporal novelty score
+
+		return freq, 0, [0,1,2,3,4,5,6]
+
 
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		

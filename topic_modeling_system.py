@@ -153,6 +153,33 @@ def checkInputValidation(method, contents):
             error_string = 'KeyError: ' + e.args[0];
         return error_string, int(date), word, tiles
 
+    elif method == 'GET_WORDGLYPH':
+        try:
+
+            date = contents['parameters']['date']
+            word = contents['parameters']['word']
+            tiles = contents['tiles']
+            for tile in tiles:
+                level = -1;
+                x = -1;
+                y = -1;
+
+                level = tile['level'];
+                x = tile['x']
+                y = tile['y']
+                
+                if level < 9 or level > 13:
+                    error_string = "Invalid tile.level";
+                if x < 0:
+                    error_string = "Invalid tile.x";
+                if y < 0:
+                    error_string = "Invalid tile.y";
+
+        except KeyError as e:
+            error_string = 'KeyError: ' + e.args[0];
+
+        return error_string, int(date), word, tiles
+
     elif method == 'GET_TILE_DETAIL_INFO':
         try:
             date_from = contents['date']['from']
@@ -417,9 +444,43 @@ def request_get_geopoint(uuid):
 
     json_data = json.dumps(point_list)
 
-    logging.info('Response: %s', json_data)
+    # logging.info('Response: %s', json_data)
  
     return json_data 
+
+@app.route('/GET_WORDGLYPH/<uuid>', methods=['POST'])
+def request_get_wordglyph(uuid):
+    
+    contents = request.get_json(silent=True);
+
+    logging.info('GET_WORDGLYPH Request from %s: %s', request.remote_addr, contents);
+
+    error_string, date, word, tiles = checkInputValidation('GET_WORDGLYPH', contents);
+    if error_string != "Success":
+        logging.error('ERROR_BAD_REQUEST: %s', error_string)
+        return error_string, status.HTTP_400_BAD_REQUEST
+
+    logging.debug('date: %d', date) 
+    logging.debug('word: %s', word)
+
+    glyph_list = []
+    for tile in tiles:
+        logging.debug('tile: %s', tile)
+
+        level = tile['level']
+        x = tile['x']
+        y = tile['y']
+        word_glyph = TM.get_wordglyph(level, x, y, date, word)
+
+        glyph_list.append(word_glyph)
+        logging.debug(word_glyph)
+
+
+
+    json_data = json.dumps(glyph_list)
+    logging.info('Response: %s', json_data)
+    return json_data
+
 
 if __name__ == '__main__':
 
