@@ -224,6 +224,8 @@ class DBWrapper():
 			south = 0.0
 			north = 0.0
 
+		#logging.info(east)
+		#logging.info(west)
 		return east, west, south, north
 
 	def get_W(self, level, x, y, year, yday):
@@ -370,7 +372,7 @@ class DBWrapper():
 			logging.debug('FileNotFoundError!');
 			pass
 
-		logging.debug(mtx_all)
+		#logging.debug(mtx_all)
 
 		elapsed_time = time.time() - start_time
 		logging.info('read_term_doc_matrices Execution time : %.3fms', elapsed_time)
