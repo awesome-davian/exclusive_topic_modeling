@@ -355,8 +355,6 @@ class TopicModelingModule():
 		year = date.timetuple().tm_year
 		day_of_year = date.timetuple().tm_yday
 
-		logging.info(day_of_year);
-
 		logging.debug('get_releated_docs(%s, %s, %s, %s, %d)', level, x, y, word, day_of_year)
 
 		s_word = porter_stemmer.stem(word)
@@ -391,6 +389,8 @@ class TopicModelingModule():
 
 		total_docs = []
 
+		tbyt_total_docs = []
+
 		# size = 0
 		# f_size = 0
 		# docs = self.db.get_related_docs_map()
@@ -408,7 +408,31 @@ class TopicModelingModule():
 			
 		# logging.debug('size of %d : %d, f_size: %d', day_of_year, size, f_size)
 
+ 
 		logging.debug('case: %s', day_of_year)
+		for each in range(start_date, end_date):
+			doc_list = map_related_docs[each]
+			for doc in doc_list:
+				d = {}
+				d['username'] = str(doc[0])
+				d['created_at'] = int(doc[1])
+				d['text'] = str(doc[2])
+				tbyt_total_docs.append(d)
+
+		timearr = [];
+		for doc in tbyt_total_docs:
+			#logging.info(doc['created_at']);
+			date= datetime.fromtimestamp(int(int(doc['created_at'])))
+			#logging.info(date);
+			mday = date.timetuple().tm_mday
+			timearr.append(mday);
+
+		#logging.info(timearr);
+
+		timedict = dict((i, timearr.count(i)) for i in timearr); 
+		logging.info(timedict);
+
+
 
 		try: 
 			doc_list = map_related_docs[day_of_year]
@@ -471,20 +495,18 @@ class TopicModelingModule():
 				if len(total_docs) > constants.MAX_RELATED_DOCS:
 					break
 
-		timearr = [];
-		for doc in total_docs:
-			logging.info(doc['created_at']);
-			date= datetime.fromtimestamp(int(int(doc['created_at'])))
-			logging.info(date);
-			mday = date.timetuple().tm_mday
-			timearr.append(mday);
+		# timearr = [];
+		# for doc in total_docs:
+		# 	logging.info(doc['created_at']);
+		# 	date= datetime.fromtimestamp(int(int(doc['created_at'])))
+		# 	logging.info(date);
+		# 	mday = date.timetuple().tm_mday
+		# 	timearr.append(mday);
 
-		#logging.info(timearr);
+		# #logging.info(timearr);
 
-		timedict = dict((i, timearr.count(i)) for i in timearr); 
-		logging.info(timedict);
-
-
+		# timedict = dict((i, timearr.count(i)) for i in timearr); 
+		# logging.info(timedict);
 
 
 
@@ -570,6 +592,7 @@ class TopicModelingModule():
 		all_topics = []
 
 		date_unix = date_from
+		idx=0
 
 		while True:
 			if date_unix > date_to:
