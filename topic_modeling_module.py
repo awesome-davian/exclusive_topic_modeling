@@ -621,7 +621,7 @@ class TopicModelingModule():
 		year = date.timetuple().tm_year		
 		yday = date.timetuple().tm_yday
 
-		logging.debug("yday: %d", yday)
+		# logging.debug("yday: %d", yday)
 
 		geo_points = {}
 
@@ -633,7 +633,7 @@ class TopicModelingModule():
 
 		geo_points['points'] = []
 
-		tdm = self.db.get_docs(word, x, y, level, year, yday)
+		docs = self.db.get_docs(word, x, y, level, year, yday)
 
 		# map_idx_to_doc[0]: date
 		# map_idx_to_doc[1]: lon
@@ -641,7 +641,7 @@ class TopicModelingModule():
 		# map_idx_to_doc[3]: author
 		# map_idx_to_doc[4]: text
 
-		for item in tdm:
+		for item in docs:
 
 			xbin, ybin = self.world_to_local(float(item[1]), float(item[2]), int(level))
 
@@ -665,6 +665,34 @@ class TopicModelingModule():
 		
 		return result
 
+	def get_wordglyph(self, level, x, y, date, word):
+
+		date = datetime.fromtimestamp(int(date/1000))
+		year = date.timetuple().tm_year
+		yday = date.timetuple().tm_yday
+
+		# logging.debug("yday: %d", yday)
+
+		result = {}
+		# word_glyph = {}
+
+		tile = {}
+		tile['x'] = x
+		tile['y'] = y
+		tile['level'] = level
+		result['tile'] = tile
+
+		word_freq, tfidf, nscores = self.db.get_word_info(word, level, x, y, year, yday)
+
+		glyph = {}
+		glyph['frequency'] = word_freq
+		glyph['tfidf'] = tfidf
+		glyph['temporal'] = nscores
+		result['word_glyph'] = glyph
+
+		logging.debug(result)
+ 
+		return result
 
 	def get_heatmaps(self, level, x, y, date_from, date_to):
 
