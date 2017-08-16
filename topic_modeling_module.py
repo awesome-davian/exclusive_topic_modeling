@@ -10,6 +10,8 @@ import time
 from datetime import datetime
 from operator import itemgetter
 
+import random
+
 
 porter_stemmer=PorterStemmer();
 
@@ -76,6 +78,21 @@ class TopicModelingModule():
 		lat = math.degrees(math.atan(math.sinh(n)))
 
 		return lat;
+
+	def world_to_local(self, lon, lat, level):
+		x = self.lon_to_x(level, lon)
+		y = self.lat_to_y(level, lat)
+
+		x = x - math.floor(x)
+		y = y - math.floor(y)
+
+		# tile resolution: 256
+		resolution = 256
+
+		x = x * resolution
+		y = y * resolution
+
+		return math.floor(x), math.floor(y)
 
 	def get_neighbor_ids(self, level, x, y):
 
@@ -324,6 +341,9 @@ class TopicModelingModule():
 		# if include or exclude exist 
 		logging.info('len(include_words): %d, len(exclude_words): %d',len(include_words), len(exclude_words))
 
+		glyph = self.db.get_tileglyph(int(level), int(x), int(y), year, yday, exclusiveness)
+		result['tile_glyph'] = glyph
+
 		if len(include_words)==0 and len(exclude_words) ==0:
 			
 			topics = self.db.get_topics(int(level), int(x), int(y), year, yday, topic_count, word_count, exclusiveness);
@@ -337,7 +357,7 @@ class TopicModelingModule():
 
 		# topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
-		result['topic'] = topics;
+		result['topic'] = topics
 
 		end_time=time.time() - start_time
 		logging.info('end of get_topics Execution time: %.3fms' , end_time)
@@ -634,6 +654,59 @@ class TopicModelingModule():
 
 		return result;
 
+	def get_geopoint(self, level, x, y, date, word):
+
+		result = []
+
+		date = datetime.fromtimestamp(int(date/1000))
+		year = date.timetuple().tm_year		
+		yday = date.timetuple().tm_yday
+
+		logging.debug("yday: %d", yday)
+
+		geo_points = {}
+
+		tile = {}
+		tile['x'] = x
+		tile['y'] = y
+		tile['level'] = level
+		geo_points['tile'] = tile
+
+		geo_points['points'] = []
+
+		tdm = self.db.get_docs(word, x, y, level, year, yday)
+
+		# map_idx_to_doc[0]: date
+		# map_idx_to_doc[1]: lon
+		# map_idx_to_doc[2]: lat
+		# map_idx_to_doc[3]: author
+		# map_idx_to_doc[4]: text
+
+		for item in tdm:
+
+			xbin, ybin = self.world_to_local(float(item[1]), float(item[2]), int(level))
+
+			point = {}
+			point['xbin'] = xbin
+			point['ybin'] = ybin
+			point['author'] = item[3]
+			point['text'] = item[4]
+
+			geo_points['points'].append(point)
+		
+		# for i in range(0, 10):
+		# 	point = {}
+		# 	point['lon'] = -74.0059 + random.uniform(-1.0, 1.0)
+		# 	point['lat'] = 40.7128 + random.uniform(-1.0, 1.0)
+		# 	# point['text'] = ""
+		# 	# point['author'] = ""
+		# 	geo_points['points'].append(point)	
+
+		result.append(geo_points)
+		
+		return result
+
+
 	def get_heatmaps(self, level, x, y, date_from, date_to):
 
 		# logging.debug('get_heatmaps(%d, %d, %d, %d, %d)', level, x, y, date_from, date_to)
@@ -656,7 +729,7 @@ class TopicModelingModule():
 			date_unix += date_intv
 
 			# get heatmap list from db
-			exclusiveness_score = self.db.get_xscore(level, x, y, year, yday)
+			xscore_e, xscore_w, xscore_s, xscore_n = self.db.get_xscore(level, x, y, year, yday)
 
 			xcls_scores = {}
 
@@ -668,7 +741,11 @@ class TopicModelingModule():
 
 			xcls_scores['exclusiveness_score'] = []
 			xcls_score = {}
-			xcls_score['value'] = exclusiveness_score
+			# xcls_score['value'] = exclusiveness_score
+			xcls_score['east'] = xscore_e
+			xcls_score['west'] = xscore_w
+			xcls_score['south'] = xscore_s
+			xcls_score['north'] = xscore_n
 
 			date_str = date.strftime("%d-%m-%Y")
 			# logging.debug('date_str: %s', date_str)
@@ -679,6 +756,8 @@ class TopicModelingModule():
 			result.append(xcls_scores)
 
 		return result
+
+
 
 
 	def get_word_info(self, level, x, y, word):

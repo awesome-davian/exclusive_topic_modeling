@@ -23,7 +23,7 @@ mtx_dir = sys.argv[1]
 global_voca_path = sys.argv[2]
 topic_dir = sys.argv[3]
 
-nmtx_dir = './data/mtx_neighbor/' + constants.DATA_RANGE + '/'
+nmtx_dir = './data/' + constants.DATA_RANGE + '/nmtx/'
 
 if not os.path.exists(mtx_dir):
 	logging.info('The Term-Doc. Matrix Directory(%s) is Not exist. Exit %s.', mtx_dir, module_name)
@@ -32,11 +32,11 @@ if not os.path.exists(mtx_dir):
 if not os.path.exists(topic_dir):
     os.makedirs(topic_dir)
 
-xscore_dir = './data/xscore/' + constants.DATA_RANGE + '/'
+xscore_dir = './data/' + constants.DATA_RANGE + '/xscore/'
 if not os.path.exists(xscore_dir):
     os.makedirs(xscore_dir)
 
-w_dir = './data/w/' + constants.DATA_RANGE + '/'
+w_dir = './data/' + constants.DATA_RANGE + '/w/'
 if not os.path.exists(w_dir):
     os.makedirs(w_dir)
 
@@ -71,8 +71,11 @@ def del_stored_topics():
 
 def read_voca(word_map, bag_words, stem_bag_words):
 
-	voca_file = open(global_voca_path, 'r', encoding='UTF8')
-	voca_hash_file = open(global_voca_path+'_hash', 'r', encoding='UTF8')
+	voca_file_name = global_voca_path + 'voca'
+	voca_hash_file_name = global_voca_path + 'voca_hash'
+
+	voca_file = open(voca_file_name, 'r', encoding='UTF8')
+	voca_hash_file = open(voca_hash_file_name, 'r', encoding='UTF8')
 	logging.debug('voca path: %s', global_voca_path)
 	
 	idx = 1
@@ -121,7 +124,7 @@ def read_spatial_mtx(mtx):
 
 	matrix = []
 	center_cnt = 0
-	with open(nmtx_dir+mtx, 'r', encoding='UTF8') as f:
+	with open(nmtx_dir+'spatial/'+mtx, 'r', encoding='UTF8') as f:
 		lines = f.readlines()
 		logging.debug('%d', len(lines))
 		for line in lines:
@@ -152,7 +155,7 @@ def read_temporal_mtx(mtx):
 	line_cnt = 0
 	center_count = 0
 	for idx, each in enumerate(neighbor_names):
-		each_path = mtx_dir + each
+		each_path = mtx_dir + 'temporal/' + each
 		if os.path.exists(each_path) == False:
 			continue
 		

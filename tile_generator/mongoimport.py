@@ -85,8 +85,8 @@ def import_file(input_file):
 					tweet_created_at = line_json["postedTime"] if "postedTime" in line_json else line_json["created_at"]
 					tweet_user_id = line_json["actor"]["id"] if "actor" in line_json else line_json["user"]["id"]
 					tweet_user_name = line_json["actor"]["displayName"] if "actor" in line_json else line_json["user"]["name"]
-					tweet_favorite_count = line_json["actor"]["favoritesCount"] if "actor" in line_json else line_json["favorite_count"]
-					tweet_retweet_count = line_json["retweetCount"] if "retweetCount" in line_json else line_json["retweet_count"]
+					# tweet_favorite_count = line_json["actor"]["favoritesCount"] if "actor" in line_json else line_json["favorite_count"]
+					# tweet_retweet_count = line_json["retweetCount"] if "retweetCount" in line_json else line_json["retweet_count"]
 
 					if "coordinates" in line_json:
 						tweet_coordinates = line_json["coordinates"]
@@ -103,9 +103,10 @@ def import_file(input_file):
 						"user":{
 							"id": tweet_user_id,
 							"name": tweet_user_name
-						},
-						"favorite_count": tweet_favorite_count,
-						"retweet_count": tweet_retweet_count
+						}
+						# },
+						# "favorite_count": tweet_favorite_count,
+						# "retweet_count": tweet_retweet_count
 						});
 				except KeyError as e:
 					print(e)

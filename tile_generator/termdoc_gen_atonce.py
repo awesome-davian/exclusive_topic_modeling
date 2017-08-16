@@ -206,7 +206,7 @@ for idx, doc in enumerate(rawdata_col.find()):
 			time_find += time.time() - s_time_find;
 
 			s_time_insert = time.time()
-			mtx_file.write(str(word_idx) + '\t' + str(doc['_id']) + '\t' + str(bag_words_one[word]) + '\n')
+			#mtx_file.write(str(word_idx) + '\t' + str(doc['_id']) + '\t' + str(bag_words_one[word]) + '\n')
 			time_insert += time.time() - s_time_insert;
 
 			for level in range(9, 14):
