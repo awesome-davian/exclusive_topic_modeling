@@ -217,7 +217,7 @@ class DBWrapper():
 				north = random.uniform(0, 1)
 				# TODO: need to be modified to get 4 direction heatmap
 		except FileNotFoundError:
-			#logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
+			logging.debug('FileNotFoundError: %s', (xscore_dir + file_name))
 			#score = -1.0
 			#score = random.uniform(0, 1)
 			east = 0.0

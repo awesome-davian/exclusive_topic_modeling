@@ -626,7 +626,8 @@ class TopicModelingModule():
 
 			date_unix += date_intv
 
-			exclusiveness_score = self.db.get_xscore(level, x, y, year, yday)  #fix 
+			east, west, south, north = self.db.get_xscore(level, x, y, year, yday)  #fix 
+			exclusiveness_score  = east;
 			if exclusiveness_score > 0.0:
 				item = {}
 				item['score'] = exclusiveness_score
