@@ -342,11 +342,11 @@ class TopicModelingModule():
 		logging.info('len(include_words): %d, len(exclude_words): %d',len(include_words), len(exclude_words))
 
 		glyph = self.db.get_tileglyph(int(level), int(x), int(y), year, yday, exclusiveness)
-		result['tile_glyph'] = glyph
+		logging.info(glyph)
 
 		if len(include_words)==0 and len(exclude_words) ==0:
 			
-			topics = self.db.get_topics(int(level), int(x), int(y), year, yday, topic_count, word_count, exclusiveness);
+			topics = self.db.get_topics_new(int(level), int(x), int(y), year, yday, topic_count, word_count, exclusiveness);
 			logging.info('done get_topics')
 
 		else:
@@ -354,6 +354,7 @@ class TopicModelingModule():
 			topics = self.get_ondemand_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness, include_words, exclude_words)
 			logging.info('done ondemand_topics')
 
+		result['tile_glyph'] = glyph
 
 		# topics = self.db.get_topics(level, x, y, year, yday, topic_count, word_count, exclusiveness);
 
@@ -598,7 +599,7 @@ class TopicModelingModule():
 			for xvalue in range(0, 6):
 				topic = {}
 				topic['exclusiveness'] = xvalue
-				topic['topic'] = self.db.get_topics(int(level), int(x), int(y), year, yday, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
+				topic['topic'] = self.db.get_topics_new(int(level), int(x), int(y), year, yday, constants.DEFAULT_NUM_TOPICS, constants.DEFAULT_NUM_TOP_K, xvalue)
 
 				if len(topic['topic']) > 0:
 					topics.append(topic)
@@ -634,6 +635,7 @@ class TopicModelingModule():
 		geo_points['points'] = []
 
 		docs = self.db.get_docs(word, x, y, level, year, yday)
+		# docs = self.db.get_docs2(words, x, y, level, year, yday)
 
 		# map_idx_to_doc[0]: date
 		# map_idx_to_doc[1]: lon
@@ -648,8 +650,8 @@ class TopicModelingModule():
 			point = {}
 			point['xbin'] = xbin
 			point['ybin'] = ybin
-			point['author'] = item[3]
-			point['text'] = item[4]
+			# point['author'] = item[3]
+			# point['text'] = item[4]
 
 			geo_points['points'].append(point)
 		
@@ -682,12 +684,12 @@ class TopicModelingModule():
 		tile['level'] = level
 		result['tile'] = tile
 
-		word_freq, tfidf, nscores = self.db.get_word_info(word, level, x, y, year, yday)
+		word_score, percent, tfidf = self.db.get_word_info(word, level, x, y, year, yday)
 
 		glyph = {}
-		glyph['frequency'] = word_freq
-		glyph['tfidf'] = tfidf
-		glyph['temporal'] = nscores
+		glyph['score'] = word_score
+		glyph['percent'] = percent
+		glyph['temporal'] = tfidf
 		result['word_glyph'] = glyph
 
 		logging.debug(result)

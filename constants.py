@@ -3,7 +3,8 @@
 # v0.3.x.x : GET_RELATED_TOPIC protocol added
 # v0.5.x.x : Protocol test complete
 # v0.9.x.x : Glyph diagram
-VERSION = 'v0.9.0.1_Aug.2017'
+# v1.0.x.x : STExNMF
+VERSION = 'v1.0.0.0_Sep.2017'
 
 MATLAB_DIR = './matlab/standard_nmf/'
 #MATLAB_DIR = './matlab/'
@@ -13,7 +14,8 @@ DEFAULT_MONGODB_PORT = 27017
 # DB_NAME_MTX = 'SALT_DB_mtx' + DB_NAME_POSTFIX
 # DB_NAME_TOPICS = 'SALT_DB_topics' + DB_NAME_POSTFIX
 
-DATA_RANGE = '131103-131105'
+DATA_RANGE = '130920-131231'
+# DATA_RANGE = '131103-131105'
 #DATA_RANGE = '131020-131110'
 # DATA_RANGE = '131103'
 LEVEL_RANGE_START = 9
@@ -28,6 +30,9 @@ TEMPORAL_XSCORE_DIR = './tile_generator/data/'+DATA_RANGE+'/xscore/temporal/'
 SPATIAL_TOPIC_PATH = './tile_generator/data/'+DATA_RANGE+'/topics/spatial/'
 TEMPORAL_TOPIC_PATH = './tile_generator/data/'+DATA_RANGE+'/topics/temporal/'
 W_PATH = './tile_generator/data/'+DATA_RANGE+'/w/'
+FREQ_DIR = './tile_generator/data/'+DATA_RANGE+'/wfreq/'
+TFIDF_DIR = './tile_generator/data/'+DATA_RANGE+'/tfidf/'
+TOPIC_DIR = './tile_generator/data/'+DATA_RANGE+'/topics/'
 
 OPMODE_SPATIAL_MTX = 0
 OPMODE_TEMPORAL_MTX = 0
