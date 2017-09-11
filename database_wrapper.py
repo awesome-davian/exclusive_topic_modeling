@@ -505,11 +505,13 @@ class DBWrapper():
 						v = line.split('\t')
 						glyph['spatial_score'] = 0.5391	# float(v[1])
 						glyph['temporal_score'] = 0.4327 # float(v[2])
+						glyph['frequency'] = 0.0 
 						break
 
 		except FileNotFoundError:
 			glyph['spatial_score'] = 0.0
 			glyph['temporal_score'] = 0.0
+			glyph['frequency'] = 0.0
 			pass
 
 		return glyph
@@ -560,7 +562,7 @@ class DBWrapper():
 
 		datapath = constants.SPATIAL_TOPIC_PATH
 		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
-
+		#topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 		topics = []
 		
 		try: 

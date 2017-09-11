@@ -727,8 +727,8 @@ class TopicModelingModule():
 		word_freq, tfidf, nscores = self.db.get_word_info(word, level, x, y, year, yday)
 
 		glyph = {}
-		glyph['frequency'] = word_freq
-		glyph['tfidf'] = tfidf
+		glyph['score'] = word_freq
+		glyph['percent'] = tfidf
 		glyph['temporal'] = nscores
 		result['word_glyph'] = glyph
 
