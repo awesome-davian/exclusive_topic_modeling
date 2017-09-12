@@ -426,12 +426,12 @@ def request_get_geopoint(uuid):
         logging.error('ERROR_BAD_REQUEST: %s', error_string)
         return error_string, status.HTTP_400_BAD_REQUEST
 
-    logging.debug('date: %d', date)
-    logging.debug('word: %s', word)
+    logging.debug('GET_GEOPOINT, date: %d', date)
+    logging.debug('GET_GEOPOINT, word: %s', word)
 
     point_list = []
     for tile in tiles:
-        logging.debug('tile: %s', tile)
+        # logging.debug('tile: %s', tile)
 
         level = tile['level']
         x = tile['x']
@@ -445,7 +445,7 @@ def request_get_geopoint(uuid):
 
     json_data = json.dumps(point_list)
 
-    # logging.info('Response: %s', json_data)
+    # logging.info('GET_GEOPOINT Response: %s', json_data)
  
     return json_data 
 
@@ -461,12 +461,12 @@ def request_get_wordglyph(uuid):
         logging.error('ERROR_BAD_REQUEST: %s', error_string)
         return error_string, status.HTTP_400_BAD_REQUEST
 
-    logging.debug('date: %d', date) 
-    logging.debug('word: %s', word)
+    logging.debug('GET_WORDGLYPH, date: %d', date) 
+    logging.debug('GET_WORDGLYPH, word: %s', word)
 
     glyph_list = []
     for tile in tiles:
-        logging.debug('tile: %s', tile)
+        # logging.debug('tile: %s', tile)
 
         level = tile['level']
         x = tile['x']
@@ -474,12 +474,11 @@ def request_get_wordglyph(uuid):
         word_glyph = TM.get_wordglyph(level, x, y, date, word)
 
         glyph_list.append(word_glyph)
-        logging.debug(word_glyph)
-
-
+    
+    # logging.debug(glyph_list)
 
     json_data = json.dumps(glyph_list)
-    logging.info('Response: %s', json_data)
+    logging.info('GET_WORDGLYPH Response: %s', json_data)
     return json_data
 
 

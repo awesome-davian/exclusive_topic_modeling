@@ -27,7 +27,7 @@ def get_files_in_dir(dirname, sort_key, reverse):
 	dirpath = os.path.abspath(dirname)
 
 	# make a generator for all file paths within dirpath
-	all_files = ( os.path.join(basedir, filename) for basedir, dirs, files in os.walk(dirpath) for filename in files   )
+	all_files = (os.path.join(basedir, filename) for basedir, dirs, files in os.walk(dirpath) for filename in files   )
 
 	sorted_files = sorted(all_files, key=sort_key, reverse=reverse)
 
@@ -67,6 +67,9 @@ def make_daily_mtx(src_dir, des_dir):
 
 	# print(mtx)
 
+	if not os.path.exists(des_dir):
+		os.makedirs(des_dir)
+
 	for idx in mtx:
 		new_file_name = 'dmtx_2013_' + str(idx)
 		with open(des_dir + new_file_name, 'a') as nf:
@@ -82,6 +85,9 @@ def make_daily_mtx(src_dir, des_dir):
 def make_voca_freq(src_dir, des_dir):
 
 	files = get_files_in_dir(src_dir, os.path.getsize, True)
+
+	if not os.path.exists(des_dir):
+		os.makedirs(des_dir)
 
 	idx = 1
 	for filepath in files:
@@ -119,10 +125,10 @@ def make_voca_freq(src_dir, des_dir):
 
 
 
-source_dir = './tile_generator/data/130810-131110/mtx/'
-target_dir = './tile_generator/data/130810-131110/dmtx/'
-voca_freq_dir = './tile_generator/data/130810-131110/vocafreq/'
-# temp = make_daily_mtx(source_dir, target_dir)
+source_dir = './tile_generator/data/130620-130731/mtx/'
+target_dir = './tile_generator/data/130620-130731/dmtx/'
+voca_freq_dir = './tile_generator/data/130620-130731/dvoca/'
+#temp = make_daily_mtx(source_dir, target_dir)
 temp = make_voca_freq(target_dir, voca_freq_dir)
 
 

@@ -29,7 +29,9 @@ class DBWrapper():
 		self.map_idx_to_word, self.map_word_to_idx, self.bag_words, self.stem_bag_words = self.read_voca()
 		self.map_idx_to_doc = self.read_docs()
 		self.map_related_docs = self.read_related_docs()
-		self.map_tdm = self.read_term_doc_matrices()
+		# self.map_max_word_freq = self.get_max_word_freq()
+		# self.map_tdm = self.read_term_doc_matrices()
+		# self.map_max_doc_freq = self.read_max_doc_frequency()
 		# self.map_tdm = {}
 
 		return
@@ -306,6 +308,176 @@ class DBWrapper():
 
 	# 	return tdm
 
+	def get_frequency_in_tile(self, tileid):
+
+		datapath = constants.FREQ_DIR
+
+		word_freq = 0
+		doc_freq = 0
+
+		tileid = 'wfreq_' + tileid
+
+		try: 
+
+			with open(datapath+tileid, 'r', encoding='UTF8') as f:	
+
+				try:
+					lines = f.readlines()
+					line = lines[0]
+					v = line.split('\t')
+					word_freq = int(v[0])
+					doc_freq = int(v[1])
+				except KeyError as ke:
+					word_freq = 0
+					doc_freq = 0	
+
+			# tdm = self.map_tdm[tileid]
+			# tdm = self.read_tem_doc_matrix(tileid)
+			# if tdm.size > 0 :
+			# 	tdm = tdm[tdm[:,0]==word_idx]
+
+			# 	# for item in tdm:
+			# 	# 	freq += int(item[2])
+			# 	freq = tdm.sum(axis=0)
+			# 	# logging.info('freq: %d', freq)
+			# 	try:
+			# 		freq = int(freq[2])
+			# 	except IndexError as ie:
+			# 		freq = 0
+		
+		except FileNotFoundError as fe:
+			print(fe)
+			word_freq = 0
+			doc_freq = 0
+
+		return word_freq, doc_freq
+
+	def get_tfidf_variation(self, word, tileid):
+
+		datapath = constants.TFIDF_DIR		
+		tfidf_var = 0.0
+
+		tilename = 'tfidf_' + tileid
+
+		try:
+			query_idx = self.map_word_to_idx[word]
+
+			try: 
+				with open(datapath+tilename, 'r', encoding='UTF8') as f:
+
+					lines = f.readlines()
+					for line in lines:
+						v = line.split('\t')
+
+						temp_word_idx = v[0]
+
+						if temp_word_idx == query_idx:
+							tfidf_var = v[1]
+							break
+
+			except FileNotFoundError as fe:
+				tfidf_var = 0.0
+
+		except KeyError as ke:
+			tfidf_var = 0.0
+			
+
+		return tfidf_var
+
+	def get_tfidf_values(self, word, tileid):
+		
+		datapath = constants.TFIDF_DIR		
+		tfidf_values = []
+
+		tilename = 'tfidf_' + tileid
+
+		try:
+			query_idx = self.map_word_to_idx[word]
+
+			try: 
+				with open(datapath+tilename, 'r', encoding='UTF8') as f:
+
+					lines = f.readlines()
+					for line in lines:
+						v = line.split('\t')
+
+						temp_word_idx = v[0]
+
+						if temp_word_idx == query_idx:
+							for i in range(2, 9):
+								tfidf_values.append(float(v[i]))
+							break
+
+			except FileNotFoundError as fe:
+				tfidf_values = []
+
+		except KeyError as ke:
+			tfidf_values = []
+
+		return tfidf_values
+
+
+	def get_word_frequency(self, word, level, x, y, year, yday):
+
+		datapath = constants.FREQ_DIR
+
+		word_freq = 0
+		doc_freq = 0
+
+		tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		tileid = 'wfreq_' + tileid
+		
+		try:
+			query_idx = self.map_word_to_idx[word]
+			logging.info('word: %s, query_idx: %d', word, query_idx)
+
+			try: 
+				with open(datapath+tileid, 'r', encoding='UTF8') as f:
+
+					lines = f.readlines()
+					is_firstline = True
+					for line in lines:
+
+						# pass the first line
+						if is_firstline == True:	
+							is_firstline = False
+							continue
+
+						v = line.split('\t')
+						
+						temp_word_idx = int(v[0])
+
+						if temp_word_idx == query_idx:
+							word_freq = int(v[1])
+							doc_freq = int(v[2])
+							break
+
+				# tdm = self.map_tdm[tileid]
+				# tdm = self.read_tem_doc_matrix(tileid)
+				# if tdm.size > 0 :
+				# 	tdm = tdm[tdm[:,0]==word_idx]
+
+				# 	# for item in tdm:
+				# 	# 	freq += int(item[2])
+				# 	freq = tdm.sum(axis=0)
+				# 	# logging.info('freq: %d', freq)
+				# 	try:
+				# 		freq = int(freq[2])
+				# 	except IndexError as ie:
+				# 		freq = 0
+			
+			except FileNotFoundError as fe:
+				print(fe)
+				word_freq = 0
+				doc_freq = 0
+
+		except KeyError as ke:
+			print(ke)
+			word_freq = 0
+			doc_freq = 0
+
+		return word_freq, doc_freq
+
 	def get_docs(self, word, x, y, level, year, yday):
 
 		docs = []
@@ -315,22 +487,111 @@ class DBWrapper():
 			word_idx = self.map_word_to_idx[word]
 
 			# get term-doc matrix
-			tileid = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
+			tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
 		
-			tdm = self.map_tdm[tileid]
-			
-			tdm = tdm[tdm[:,0]==word_idx]
+			# tdm = self.map_tdm[tileid]
+			tdm = self.read_tem_doc_matrix(tileid)
+			if tdm.size > 0 :			
+				tdm = tdm[tdm[:,0]==word_idx]
 
-			# get docs including the word_idx
-			for item in tdm:
-				doc_idx = item[1]
-				doc = self.map_idx_to_doc[doc_idx]
-				docs.append(doc)
+				# get docs including the word_idx
+				for item in tdm:
+					doc_idx = item[1]
+					doc = self.map_idx_to_doc[doc_idx]
+					docs.append(doc)
 		except KeyError as e:
 			logging.debug('KeyError: %s', e)
 
 
 		return docs
+
+	# get_docs2: not by word, but by word list.
+	# def get_docs2(self, words, x, y, level, year, yday):
+
+	# 	docs = []
+		
+	# 	word_idx = []
+	# 	for word in words:
+	# 		try:
+	# 			word_idx.append(self.map_word_to_idx[word])
+	# 		except KeyError as e:
+	# 			logging.debug('KeyError: %s', e)
+
+	# 	try:
+	# 		# get term-doc matrix
+	# 		tileid = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)				
+	# 		tdm = self.map_tdm[tileid]
+	# 		tdm = tdm[np.logical_or.reduce([tdm[:,0] == w for w in word_idx])]
+
+	# 		tdm = tdm[:,1]
+	# 		setTdm = set(tdm)
+
+	# 		for doc_idx in setTdm:
+	# 			doc = self.map_idx_to_doc[doc_idx]
+	# 			docs.append(doc)
+
+	# 	except KeyError as e:
+	# 		logging.debug('KeyError: %s', e)
+
+	# 	return docs
+
+	def read_tem_doc_matrix(self, tileid):
+		
+		datapath = constants.MTX_DIR
+
+		mtx = np.array([])
+		tileid = 'mtx_' + tileid
+
+		try:
+			
+			with open(datapath+tileid, 'r', encoding='UTF8') as f:
+				lines = f.readlines()
+				for line in lines:
+					v = line.split('\t')
+					word_idx = v[0]
+					doc_idx = v[1]
+					word_freq = v[2]
+
+					item = np.array([v[0], v[1], v[2]], dtype=np.int32)
+					mtx = np.append(mtx, item, axis=0)
+
+				mtx = np.array(mtx, dtype=np.int32).reshape(len(lines), 3)		
+
+		except FileNotFoundError as fe:
+			logging.debug('FileNotFoundError: %s', fe);
+			pass
+
+		return mtx
+
+	def get_max_word_freq(self):
+
+		datapath = constants.FREQ_DIR
+
+		max_all = collections.OrdderedDict()
+
+		for root, directories, files in os.walk(datapath):
+
+			for filename in files:
+									
+				if filename.startswith('freq_') == True:
+					
+					tileid = filename[filename.find('_')+1:]
+					freq, _ = self.get_frequency_in_tile(tileid)
+
+					v = filename.split('_')
+					level = v[2]
+					day = str(v[1][1:])
+			
+					if day not in max_all:
+						max_all[day] = collections.OrderedDict()
+
+					if level not in max_all[day]:
+						max_all[day][level] = 0
+
+					if freq > max_all[day][level]:
+						max_all[day][level] = freq
+
+		return max_all
 
 	def read_term_doc_matrices(self):
 
@@ -379,6 +640,33 @@ class DBWrapper():
 		logging.info('read_term_doc_matrices Execution time : %.3fms', elapsed_time)
 
 		return mtx_all
+
+	# This function does not working properly.
+	# def read_max_doc_frequency(self):
+
+	# 	freq = collections.OrderedDict()
+
+	# 	for key, value in self.map_tdm.items():
+	# 		logging.info('key: %s, value: %s', key, value)
+	# 		v = key.split('_')
+
+	# 		level = v[3]
+	# 		freq = self.get_doc_frequency_in_tile(key)
+
+	# 		day = str(v[2][1:])
+	
+	# 		if day not in freq:
+	# 			freq[day] = collections.OrderedDict()
+
+	# 		if level not in freq[day]:
+	# 			freq[day][level] = 0
+
+	# 		if freq > freq[day][level]:
+	# 			freq[day][level] = freq
+
+	# 	print(freq)
+
+	# 	return freq
 
 
 	def get_documents_in_tile(self, zoom_level, tile_id):
@@ -487,28 +775,134 @@ class DBWrapper():
 	def get_key(self,item):
 		return float(item['score'])
 
+	def get_jacard_score(self, datapath, level, x, y, year, yday, exclusiveness):
+		
+		topic_file_name = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		mypath = constants.TOPIC_DIR + 'alpha_0.0/'
+		neighbor_names = []
+		topic_self = [] 
+		topic_neighbor = []
+
+		for i in range(1,6):
+			temp_name = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
+			neighbor_names.append(temp_name)
+	  
+
+		for each in neighbor_names:
+			logging.debug('path: %s', each)
+
+		for each in neighbor_names:
+			each_path = datapath + each 
+
+			if os.path.exists(each_path) == False:
+				continue
+
+			try:
+				with open(each_path, 'r', encoding = 'ISO-8859-1') as each_file: 
+
+					lines = each_file.readlines()
+
+					if len(lines) > 0 :	
+									
+						is_first = True
+						for line in lines:
+
+							v = line.split('\t')
+
+							if is_first == True:
+								is_first = False
+								continue
+
+							for i in range(0, len(v) - 1):
+								topic_neighbor.append(v[i].strip())
+			
+			except FileNotFoundError as fe:
+				logging.debug(fe)
+				pass 
+
+		#get topic_self 
+		try: 
+			with open(mypath + topic_file_name, 'r', encoding = 'ISO-8859-1') as file:
+				lines = file.readlines()
+				if len(lines) > 0:
+					is_first = True
+					for line in lines: 
+						v = line.split('\t')
+
+						if is_first == True:
+							is_first =False
+							continue
+						for i in range(0,len(v) - 1):
+							topic_self.append(v[i].strip())
+
+		except KeyError as fe:
+			logging.error(fe)
+			pass
+
+		query_self = []
+		query_neighbor = []
+
+		for element in topic_self:
+			try:
+				query_idx = self.map_word_to_idx[element]
+				query_self.append(query_idx)
+
+			except KeyError as ke:
+				continue
+
+		for element in topic_neighbor:
+			try:
+				query_idx = self.map_word_to_idx[element]
+				query_neighbor.append(query_idx)
+			except KeyError as ke:
+				continue
+
+		set_neighbor = set(query_neighbor)
+		set_self = set(query_self)
+
+		jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
+
+		return jacard_score
+
 	def get_tileglyph(self, level, x, y, year, yday, exclusiveness):
 		logging.debug('get_tileglyph(%d, %d, %d, %d, %d, %d)', level, x, y, year, yday, exclusiveness);
 
-		# TODO: to be modified.
-		datapath = constants.SPATIAL_TOPIC_PATH
-		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
+		# datapath = constants.SPATIAL_TOPIC_PATH
+		if exclusiveness == 1:
+			datapath = constants.TOPIC_DIR + 'alpha_0.0/'
+		elif exclusiveness == 2:
+			datapath = constants.TOPIC_DIR + 'alpha_0.6/'
+		elif exclusiveness == 3:
+			datapath = constants.TOPIC_DIR + 'alpha_0.7/'
+		elif exclusiveness == 4:
+			datapath = constants.TOPIC_DIR + 'alpha_0.8/'
+		elif exclusiveness == 5:
+			datapath = constants.TOPIC_DIR + 'alpha_0.9/'
+		else:
+			datapath = constants.TOPIC_DIR + 'alpha_0.7/'
+
+		topic_file_name = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
 
 		glyph = {}
 		try: 
-			with open(datapath+topic_file_name, 'r', encoding='UTF8') as f:
+			with open(datapath+topic_file_name, 'r', encoding='ISO-8859-1') as f:
 				
 				lines = f.readlines()
 
-				if len(lines) > 0:	
+				if len(lines) > 0:
 					for line in lines:
 						v = line.split('\t')
-						glyph['spatial_score'] = 0.5391	# float(v[1])
-						glyph['temporal_score'] = 0.4327 # float(v[2])
-						glyph['frequency'] = 0.0 
+						#glyph['spatial_score'] = float(v[1]) / 100.0
+						glyph['temporal_score'] = float(v[2]) / 100.0
+						_, frequency = self.get_frequency_in_tile(tileid)
+						glyph['frequency'] = frequency
 						break
 
-		except FileNotFoundError:
+					glyph['spatial_score'] = self.get_jacard_score(datapath, level, x, y, year, yday, exclusiveness)
+
+		except FileNotFoundError as fe:
+			print(fe)
 			glyph['spatial_score'] = 0.0
 			glyph['temporal_score'] = 0.0
 			glyph['frequency'] = 0.0
@@ -519,36 +913,149 @@ class DBWrapper():
 	def get_word_info(self, word, level, x, y, year, yday):
 		logging.debug('get_word_info(%s, %d, %d, %d, %d, %d)', word, level, x, y, year, yday)
 
-		# TODO: to be modified
-
 		# calculate the frequency
-		freq = 0
+		word_freq = 0.0
+		tfidf_var = 0.0
+		tf_word_percent = 0.0 
+
 		try:
-			# word to idx
-			word_idx = self.map_word_to_idx[word]
-
 			# get term-doc matrix
-			tileid = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
-		
-			# tdm = self.get_tdm(tileid)
-			tdm = self.map_tdm[tileid]
-			
-			tdm = tdm[tdm[:,0]==word_idx]
+			tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
+			word_freq, _ = self.get_word_frequency(word, level, x, y, year, yday)
+			tot_freq = 0
+			for i in range(0,7):
+				temp_word_freq, _ = self.get_word_frequency(word, level, x, y, year, str(yday - i))
+				tot_freq += temp_word_freq
+				#logging.debug(tot_freq)
 
-			# get docs including the word_idx
-			
-			for item in tdm:
-				freq += int(item[2])
-				
+			#logging.debug(tot_freq)
+
+			if(tot_freq >0):
+				tf_word_percent = word_freq / tot_freq
+
+			# max_freq = self.map_max_word_freq[yday][level]
+			# word_score = word_freq / max_freq
+
+
 		except KeyError as e:
 			logging.debug('KeyError: %s', e)
+			word_freq = 0
+			tf_word_percent = 0
 
-
-		# get tfidf
+		# get tfidf variation
+		tfidf_var = self.get_tfidf_variation(word, tileid)
+		tfidf_values = self.get_tfidf_values(word, tileid)
 
 		# get temporal novelty score
+		return word_freq, tf_word_percent, tfidf_values
 
-		return freq, 0, [0,1,2,3,4,5,6]
+	def get_topics_new(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
+		
+		logging.debug('get_topics_new(%d, %d, %d, %d, %d, %d, %d, %d)', level, x, y, year, yday, topic_count, word_count, exclusiveness);
+
+		# date_format = "%Y-%m-%d"
+		# date = datetime.strptime(date, date_format)
+
+		# exclusiveness = int(exclusiveness)
+
+		
+		if exclusiveness == 1:
+			datapath = constants.TOPIC_DIR + 'alpha_0.0/'
+		elif exclusiveness == 2:
+			datapath = constants.TOPIC_DIR + 'alpha_0.6/'
+		elif exclusiveness == 3:
+			datapath = constants.TOPIC_DIR + 'alpha_0.7/'
+		elif exclusiveness == 4:
+			datapath = constants.TOPIC_DIR + 'alpha_0.8/'
+		elif exclusiveness == 5:
+			datapath = constants.TOPIC_DIR + 'alpha_0.9/'
+		else:
+			datapath = constants.TOPIC_DIR + 'alpha_0.7/'
+		
+		tileid = str(year) + '_' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		topic_file_name = 'topics_' + tileid
+		# topic_file_name = 'topics_' + tileid + '_' + str(exclusiveness)
+
+		tileid2 = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+		total_word_freq, _ = self.get_frequency_in_tile(tileid2)
+		
+		topic_word_freq = 0
+		topics = []
+		num_topics = 0
+		
+		try: 
+			with open(datapath+topic_file_name, 'r', encoding='ISO-8859-1') as f:
+				
+				lines = f.readlines()
+
+				if len(lines) > 0:
+
+					topic_cnt = 0
+					is_first = True
+					for line in lines:
+						#logging.debug(line)
+
+						v = line.split('\t')
+
+						if is_first == True:
+							num_topics = int(v[0])
+							is_first = False
+							continue
+
+						topic_cnt += 1
+
+						if topic_cnt > topic_count:
+							break
+
+						topic = []
+						for i in range(0, num_topics):
+							topic.append(v[i].strip())
+
+						topics.append(topic)
+
+		except FileNotFoundError as fe:
+			print(fe)
+			pass
+
+		print(topics)
+
+		if len(topics) == 0:
+			return topics
+
+		topics = [[topics[j][i] for j in range(len(topics))] for i in range(len(topics[0]))]
+		
+		res = []
+		for i in range(num_topics):
+
+			words = topics[i]
+			new_words = []
+			topic_word_freq = 0
+			for word in words:
+				word_freq, _ = self.get_word_frequency(word, level, x, y, year, yday)
+				freq_word = self.get_most_freq_word(word)
+				topic_word_freq += word_freq
+
+				w = {}
+				w['word'] = freq_word
+				w['count'] = word_freq
+				w['score'] = 0
+
+				new_words.append(w)
+
+
+
+			topic = {}
+			topic['words'] = new_words
+			# topic['count'] = topic_word_freq
+			logging.info('topic_word_freq: %d, total_word_freq: %d', topic_word_freq, total_word_freq)
+			topic['score'] = (topic_word_freq/total_word_freq) if total_word_freq != 0 else 0.0
+
+			res.append(topic)
+
+		res = sorted(res, key=self.get_key, reverse=True)
+
+		# return topics[:num_topics]
+		return res
 
 
 	def get_topics(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
@@ -558,11 +1065,17 @@ class DBWrapper():
 		# date_format = "%Y-%m-%d"
 		# date = datetime.strptime(date, date_format)
 
-		exclusiveness = int(exclusiveness)
+		# exclusiveness = int(exclusiveness)
 
 		datapath = constants.SPATIAL_TOPIC_PATH
-		topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y) + '_' + str(exclusiveness)
-		#topic_file_name = 'topics_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
+	
+		tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
+		topic_file_name = 'topics_' + tileid + '_' + str(exclusiveness)
+
+		total_word_freq, _ = self.get_frequency_in_tile(tileid)
+		
+		topic_word_freq = 0
+		
 		topics = []
 		
 		try: 
@@ -588,8 +1101,10 @@ class DBWrapper():
 						if len(v) == 1:
 							
 							if num_topics > 0:
+
+								# if num_topics < 2:
 								topic['words'] = words
-								topic['exclusiveness']=exclusiveness
+								topic['score'] = (topic_word_freq/total_word_freq) if total_word_freq != 0 else 0
 								topics.append(topic)
 
 							num_topics += 1
@@ -597,6 +1112,7 @@ class DBWrapper():
 							topic = {}
 							words = []
 							append_cnt = 0
+							topic_word_freq = 0
 
 							topic['score'] = float(v[0])
 						else:
@@ -610,12 +1126,13 @@ class DBWrapper():
 								word['word'] = freq_word
 								word['count'] = int(v[1])
 								word['score'] = float(v[2])
-
 								words.append(word)
+
+								topic_word_freq += int(v[1])
 								append_cnt += 1
 					
 					topic['words'] = words
-					topic['exclusiveness']=exclusiveness
+					topic['score'] = (topic_word_freq / total_word_freq) if total_word_freq != 0 else 0
 					
 					topics.append(topic)				
 						
@@ -633,20 +1150,20 @@ class DBWrapper():
 
 		return
 
-	def read_spatial_mtx(self, directory, mtx):
+	# def read_spatial_mtx(self, directory, mtx):
 
-		v = mtx.split('_')
+	# 	v = mtx.split('_')
 
-		# remove d from v[2]
-		year = int(v[1])
-		yday = int(v[2][1:])
-		level = int(v[3])
-		x = int(v[4])
-		y = int(v[5])
+	# 	# remove d from v[2]
+	# 	year = int(v[1])
+	# 	yday = int(v[2][1:])
+	# 	level = int(v[3])
+	# 	x = int(v[4])
+	# 	y = int(v[5])
 
-		res = self.read_spatial_mtx(directory, year, yday, level, x, y)
+	# 	res = self.read_spatial_mtx(directory, year, yday, level, x, y)
 
-		return res
+	# 	return res
 
 	def read_spatial_mtx(self, directory, year, yday, level, x, y):
 
