@@ -389,7 +389,7 @@ class DBWrapper():
 		datapath = constants.TFIDF_DIR		
 		tfidf_values = []
 
-		tilename = 'tfidf_' + tileid
+		tilename = 'tfidf_eightdays_' + tileid
 
 		try:
 			query_idx = self.map_word_to_idx[word]
@@ -403,8 +403,8 @@ class DBWrapper():
 
 						temp_word_idx = v[0]
 
-						if temp_word_idx == query_idx:
-							for i in range(2, 9):
+						if int(temp_word_idx) == int(query_idx):
+							for i in range(1, 8):
 								tfidf_values.append(float(v[i]))
 							break
 
@@ -943,7 +943,7 @@ class DBWrapper():
 			tf_word_percent = 0
 
 		# get tfidf variation
-		tfidf_var = self.get_tfidf_variation(word, tileid)
+		#tfidf_var = self.get_tfidf_variation(word, tileid)
 		tfidf_values = self.get_tfidf_values(word, tileid)
 
 		# get temporal novelty score
