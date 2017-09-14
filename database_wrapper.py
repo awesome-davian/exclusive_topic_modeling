@@ -1,13 +1,14 @@
 import os
 import logging
-import pymongo
 import constants
 import numpy as np
 import time
 from datetime import datetime
 import collections
 import random
+from nltk import PorterStemmer
 
+porter_stemmer=PorterStemmer();
 
 def getTwitterDate(date):
 	date_format = ''
@@ -21,6 +22,19 @@ def getTwitterDate(date):
 
 
 	return datetime.strptime(date, date_format)
+
+def getTwitterHour(date):
+	date_format = ''
+	if len(date) == 30:
+		# date_format = "EEE MMM dd HH:mm:ss ZZZZZ yyyy";
+		date_format = "%a %b %d %H:%M:%S %z %Y"
+
+	else:
+		# date_format = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+		date_format = "%Y-%m-%dT%H:%M:%S.000Z"
+
+
+	return datetime.strptime(date, date_format).timetuple().tm_hour, datetime.strptime(date, date_format).timetuple().tm_min
 
 class DBWrapper():
 
@@ -387,7 +401,7 @@ class DBWrapper():
 	def get_tfidf_values(self, word, tileid):
 		
 		datapath = constants.TFIDF_DIR		
-		tfidf_values = []
+		tfidf_values = 0.0
 
 		tilename = 'tfidf_eightdays_' + tileid
 
@@ -404,18 +418,47 @@ class DBWrapper():
 						temp_word_idx = v[0]
 
 						if int(temp_word_idx) == int(query_idx):
-							for i in range(1, 8):
-								tfidf_values.append(float(v[i]))
+							tfidf_values = float(v[1])
 							break
 
 			except FileNotFoundError as fe:
-				tfidf_values = []
+				tfidf_values = 0.0
 
 		except KeyError as ke:
-			tfidf_values = []
+			tfidf_values = 0.0
 
 		return tfidf_values
 
+	def get_tfidf_values2(self, word, tileid):
+		
+		datapath = constants.TFIDF_DIR		
+		tfidf_values = 0.0
+
+		tilename = 'tfidf_eightdays_' + tileid
+
+		try:
+			query_idx = self.map_word_to_idx[word]
+
+			try: 
+				with open(datapath+tilename, 'r', encoding='UTF8') as f:
+
+					lines = f.readlines()
+					for line in lines:
+						v = line.split('\t')
+
+						temp_word_idx = v[0]
+
+						if int(temp_word_idx) == int(query_idx):
+							tfidf_values = float(v[1])
+							break
+
+			except FileNotFoundError as fe:
+				tfidf_values = 0.0
+
+		except KeyError as ke:
+			tfidf_values = 0.0
+
+		return tfidf_values
 
 	def get_word_frequency(self, word, level, x, y, year, yday):
 
@@ -429,7 +472,7 @@ class DBWrapper():
 		
 		try:
 			query_idx = self.map_word_to_idx[word]
-			logging.info('word: %s, query_idx: %d', word, query_idx)
+			#logging.info('word: %s, query_idx: %d', word, query_idx)
 
 			try: 
 				with open(datapath+tileid, 'r', encoding='UTF8') as f:
@@ -782,6 +825,9 @@ class DBWrapper():
 		neighbor_names = []
 		topic_self = [] 
 		topic_neighbor = []
+		topic_yesterday = []
+		jacard_score = 0.0
+		jacard_score_yesterday = 0.0
 
 		for i in range(1,6):
 			temp_name = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
@@ -791,10 +837,11 @@ class DBWrapper():
 		for each in neighbor_names:
 			logging.debug('path: %s', each)
 
-		for each in neighbor_names:
-			each_path = datapath + each 
+		for idx, each in enumerate(neighbor_names):
+			each_path = mypath + each 
 
 			if os.path.exists(each_path) == False:
+				logging.debug('no file %s', each_path)
 				continue
 
 			try:
@@ -814,6 +861,8 @@ class DBWrapper():
 								continue
 
 							for i in range(0, len(v) - 1):
+								if idx == 0 :
+								    topic_yesterday.append(v[i].strip()) 
 								topic_neighbor.append(v[i].strip())
 			
 			except FileNotFoundError as fe:
@@ -821,26 +870,28 @@ class DBWrapper():
 				pass 
 
 		#get topic_self 
-		try: 
-			with open(mypath + topic_file_name, 'r', encoding = 'ISO-8859-1') as file:
-				lines = file.readlines()
-				if len(lines) > 0:
-					is_first = True
-					for line in lines: 
-						v = line.split('\t')
+		if os.path.exists(datapath + topic_file_name) == True:		
+			try: 
+				with open(datapath + topic_file_name, 'r', encoding = 'ISO-8859-1') as file:
+					lines = file.readlines()
+					if len(lines) > 0:
+						is_first = True
+						for line in lines: 
+							v = line.split('\t')
 
-						if is_first == True:
-							is_first =False
-							continue
-						for i in range(0,len(v) - 1):
-							topic_self.append(v[i].strip())
+							if is_first == True:
+								is_first =False
+								continue
+							for i in range(0,len(v) - 1):
+								topic_self.append(v[i].strip())
 
-		except KeyError as fe:
-			logging.error(fe)
-			pass
+			except KeyError as fe:
+				logging.error(fe)
+				pass
 
 		query_self = []
 		query_neighbor = []
+		query_yesterday = []
 
 		for element in topic_self:
 			try:
@@ -857,12 +908,26 @@ class DBWrapper():
 			except KeyError as ke:
 				continue
 
+		for element in topic_yesterday:
+			try: 
+				query_idx = self.map_word_to_idx[element]
+				query_yesterday.append(query_idx)
+			except KeyError as ke:
+				continue
+
 		set_neighbor = set(query_neighbor)
 		set_self = set(query_self)
+		set_yesterday = set(query_yesterday)
 
-		jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
+		if len(set_neighbor) == 0 or len(set_yesterday )==0:
+			jacard_score = 0.0
+			jacard_score_yesterday = 0.0
 
-		return jacard_score
+		else : 
+			jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
+			jacard_score_yesterday = len(set_yesterday.intersection(set_self)) / len(set_yesterday.union(set_self))
+
+		return jacard_score, jacard_score_yesterday
 
 	def get_tileglyph(self, level, x, y, year, yday, exclusiveness):
 		logging.debug('get_tileglyph(%d, %d, %d, %d, %d, %d)', level, x, y, year, yday, exclusiveness);
@@ -884,6 +949,9 @@ class DBWrapper():
 		topic_file_name = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 		tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
 
+		tile_boarder, tile_glyph_arc = self.get_jacard_score(datapath, level, x, y, year, yday, exclusiveness)
+
+
 		glyph = {}
 		try: 
 			with open(datapath+topic_file_name, 'r', encoding='ISO-8859-1') as f:
@@ -894,12 +962,13 @@ class DBWrapper():
 					for line in lines:
 						v = line.split('\t')
 						#glyph['spatial_score'] = float(v[1]) / 100.0
-						glyph['temporal_score'] = float(v[2]) / 100.0
+						#glyph['temporal_score'] = float(v[2]) / 100.0
 						_, frequency = self.get_frequency_in_tile(tileid)
 						glyph['frequency'] = frequency
 						break
 
-					glyph['spatial_score'] = self.get_jacard_score(datapath, level, x, y, year, yday, exclusiveness)
+					glyph['spatial_score'] = tile_boarder
+					glyph['temporal_score'] = tile_glyph_arc
 
 		except FileNotFoundError as fe:
 			print(fe)
@@ -910,44 +979,97 @@ class DBWrapper():
 
 		return glyph
 
+	def get_day_related_docs(self, level, x, y, year, yday, word):
+
+		s_word = porter_stemmer.stem(word)
+		word_idx = self.map_word_to_idx[s_word]
+
+		rel_docs = [] 
+		time_arr = [] 
+
+		if os.path.exists(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)) == True:
+			try:
+				with open(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y), 'r', encoding = 'UTF8') as f:
+				    lines = f.readlines()
+				    for line in lines: 
+				    	v= line.split('\t')
+
+				    	temp_word_idx = int(v[0])
+				    	doc_idx = int(v[1])
+
+				    	if int(word_idx) == temp_word_idx:
+
+					    	# doc_time = getTwitterDate(self.map_idx_to_doc[doc_idx][0])
+					    	# date = doc_time.timetuple().tm_yday
+					    	# unixtime = time.mktime(doc_time.timetuple())
+					    	# username = str(self.map_idx_to_doc[doc_idx][3])
+					    	# text = str(self.map_idx_to_doc[doc_idx][4])
+
+					    	local_hours, local_minutes = getTwitterHour(self.map_idx_to_doc[doc_idx][0])
+
+					    	#d = {}
+					    	#d['username'] = username
+					    	#d['created_at'] = unixtime
+					    	#d['text'] = text
+					    	rel_docs.append(local_hours*60 + local_minutes)
+				
+				for i in range(0,1440): 
+					isexist = rel_docs.count(i)
+					if isexist > 0:
+						time_arr.append(1)
+					else: 
+						time_arr.append(0)
+
+			except FileNotFoundError as fe:
+				logging.debug('FileNotFoundError: %s', fe);
+				time_arr = [] 
+				pass 
+
+		return time_arr
+
 	def get_word_info(self, word, level, x, y, year, yday):
 		logging.debug('get_word_info(%s, %d, %d, %d, %d, %d)', word, level, x, y, year, yday)
 
 		# calculate the frequency
 		word_freq = 0.0
 		tfidf_var = 0.0
-		tf_word_percent = 0.0 
+		tf_word_percent = [] 
+		time_arr = []
+		today_freq = 0.0
 
 		try:
 			# get term-doc matrix
 			tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
 			word_freq, _ = self.get_word_frequency(word, level, x, y, year, yday)
-			tot_freq = 0
 			for i in range(0,7):
-				temp_word_freq, _ = self.get_word_frequency(word, level, x, y, year, str(yday - i))
-				tot_freq += temp_word_freq
+				tot_freq = 0
+				today_freq, _ = self.get_word_frequency(word,level, x, y, year, str(yday - i))
+				for i in range(0,7):
+					temp_word_freq, _ = self.get_word_frequency(word, level, x, y, year, str(yday - i))
+					tot_freq += temp_word_freq
+					#logging.debug(tot_freq)
+
 				#logging.debug(tot_freq)
 
-			#logging.debug(tot_freq)
+				if(tot_freq >0):
+					tf_word_percent.append(today_freq / tot_freq)
 
-			if(tot_freq >0):
-				tf_word_percent = word_freq / tot_freq
-
-			# max_freq = self.map_max_word_freq[yday][level]
-			# word_score = word_freq / max_freq
+				# max_freq = self.map_max_word_freq[yday][level]
+				# word_score = word_freq / max_freq
 
 
 		except KeyError as e:
 			logging.debug('KeyError: %s', e)
 			word_freq = 0
-			tf_word_percent = 0
+			tf_word_percent.append(0)
 
 		# get tfidf variation
 		#tfidf_var = self.get_tfidf_variation(word, tileid)
-		tfidf_values = self.get_tfidf_values(word, tileid)
+		#tfidf_value = self.get_tfidf_values(word, tileid)
+		time_arr = self.get_day_related_docs(level, x, y, year, yday, word)
 
 		# get temporal novelty score
-		return word_freq, tf_word_percent, tfidf_values
+		return word_freq, time_arr, tf_word_percent
 
 	def get_topics_new(self, level, x, y, year, yday, topic_count, word_count, exclusiveness):
 		
