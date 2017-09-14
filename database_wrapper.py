@@ -828,8 +828,10 @@ class DBWrapper():
 		topic_yesterday = []
 		jacard_score = 0.0
 		jacard_score_yesterday = 0.0
+		topic_count = 10
 
-		for i in range(1,6):
+
+		for i in range(1,4):
 			temp_name = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
 			neighbor_names.append(temp_name)
 	  
@@ -852,6 +854,7 @@ class DBWrapper():
 					if len(lines) > 0 :	
 									
 						is_first = True
+						topic_cnt = 0
 						for line in lines:
 
 							v = line.split('\t')
@@ -859,6 +862,10 @@ class DBWrapper():
 							if is_first == True:
 								is_first = False
 								continue
+
+							topic_cnt += 1 
+							if topic_cnt > topic_count:
+								break
 
 							for i in range(0, len(v) - 1):
 								if idx == 0 :
@@ -875,6 +882,8 @@ class DBWrapper():
 				with open(datapath + topic_file_name, 'r', encoding = 'ISO-8859-1') as file:
 					lines = file.readlines()
 					if len(lines) > 0:
+
+						topic_cnt = 0
 						is_first = True
 						for line in lines: 
 							v = line.split('\t')
@@ -882,6 +891,11 @@ class DBWrapper():
 							if is_first == True:
 								is_first =False
 								continue
+
+							topic_cnt += 1 
+							if topic_cnt > topic_count:
+								break
+
 							for i in range(0,len(v) - 1):
 								topic_self.append(v[i].strip())
 
@@ -919,15 +933,34 @@ class DBWrapper():
 		set_self = set(query_self)
 		set_yesterday = set(query_yesterday)
 
-		if len(set_neighbor) == 0 or len(set_yesterday )==0:
-			jacard_score = 0.0
-			jacard_score_yesterday = 0.0
+		diff_set_with_neighbor = list(set_self.difference(set_neighbor))
+		diff_set_with_yesterday = list(set_self.difference(set_yesterday))
 
-		else : 
-			jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
-			jacard_score_yesterday = len(set_yesterday.intersection(set_self)) / len(set_yesterday.union(set_self))
+		tot_freq_neighbor = 0
+		tot_freq_yesterday = 0
 
-		return jacard_score, jacard_score_yesterday
+		for i in range(len(diff_set_with_neighbor)):
+			temp = self.map_idx_to_word[diff_set_with_neighbor[i]]
+			temp_word_freq, _  = self.get_word_frequency(temp, level, x, y, year, yday)
+			tot_freq_neighbor += temp_word_freq
+
+		for i in range(len(diff_set_with_yesterday)):
+			temp = self.map_idx_to_word[diff_set_with_yesterday[i]]
+			temp_word_freq, _ = self.get_word_frequency(temp, level, x, y, year, yday)
+			tot_freq_yesterday += temp_word_freq
+
+
+		# if len(set_self) == 0 :
+		# 	jacard_score = 0.0
+		# 	jacard_score_yesterday = 0.0
+
+		# else : 
+		# 	#jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
+		# 	#jacard_score_yesterday = len(set_yesterday.intersection(set_self)) / len(set_yesterday.union(set_self))
+		# 	jacard_score = len(set_self.difference(set_neighbor)) / len((set_self))
+		# 	jacard_score_yesterday = len(set_self.difference(set_yesterday)) / len((set_self))
+	
+		return tot_freq_neighbor, tot_freq_yesterday
 
 	def get_tileglyph(self, level, x, y, year, yday, exclusiveness):
 		logging.debug('get_tileglyph(%d, %d, %d, %d, %d, %d)', level, x, y, year, yday, exclusiveness);
@@ -1006,19 +1039,19 @@ class DBWrapper():
 					    	# text = str(self.map_idx_to_doc[doc_idx][4])
 
 					    	local_hours, local_minutes = getTwitterHour(self.map_idx_to_doc[doc_idx][0])
+					    	rel_docs.append(local_hours)
+
 
 					    	#d = {}
 					    	#d['username'] = username
 					    	#d['created_at'] = unixtime
 					    	#d['text'] = text
-					    	rel_docs.append(local_hours*60 + local_minutes)
-				
-				for i in range(0,1440): 
+					        #rel_docs.append(local_hours*60 + local_minutes)
+
+				for i in range(0,24): 
 					isexist = rel_docs.count(i)
-					if isexist > 0:
-						time_arr.append(1)
-					else: 
-						time_arr.append(0)
+					time_arr.append(isexist)
+
 
 			except FileNotFoundError as fe:
 				logging.debug('FileNotFoundError: %s', fe);
