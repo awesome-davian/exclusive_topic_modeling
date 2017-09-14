@@ -829,6 +829,7 @@ class DBWrapper():
 		jacard_score = 0.0
 		jacard_score_yesterday = 0.0
 		topic_count = 10
+		
 
 
 		for i in range(1,4):
