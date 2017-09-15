@@ -6,6 +6,7 @@ import time
 from nltk import PorterStemmer
 from datetime import datetime
 import math
+import json
 
 
 logging.config.fileConfig('logging.conf')
@@ -191,7 +192,7 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 
 	topic_file_name = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
-	logging.info(topic_file_name)
+	#logging.info(topic_file_name)
 
 	# temp_name = 'topics_' + str(2013) + '_' + str(307) + '_' + str(12) + '_' 
 
@@ -200,25 +201,35 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 	# neighbor_names.append(temp_name+str(x+0)+'_'+str(y-1))
 	# neighbor_names.append(temp_name+str(x-1)+'_'+str(y+0))
 
-	for i in range(1,6):
+	for i in range(1,4):
 		temp_name = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
 		neighbor_names.append(temp_name)
 
 	topic_self = [] 
 	topic_neighbor = []
 	topic_yesterday = []
+	num_topics = 0
+	topic_count = 5
 
 	try: 
 		with open(datapath + topic_file_name, 'r', encoding = 'ISO-8859-1') as file:
 			lines = file.readlines()
 			if len(lines) > 0:
+
+				topic_cnt = 0 
 				is_first = True
 				for line in lines: 
 					v = line.split('\t')
 
 					if is_first == True:
+						num_topics = int(v[0])
 						is_first =False
 						continue
+
+					topic_cnt += 1 
+					if topic_cnt > topic_count:
+						break
+
 					for i in range(0,len(v) - 1):
 						topic_self.append(v[i].strip())
 
@@ -228,8 +239,8 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 
    
 
-	for each in neighbor_names:
-		logging.debug('path: %s', each)
+	# for each in neighbor_names:
+	# 	logging.debug('path: %s', each)
 
 	for idx, each in enumerate(neighbor_names):
 
@@ -246,6 +257,7 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 				if len(lines) > 0 :	
 
 					is_first = True
+					topic_cnt = 0 
 					for line in lines:
 
 						v = line.split('\t')
@@ -253,7 +265,9 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 						if is_first == True:
 							is_first = False
 							continue
-
+						topic_cnt += 1 
+						if topic_cnt > topic_count:
+							break
 
 						for i in range(0, len(v)-1):
 							if idx == 0 :
@@ -301,23 +315,52 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 	set_neighbor = set(query_neighbor)
 	set_self = set(query_self)
 	set_yesterday = set(query_yesterday)
-	print(len(set_neighbor))
-	print(len(set_self))
-	print(len(set_yesterday))
 
-	#print(len(set_neighbor.intersection(set_self)))
-	#print(len(set_neighbor.union(set_self)))
+	diff_set_with_neighbor = list(set_self.difference(set_neighbor))
+	diff_set_with_yesterday = list(set_self.difference(set_yesterday))
+	# print(len(set_neighbor))
+	# print(len(set_self))
+	#print(len(set_yesterday))
+
+	# print((diff_set_with_neighbor))
+	# print((diff_set_with_yesterday))
+
+	tot_freq_neighbor = 0
+	tot_freq_yesterday = 0
+
+	for i in range(len(diff_set_with_neighbor)):
+		temp = map_idx_to_word[diff_set_with_neighbor[i]]
+		temp_word_freq, _  = get_word_frequency(temp, level, x, y, year, yday)
+		tot_freq_neighbor += temp_word_freq
+
+	for i in range(len(diff_set_with_yesterday)):
+		temp = map_idx_to_word[diff_set_with_yesterday[i]]
+		temp_word_freq, _ = get_word_frequency(temp, level, x, y, year, yday)
+		tot_freq_yesterday += temp_word_freq
+
+
+
 	if len(set_neighbor) == 0 or len(set_yesterday) ==0:
 		jacard_score = 0.0
 		jacard_score_yesterday = 0.0
 
 	else : 
-		jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
-		jacard_score_yesterday = len(set_yesterday.intersection(set_self)) / len(set_yesterday.union(set_self))
+		#jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
+		#jacard_score_yesterday = len(set_yesterday.intersection(set_self)) / len(set_yesterday.union(set_self))
+		jacard_score = len(set_self.difference(set_neighbor)) / len((set_self))
+		jacard_score_yesterday = len(set_self.difference(set_yesterday)) / len((set_self))
+	
+	#print(jacard_score)
+	#print(jacard_score_yesterday)
+	# print('---------------------------------------------')
+	# print('freq')
+	# print(tot_freq_neighbor)
+	# print('len')
+	# print(len(diff_set_with_neighbor))
+	print(math.log(tot_freq_neighbor,2.7) * len(diff_set_with_neighbor) / num_topics)
+	print(math.log(tot_freq_yesterday,2.7) * len(diff_set_with_yesterday) / num_topics)
+	#print(tot_freq_yesterday)
 
-
-	print(jacard_score)
-	print(jacard_score_yesterday)
 
 	return jacard_score, jacard_score_yesterday
 
@@ -334,7 +377,7 @@ def get_tfidf_values(word):
 
 	try: 
 		query_idx = map_word_to_idx[word]
-		print(query_idx)
+		#print(query_idx)
 
 		try: 
 			with open(datapath + tilename, 'r', encoding = 'UTF8') as f: 
@@ -344,7 +387,7 @@ def get_tfidf_values(word):
 					v = line.split('\t')
 					temp_word_idx = v[0]
 					if int(temp_word_idx) == int(query_idx): 
-						print(temp_word_idx)
+						#print(temp_word_idx)
 						for i in range(2,9):
 							tfidf_values.append(float(v[i]))
 						break 
@@ -367,7 +410,7 @@ def get_tfidf_value(word):
 
 	try: 
 		query_idx = map_word_to_idx[word]
-		print(query_idx)
+		#print(query_idx)
 
 		try: 
 			with open(datapath + tilename, 'r', encoding = 'UTF8') as f: 
@@ -377,7 +420,7 @@ def get_tfidf_value(word):
 					v = line.split('\t')
 					temp_word_idx = v[0]
 					if int(temp_word_idx) == int(query_idx): 
-						print(temp_word_idx)
+						#print(temp_word_idx)
 						tfidf_values = float(v[1])
 						break 
 		except FileNotFoundError as fe: 
@@ -400,7 +443,7 @@ def get_word_frequency(word, level, x, y, year, yday):
 	
 	try:
 		query_idx = map_word_to_idx[word]
-		logging.info('word: %s, query_idx: %d', word, query_idx)
+		#logging.info('word: %s, query_idx: %d', word, query_idx)
 
 		try: 
 			with open(datapath+tileid, 'r', encoding='UTF8') as f:
@@ -467,7 +510,7 @@ def get_week_freq(word, level, x, y, year, yday):
 		tf_word_percent.append(0)
 
 
-	print(tf_word_percent)
+	#print(tf_word_percent)
 
 
 	return tf_word_percent
@@ -475,66 +518,241 @@ def get_week_freq(word, level, x, y, year, yday):
 def get_day_related_docs(level, x, y, year, yday, word):
 
 	s_word = porter_stemmer.stem(word)
-	print(word)
+	#print(word)
 	word_idx = map_word_to_idx[s_word]
 
-	print(word_idx)
+	#print(word_idx)
 
 	rel_docs = []
-	with open(constants.MTX_DIR + 'mtx_' + str(year) + '_d'
-	 + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y), 'r', encoding = 'UTF8') as f:
-	    lines = f.readlines()
-	    for line in lines: 
-	    	v= line.split('\t')
+	doc_list = []  
 
-	    	temp_word_idx = int(v[0])
-	    	doc_idx = int(v[1])
+	if os.path.exists(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)) == True:
+		try:
+			with open(constants.MTX_DIR + 'mtx_' + str(year) + '_d'
+			 + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y), 'r', encoding = 'UTF8') as f:
+			    lines = f.readlines()
+			    for line in lines: 
+			    	v= line.split('\t')
 
-	    	if int(word_idx) == temp_word_idx:
+			    	temp_word_idx = int(v[0])
+			    	doc_idx = int(v[1])
 
-		    	doc_time = getTwitterDate(map_idx_to_doc[doc_idx][0])
-		    	date = doc_time.timetuple().tm_yday
-		    	unixtime = time.mktime(doc_time.timetuple())
-		    	username = str(map_idx_to_doc[doc_idx][3])
-		    	text = str(map_idx_to_doc[doc_idx][4])
+			    	if int(word_idx) == temp_word_idx:
 
-		    	local_hours, local_minutes = getTwitterHour(map_idx_to_doc[doc_idx][0])
+				    	doc_time = getTwitterDate(map_idx_to_doc[doc_idx][0])
+				    	date = doc_time.timetuple().tm_yday
+				    	unixtime = time.mktime(doc_time.timetuple())
+				    	username = str(map_idx_to_doc[doc_idx][3])
+				    	text = str(map_idx_to_doc[doc_idx][4])
 
-		    	#d = {}
-		    	#d['username'] = username
-		    	#d['created_at'] = unixtime
-		    	#d['text'] = text
-		    	rel_docs.append(local_hours*60 + local_minutes)
+				    	local_hours, local_minutes = getTwitterHour(map_idx_to_doc[doc_idx][0])
 
 
-	print(rel_docs)
+				    	d = {}
+				    	d['username'] = username
+				    	d['created_at'] = unixtime
+				    	d['text'] = text
+				    	doc_list.append(d)
 
-	return rel_docs
+				    	rel_docs.append(local_hours)
+
+
+			arr = [] 
+			for i in range(0,24): 
+				isexist = rel_docs.count(i)
+				arr.append(isexist)
+	
+		except FileNotFoundError as fe :
+			rel_docs = []
+			doc_list = []
+			pass 
+
+
+	return rel_docs, doc_list
 
 
 
+
+def get_related_docs(level, x, y, word, date):
+
+	start_time = time.time()
+
+	# get docs including the word 
+	date = datetime.fromtimestamp(int(int(date)/1000))
+	year = date.timetuple().tm_year
+	day_of_year = date.timetuple().tm_yday
+
+	logging.debug('get_releated_docs(%s, %s, %s, %s, %d)', level, x, y, word, day_of_year)
+
+	s_word = porter_stemmer.stem(word)
+	word_idx = map_word_to_idx[s_word]
+
+	logging.info('word: %s, s_word: %s, word_idx: %d', word, s_word, word_idx)
+
+
+	total_docs = []
+	time_arr = {}
+
+	_,  temp_doc_list = get_day_related_docs(level, x, y, year, day_of_year, word)
+
+	for element in temp_doc_list:
+		d = {}
+		d['username'] = element.get('username')
+		d['created_at'] = element.get('created_at')
+		d['text'] = element.get('text')
+		total_docs.append(d)
+
+
+	for i in range(day_of_year, day_of_year + 30):
+
+		_, doc_freq = get_word_frequency(s_word, level, x, y, year, i)
+		time_arr[str(i)] = doc_freq	
+
+
+	result = {}
+	tile = {}
+	tile['x'] = x
+	tile['y'] = y
+	tile['level'] = level
+
+	result['tile'] = tile
+
+	result['documents'] = total_docs
+	result['timeGraph'] = time_arr;
+
+	elapsed_time=time.time()-start_time
+	logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
+
+	print(time_arr)
+
+
+	return result
+
+
+
+def get_day_geo_docs( level, x, y, year, yday, word):
+
+	s_word = porter_stemmer.stem(word)
+	word_idx =map_word_to_idx[s_word]
+
+	points = []
+
+
+
+	if os.path.exists(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)) == True:
+		try:
+			with open(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y), 'r', encoding = 'UTF8') as f:
+			    lines = f.readlines()
+			    for line in lines: 
+			    	v= line.split('\t')
+
+			    	temp_word_idx = int(v[0])
+			    	doc_idx = int(v[1])
+
+			    	if int(word_idx) == temp_word_idx:
+
+				    	lon = str(map_idx_to_doc[doc_idx][1])
+				    	lat = str(map_idx_to_doc[doc_idx][2])
+
+				    	point = {}
+				    	point['xbin'] = lon
+				    	point['ybin'] = lat
+				    	points.append(point)    	
+
+
+		except FileNotFoundError as fe:
+			logging.debug('FileNotFoundError: %s', fe);
+			points = []
+			pass 
+
+	#print(points)
+
+	return points
 
 datapath = constants.TOPIC_DIR + 'alpha_0.8/'
+
+# points = get_day_geo_docs(11, 603, 1277, 2013, 307, 'marathon')
+
+# geo_points = []
+
+# for element in points:
+# 	point = {}
+# 	point['xbin'] = float(element.get('xbin'))
+# 	point['ybin'] = float(element.get('ybin'))
+
+# 	geo_points.append(point)
+
+
+# print(geo_points)
+
+
+
+temp = get_related_docs(11, 603, 1277, 'marathon', 1383485320000)
+json.dumps(temp)
+# temp= porter_stemmer.stem('someones')
+# print(map_word_to_idx[temp])
 #temp = get_tfidf_value('nycmarathon')
 #print(temp)
+#compute_jacard_score(12, 1206, 2554, 2013, 307, datapath)
 
 #get_week_freq('nycmarathon', 11, 603, 1278, 2013, 307)
-#compute_jacard_score(12, 1207, 2556, 2013, 307, datapath)
-#compute_jacard_score(11, 603, 1278, 2013, 307, datapath)
+# compute_jacard_score(12, 1207, 2556, 2013, 307, datapath)
+# compute_jacard_score(11, 601, 1276, 2013, 306, datapath)
+# compute_jacard_score(11, 602, 1276, 2013, 306, datapath)
+# compute_jacard_score(11, 602, 1277, 2013, 306, datapath)
+# compute_jacard_score(11, 603, 1277, 2013, 306, datapath)
+# compute_jacard_score(11, 603, 1278, 2013, 306, datapath)
+# compute_jacard_score(11, 603, 1279, 2013, 306, datapath)
+# compute_jacard_score(11, 604, 1277, 2013, 306, datapath)
+# compute_jacard_score(11, 604, 1278, 2013, 306, datapath)
 
-temp = get_day_related_docs(11,603,1278, 2013, 307, 'nycmarathon')
+# compute_jacard_score(12, 1203, 2553, 2013, 307, datapath)
+# compute_jacard_score(12, 1204, 2553, 2013, 307, datapath)
+# compute_jacard_score(12, 1205, 2554, 2013, 307, datapath)
+# compute_jacard_score(12, 1205, 2556, 2013, 307, datapath)
+# compute_jacard_score(12, 1206, 2554, 2013, 307, datapath)
+# compute_jacard_score(12, 1206, 2555, 2013, 307, datapath)
+# compute_jacard_score(12, 1206, 2556, 2013, 307, datapath)
+# compute_jacard_score(12, 1207, 2555, 2013, 307, datapath)
+# compute_jacard_score(12, 1207, 2556, 2013, 307, datapath)
+# compute_jacard_score(12, 1208, 2554, 2013, 307, datapath)
+# compute_jacard_score(12, 1208, 2555, 2013, 307, datapath)
+# compute_jacard_score(12, 1208, 2556, 2013, 307, datapath)
 
-print(temp)
+# get_day_related_docs(11,603,1278, 2013, 307, 'start')
+#get_day_related_docs(12, 1207, 2556, 2013, 307, 'start')
+# get_day_related_docs(11, 601, 1276, 2013, 307, 'start')
+# get_day_related_docs(11, 602, 1276, 2013, 307, 'start')
+#get_day_related_docs(12, 1206, 2556, 2013, 307, 'finish')
+# get_day_related_docs(11, 603, 1277, 2013, 307, 'start')
+# get_day_related_docs(11, 603, 1278, 2013, 307, 'nycmarathon')
+# get_day_related_docs(11, 603, 1279, 2013, 307, 'nycmarathon')
+# get_day_related_docs(11, 604, 1277, 2013, 307, 'nycmarathon')
+# get_day_related_docs(11, 604, 1278, 2013, 307, 'nycmarathon')
 
-arr = [] 
-for i in range(0,1440): 
-	isexist = temp.count(i)
-	if isexist > 0:
-		arr.append(1)
-	else: 
-		arr.append(0)
+# get_day_related_docs(12, 1203, 2553, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1204, 2553, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1205, 2554, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1205, 2556, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1206, 2554, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1206, 2555, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1206, 2556, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1207, 2555, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1207, 2556, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1208, 2554, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1208, 2555, 2013, 307, 'nycmarathon')
+# get_day_related_docs(12, 1208, 2556, 2013, 307, 'nycmarathon')
 
-print(arr)
+
+# arr = [] 
+# for i in range(0,1440): 
+# 	isexist = temp.count(i)
+# 	if isexist > 0:
+# 		arr.append(1)
+# 	else: 
+# 		arr.append(0)
+
+# print(arr)
 # arr = [] 
 # for i in range(0,7):
 # 	day = 307  
