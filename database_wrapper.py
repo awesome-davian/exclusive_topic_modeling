@@ -369,7 +369,7 @@ class DBWrapper():
 			# 		freq = 0
 		
 		except FileNotFoundError as fe:
-			print(fe)
+			#print(fe)
 			word_freq = 0
 			doc_freq = 0
 
@@ -519,12 +519,12 @@ class DBWrapper():
 				# 		freq = 0
 			
 			except FileNotFoundError as fe:
-				print(fe)
+				#print(fe)
 				word_freq = 0
 				doc_freq = 0
 
 		except KeyError as ke:
-			print(ke)
+			#print(ke)
 			word_freq = 0
 			doc_freq = 0
 
@@ -536,13 +536,15 @@ class DBWrapper():
 
 		try:
 			# word to idx
-			word_idx = self.map_word_to_idx[word]
+			temp = porter_stemmer.stem(word)
+			word_idx = self.map_word_to_idx[temp]
 
 			# get term-doc matrix
 			tileid = 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)		
+			#tileid = str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 		
 			tdm = self.map_tdm[tileid]
-			# tdm = self.read_tem_doc_matrix(tileid)
+			#tdm = self.read_tem_doc_matrix(tileid)
 			if tdm.size > 0 :			
 				tdm = tdm[tdm[:,0]==word_idx]
 
@@ -553,6 +555,8 @@ class DBWrapper():
 					docs.append(doc)
 		except KeyError as e:
 			logging.debug('KeyError: %s', e)
+			docs = []
+			pass 
 
 
 		return docs
@@ -1018,7 +1022,7 @@ class DBWrapper():
 					glyph['temporal_score'] = tile_glyph_arc
 
 		except FileNotFoundError as fe:
-			print(fe)
+			#print(fe)
 			glyph['spatial_score'] = 0.0
 			glyph['temporal_score'] = 0.0
 			glyph['frequency'] = 0.0
@@ -1033,6 +1037,7 @@ class DBWrapper():
 
 		rel_docs = [] 
 		time_arr = [] 
+		doc_list = []
 
 		if os.path.exists(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)) == True:
 			try:
@@ -1046,21 +1051,20 @@ class DBWrapper():
 
 				    	if int(word_idx) == temp_word_idx:
 
-					    	# doc_time = getTwitterDate(self.map_idx_to_doc[doc_idx][0])
-					    	# date = doc_time.timetuple().tm_yday
-					    	# unixtime = time.mktime(doc_time.timetuple())
-					    	# username = str(self.map_idx_to_doc[doc_idx][3])
-					    	# text = str(self.map_idx_to_doc[doc_idx][4])
+					    	doc_time = getTwitterDate(self.map_idx_to_doc[doc_idx][0])
+					    	date = doc_time.timetuple().tm_yday
+					    	unixtime = time.mktime(doc_time.timetuple())
+					    	username = str(self.map_idx_to_doc[doc_idx][3])
+					    	text = str(self.map_idx_to_doc[doc_idx][4])
 
 					    	local_hours, local_minutes = getTwitterHour(self.map_idx_to_doc[doc_idx][0])
-					    	rel_docs.append(local_hours)
+					    	rel_docs.append(local_hours)					    	
 
-
-					    	#d = {}
-					    	#d['username'] = username
-					    	#d['created_at'] = unixtime
-					    	#d['text'] = text
-					        #rel_docs.append(local_hours*60 + local_minutes)
+					    	d = {}
+					    	d['username'] = username
+					    	d['created_at'] = unixtime
+					    	d['text'] = text
+					    	doc_list.append(d)
 
 				for i in range(0,24): 
 					isexist = rel_docs.count(i)
@@ -1070,9 +1074,45 @@ class DBWrapper():
 			except FileNotFoundError as fe:
 				logging.debug('FileNotFoundError: %s', fe);
 				time_arr = [] 
+				doc_list = []
 				pass 
 
-		return time_arr
+		return time_arr, doc_list
+
+	def get_day_geo_docs(self, level, x, y, year, yday, word):
+
+		s_word = porter_stemmer.stem(word)
+		word_idx = self.map_word_to_idx[s_word]
+
+		points = []
+
+		if os.path.exists(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)) == True:
+			try:
+				with open(constants.MTX_DIR + 'mtx_' + str(year) + '_d' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y), 'r', encoding = 'UTF8') as f:
+				    lines = f.readlines()
+				    for line in lines: 
+				    	v= line.split('\t')
+
+				    	temp_word_idx = int(v[0])
+				    	doc_idx = int(v[1])
+
+				    	if int(word_idx) == temp_word_idx:
+
+					    	lon = str(self.map_idx_to_doc[doc_idx][1])
+					    	lat = str(self.map_idx_to_doc[doc_idx][2])
+
+					    	point = {}
+					    	point['xbin'] = lon
+					    	point['ybin'] = lat
+					    	points.append(point)    	
+
+
+			except FileNotFoundError as fe:
+				logging.debug('FileNotFoundError: %s', fe);
+				points = []
+				pass 
+
+		return points
 
 	def get_word_info(self, word, level, x, y, year, yday):
 		logging.debug('get_word_info(%s, %d, %d, %d, %d, %d)', word, level, x, y, year, yday)
@@ -1113,7 +1153,7 @@ class DBWrapper():
 		# get tfidf variation
 		#tfidf_var = self.get_tfidf_variation(word, tileid)
 		#tfidf_value = self.get_tfidf_values(word, tileid)
-		time_arr = self.get_day_related_docs(level, x, y, year, yday, word)
+		time_arr, _ = self.get_day_related_docs(level, x, y, year, yday, word)
 
 		# get temporal novelty score
 		return word_freq, time_arr, tf_word_percent
@@ -1183,7 +1223,7 @@ class DBWrapper():
 						topics.append(topic)
 
 		except FileNotFoundError as fe:
-			print(fe)
+			#print(fe)
 			pass
 
 		# print(topics)

@@ -36,6 +36,7 @@ W_PATH = './tile_generator/data/'+DATA_RANGE+'/w/'
 FREQ_DIR = './tile_generator/data/'+DATA_RANGE+'/wfreq/'
 TFIDF_DIR = './tile_generator/data/'+DATA_RANGE+'/tfidf/'
 TOPIC_DIR = './tile_generator/data/'+DATA_RANGE+'/topics/'
+LOG_DIR = './tile_generator/data/' +DATA_RANGE + '/userlogs'
 
 OPMODE_SPATIAL_MTX = 0
 OPMODE_TEMPORAL_MTX = 0

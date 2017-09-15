@@ -367,6 +367,7 @@ class TopicModelingModule():
 
 		return result;
 
+
 	def get_related_docs(self, level, x, y, word, date):
 
 		start_time = time.time()
@@ -383,155 +384,25 @@ class TopicModelingModule():
 
 		logging.info('word: %s, s_word: %s, word_idx: %d', word, s_word, word_idx)
 
-		map_related_docs = self.db.get_related_docs_map()[word_idx]
-
-		logging.info('stemmed word: %s, idx: %d', s_word, word_idx)
-
-		d = str(constants.DATA_RANGE).split('-')
-
-		d[0] = '20'+d[0][0:2] + '-' + d[0][2:4] + '-' + d[0][4:6]
-		d[1] = '20'+d[1][0:2] + '-' + d[1][2:4] + '-' + d[1][4:6]
-
-		logging.debug(d[0])
-		logging.debug(d[1])
-
-		date_format = "%Y-%m-%d"
-		start_date = datetime.strptime(d[0], date_format).timetuple().tm_yday
-		end_date = datetime.strptime(d[1], date_format).timetuple().tm_yday if len(d) > 1 else start_date
-
-		# start_date = int(d[0])
-		# end_date = int(d[1]) if len(d) > 1 else int(d[0])
-
-		max_compare = max([end_date - day_of_year, day_of_year - start_date])
-
-		logging.debug('start date: %d', start_date)
-		logging.debug('end date: %d', end_date)
-		logging.debug('max_compare: %d', max_compare)
 
 		total_docs = []
+		time_arr = {}
 
-		tbyt_total_docs = []
+		_,  temp_doc_list = self.db.get_day_related_docs(level, x, y, year, day_of_year, word)
 
-		# size = 0
-		# f_size = 0
-		# docs = self.db.get_related_docs_map()
-		# for each in docs.items():
-		
-		# 	try: 
-		# 		size += len(each[1][day_of_year])
-		# 		for txt in each[1][day_of_year]:
-		# 			f_size += txt.count('love')
-		# 			if txt.count('love') > 0:
-		# 				logging.debug('Found! [%d]: %s', each[0], str(txt).encode('utf-8'))
-
-		# 	except KeyError:
-		# 		pass
-			
-		# logging.debug('size of %d : %d, f_size: %d', day_of_year, size, f_size)
-
- 
-		logging.debug('case: %s', day_of_year)
-		for each in range(start_date, end_date):
-			doc_list = map_related_docs[each]
-			for doc in doc_list:
-				d = {}
-				d['username'] = str(doc[0])
-				d['created_at'] = int(doc[1])
-				d['text'] = str(doc[2])
-				tbyt_total_docs.append(d)
-
-		timearr = [];
-		for doc in tbyt_total_docs:
-			#logging.info(doc['created_at']);
-			date= datetime.fromtimestamp(int(int(doc['created_at'])))
-			#logging.info(date);
-			mday = date.timetuple().tm_mday
-			timearr.append(mday);
-
-		#logging.info(timearr);
-
-		timedict = dict((i, timearr.count(i)) for i in timearr); 
-		logging.info(timedict);
+		for element in temp_doc_list:
+			d = {}
+			d['username'] = element.get('username')
+			d['created_at'] = element.get('created_at')
+			d['text'] = element.get('text')
+			total_docs.append(d)
 
 
+		for i in range(day_of_year, day_of_year + 30):
 
-		try: 
-			doc_list = map_related_docs[day_of_year]
-			for doc in doc_list:
-				d = {}
-				d['username'] = str(doc[0])
-				d['created_at'] = int(doc[1])
-				d['text'] = str(doc[2])
-				total_docs.append(d)
-		except KeyError:
-			pass
+			_, doc_freq = self.db.get_word_frequency(s_word, level, x, y, year, i)
+			time_arr[str(i)] = doc_freq	
 
-		logging.debug('len: %s', len(total_docs))
-
-		if len(total_docs) < constants.MAX_RELATED_DOCS:
-
-			for each in range(1, max_compare+1):	
-				
-				date_cursor = day_of_year - each
-				if date_cursor < start_date:
-					continue
-				else:
-					logging.debug('case: %s', date_cursor)
-
-					try: 
-						doc_list = map_related_docs[date_cursor]
-						for doc in doc_list:
-							d = {}
-							d['username'] = str(doc[0])
-							d['created_at'] = int(doc[1])
-							d['text'] = str(doc[2])
-							total_docs.append(d)
-					except KeyError:
-						pass
-
-				logging.debug('len: %s', len(total_docs))
-
-				if len(total_docs) > constants.MAX_RELATED_DOCS:
-					break
-
-				date_cursor = day_of_year + each
-				if date_cursor > end_date:
-					continue
-				else:
-					logging.debug('case: %s', date_cursor)
-
-					try: 
-						doc_list = map_related_docs[date_cursor]
-						for doc in doc_list:
-							d = {}
-							d['username'] = str(doc[0])
-							d['created_at'] = int(doc[1])
-							d['text'] = str(doc[2])
-							total_docs.append(d)
-					except KeyError:
-						pass
-
-				logging.debug('len: %s', len(total_docs))
-
-				if len(total_docs) > constants.MAX_RELATED_DOCS:
-					break
-
-		# timearr = [];
-		# for doc in total_docs:
-		# 	logging.info(doc['created_at']);
-		# 	date= datetime.fromtimestamp(int(int(doc['created_at'])))
-		# 	logging.info(date);
-		# 	mday = date.timetuple().tm_mday
-		# 	timearr.append(mday);
-
-		# #logging.info(timearr);
-
-		# timedict = dict((i, timearr.count(i)) for i in timearr); 
-		# logging.info(timedict);
-
-
-
-		total_docs_sorted = sorted(total_docs[:constants.MAX_RELATED_DOCS], key=itemgetter('created_at'), reverse=True)
 
 		result = {}
 		tile = {}
@@ -541,13 +412,195 @@ class TopicModelingModule():
 
 		result['tile'] = tile
 
-		result['documents'] = total_docs_sorted[:constants.MAX_RELATED_DOCS]
-		result['timeGraph'] = timedict;
+		result['documents'] = total_docs
+		result['timeGraph'] = time_arr;
 
 		elapsed_time=time.time()-start_time
 		logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
 
 		return result
+
+	# def get_related_docs(self, level, x, y, word, date):
+
+	# 	start_time = time.time()
+
+	# 	# get docs including the word 
+	# 	date = datetime.fromtimestamp(int(int(date)/1000))
+	# 	year = date.timetuple().tm_year
+	# 	day_of_year = date.timetuple().tm_yday
+
+	# 	logging.debug('get_releated_docs(%s, %s, %s, %s, %d)', level, x, y, word, day_of_year)
+
+	# 	s_word = porter_stemmer.stem(word)
+	# 	word_idx = self.db.get_global_voca_map_word_to_idx()[s_word]
+
+	# 	logging.info('word: %s, s_word: %s, word_idx: %d', word, s_word, word_idx)
+
+	# 	map_related_docs = self.db.get_related_docs_map()[word_idx]
+
+	# 	logging.info('stemmed word: %s, idx: %d', s_word, word_idx)
+
+	# 	d = str(constants.DATA_RANGE).split('-')
+
+	# 	d[0] = '20'+d[0][0:2] + '-' + d[0][2:4] + '-' + d[0][4:6]
+	# 	d[1] = '20'+d[1][0:2] + '-' + d[1][2:4] + '-' + d[1][4:6]
+
+	# 	logging.debug(d[0])
+	# 	logging.debug(d[1])
+
+	# 	date_format = "%Y-%m-%d"
+	# 	start_date = datetime.strptime(d[0], date_format).timetuple().tm_yday
+	# 	end_date = datetime.strptime(d[1], date_format).timetuple().tm_yday if len(d) > 1 else start_date
+
+	# 	# start_date = int(d[0])
+	# 	# end_date = int(d[1]) if len(d) > 1 else int(d[0])
+
+	# 	max_compare = max([end_date - day_of_year, day_of_year - start_date])
+
+	# 	logging.debug('start date: %d', start_date)
+	# 	logging.debug('end date: %d', end_date)
+	# 	logging.debug('max_compare: %d', max_compare)
+
+	# 	total_docs = []
+
+	# 	tbyt_total_docs = []
+
+	# 	# size = 0
+	# 	# f_size = 0
+	# 	# docs = self.db.get_related_docs_map()
+	# 	# for each in docs.items():
+		
+	# 	# 	try: 
+	# 	# 		size += len(each[1][day_of_year])
+	# 	# 		for txt in each[1][day_of_year]:
+	# 	# 			f_size += txt.count('love')
+	# 	# 			if txt.count('love') > 0:
+	# 	# 				logging.debug('Found! [%d]: %s', each[0], str(txt).encode('utf-8'))
+
+	# 	# 	except KeyError:
+	# 	# 		pass
+			
+	# 	# logging.debug('size of %d : %d, f_size: %d', day_of_year, size, f_size)
+
+ 
+	# 	logging.debug('case: %s', day_of_year)
+	# 	for each in range(start_date, end_date):
+	# 		doc_list = map_related_docs[each]
+	# 		for doc in doc_list:
+	# 			d = {}
+	# 			d['username'] = str(doc[0])
+	# 			d['created_at'] = int(doc[1])
+	# 			d['text'] = str(doc[2])
+	# 			tbyt_total_docs.append(d)
+
+	# 	timearr = [];
+	# 	for doc in tbyt_total_docs:
+	# 		#logging.info(doc['created_at']);
+	# 		date= datetime.fromtimestamp(int(int(doc['created_at'])))
+	# 		#logging.info(date);
+	# 		mday = date.timetuple().tm_mday
+	# 		timearr.append(mday);
+
+	# 	#logging.info(timearr);
+
+	# 	timedict = dict((i, timearr.count(i)) for i in timearr); 
+	# 	logging.info(timedict);
+
+
+
+	# 	try: 
+	# 		doc_list = map_related_docs[day_of_year]
+	# 		for doc in doc_list:
+	# 			d = {}
+	# 			d['username'] = str(doc[0])
+	# 			d['created_at'] = int(doc[1])
+	# 			d['text'] = str(doc[2])
+	# 			total_docs.append(d)
+	# 	except KeyError:
+	# 		pass
+
+	# 	logging.debug('len: %s', len(total_docs))
+
+	# 	if len(total_docs) < constants.MAX_RELATED_DOCS:
+
+	# 		for each in range(1, max_compare+1):	
+				
+	# 			date_cursor = day_of_year - each
+	# 			if date_cursor < start_date:
+	# 				continue
+	# 			else:
+	# 				logging.debug('case: %s', date_cursor)
+
+	# 				try: 
+	# 					doc_list = map_related_docs[date_cursor]
+	# 					for doc in doc_list:
+	# 						d = {}
+	# 						d['username'] = str(doc[0])
+	# 						d['created_at'] = int(doc[1])
+	# 						d['text'] = str(doc[2])
+	# 						total_docs.append(d)
+	# 				except KeyError:
+	# 					pass
+
+	# 			logging.debug('len: %s', len(total_docs))
+
+	# 			if len(total_docs) > constants.MAX_RELATED_DOCS:
+	# 				break
+
+	# 			date_cursor = day_of_year + each
+	# 			if date_cursor > end_date:
+	# 				continue
+	# 			else:
+	# 				logging.debug('case: %s', date_cursor)
+
+	# 				try: 
+	# 					doc_list = map_related_docs[date_cursor]
+	# 					for doc in doc_list:
+	# 						d = {}
+	# 						d['username'] = str(doc[0])
+	# 						d['created_at'] = int(doc[1])
+	# 						d['text'] = str(doc[2])
+	# 						total_docs.append(d)
+	# 				except KeyError:
+	# 					pass
+
+	# 			logging.debug('len: %s', len(total_docs))
+
+	# 			if len(total_docs) > constants.MAX_RELATED_DOCS:
+	# 				break
+
+	# 	# timearr = [];
+	# 	# for doc in total_docs:
+	# 	# 	logging.info(doc['created_at']);
+	# 	# 	date= datetime.fromtimestamp(int(int(doc['created_at'])))
+	# 	# 	logging.info(date);
+	# 	# 	mday = date.timetuple().tm_mday
+	# 	# 	timearr.append(mday);
+
+	# 	# #logging.info(timearr);
+
+	# 	# timedict = dict((i, timearr.count(i)) for i in timearr); 
+	# 	# logging.info(timedict);
+
+
+
+	# 	total_docs_sorted = sorted(total_docs[:constants.MAX_RELATED_DOCS], key=itemgetter('created_at'), reverse=True)
+
+	# 	result = {}
+	# 	tile = {}
+	# 	tile['x'] = x
+	# 	tile['y'] = y
+	# 	tile['level'] = level
+
+	# 	result['tile'] = tile
+
+	# 	result['documents'] = total_docs_sorted[:constants.MAX_RELATED_DOCS]
+	# 	result['timeGraph'] = timedict;
+
+	# 	elapsed_time=time.time()-start_time
+	# 	logging.info('get_releated_docs elapsed: %.3fms' , elapsed_time)
+
+	# 	return result
 
 	def getTermDocMtx(self, level, x, y, date):
 
@@ -676,34 +729,44 @@ class TopicModelingModule():
 
 		geo_points['points'] = []
 
-		docs = self.db.get_docs(word, x, y, level, year, yday)
+		#docs = self.db.get_docs(word, x, y, level, year, yday)
 		# docs = self.db.get_docs2(words, x, y, level, year, yday)
+		points = self.db.get_day_geo_docs(level, x, y, year, yday, word)
 
-		# map_idx_to_doc[0]: date
-		# map_idx_to_doc[1]: lon
-		# map_idx_to_doc[2]: lat
-		# map_idx_to_doc[3]: author
-		# map_idx_to_doc[4]: text
+		for element in points:
 
-		for item in docs:
-
-			xbin, ybin = self.world_to_local(float(item[1]), float(item[2]), int(level))
-
+			xbin, ybin = self.world_to_local(float(element.get('xbin')), float(element.get('ybin')), int(level))
 			point = {}
 			point['xbin'] = xbin
 			point['ybin'] = ybin
-			# point['author'] = item[3]
-			# point['text'] = item[4]
 
 			geo_points['points'].append(point)
-		
-		# for i in range(0, 10):
+
+		# # map_idx_to_doc[0]: date
+		# # map_idx_to_doc[1]: lon
+		# # map_idx_to_doc[2]: lat
+		# # map_idx_to_doc[3]: author
+		# # map_idx_to_doc[4]: text
+
+		# for item in docs:
+
+		# 	xbin, ybin = self.world_to_local(float(item[1]), float(item[2]), int(level))
+
 		# 	point = {}
-		# 	point['lon'] = -74.0059 + random.uniform(-1.0, 1.0)
-		# 	point['lat'] = 40.7128 + random.uniform(-1.0, 1.0)
-		# 	# point['text'] = ""
-		# 	# point['author'] = ""
-		# 	geo_points['points'].append(point)	
+		# 	point['xbin'] = xbin
+		# 	point['ybin'] = ybin
+		# 	# point['author'] = item[3]
+		# 	# point['text'] = item[4]
+
+		# 	geo_points['points'].append(point)
+		
+		# # for i in range(0, 10):
+		# # 	point = {}
+		# # 	point['lon'] = -74.0059 + random.uniform(-1.0, 1.0)
+		# # 	point['lat'] = 40.7128 + random.uniform(-1.0, 1.0)
+		# # 	# point['text'] = ""
+		# # 	# point['author'] = ""
+		# # 	geo_points['points'].append(point)	
 
 		result.append(geo_points)
 		
