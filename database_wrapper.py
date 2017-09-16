@@ -480,7 +480,8 @@ class DBWrapper():
 		tileid = 'wfreq_' + tileid
 		
 		try:
-			query_idx = self.map_word_to_idx[word]
+			temp = porter_stemmer.stem(word)
+			query_idx = self.map_word_to_idx[temp]
 			#logging.info('word: %s, query_idx: %d', word, query_idx)
 
 			try: 

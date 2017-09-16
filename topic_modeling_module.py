@@ -398,7 +398,7 @@ class TopicModelingModule():
 			total_docs.append(d)
 
 
-		for i in range(day_of_year, day_of_year + 30):
+		for i in range(day_of_year - 15, day_of_year + 15):
 
 			_, doc_freq = self.db.get_word_frequency(s_word, level, x, y, year, i)
 			time_arr[str(i)] = doc_freq	
