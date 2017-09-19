@@ -847,13 +847,21 @@ class DBWrapper():
 		topic_yesterday = []
 		jacard_score = 0.0
 		jacard_score_yesterday = 0.0
-		topic_count = 10
-		
+		topic_count = 5
+		num_topics = 0
 
-		for i in range(1,4):
+		my_tile = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' 		
+
+		for i in range(0,4):
 			temp_name = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
 			neighbor_names.append(temp_name)
-	  
+
+
+		neighbor_names.append(my_tile+str(x+1)+'_'+str(y+0))
+		neighbor_names.append(my_tile+str(x+0)+'_'+str(y+1))
+		neighbor_names.append(my_tile+str(x+0)+'_'+str(y-1))
+		neighbor_names.append(my_tile+str(x-1)+'_'+str(y+0))
+		  
 
 		for each in neighbor_names:
 			logging.debug('path: %s', each)
@@ -879,6 +887,7 @@ class DBWrapper():
 							v = line.split('\t')
 
 							if is_first == True:
+								num_topics = int(v[0])
 								is_first = False
 								continue
 
@@ -888,8 +897,9 @@ class DBWrapper():
 
 							for i in range(0, len(v) - 1):
 								if idx == 0 :
-								    topic_yesterday.append(v[i].strip()) 
-								topic_neighbor.append(v[i].strip())
+								    topic_yesterday.append(porter_stemmer.stem(v[i].strip())) 
+								else:
+									topic_neighbor.append(porter_stemmer.stem(v[i].strip()))
 			
 			except FileNotFoundError as fe:
 				logging.debug(fe)
@@ -908,6 +918,7 @@ class DBWrapper():
 							v = line.split('\t')
 
 							if is_first == True:
+								num_topics = int(v[0])
 								is_first =False
 								continue
 
@@ -916,7 +927,7 @@ class DBWrapper():
  								break
 
 							for i in range(0,len(v) - 1):
-								topic_self.append(v[i].strip())
+								topic_self.append(porter_stemmer.stem(v[i].strip()))
 
 			except KeyError as fe:
 				logging.error(fe)
@@ -967,6 +978,14 @@ class DBWrapper():
 			temp = self.map_idx_to_word[diff_set_with_yesterday[i]]
 			temp_word_freq, _ = self.get_word_frequency(temp, level, x, y, year, yday)
 			tot_freq_yesterday += temp_word_freq
+
+		if int(num_topics) == 0:
+			tot_freq_yesterday = 0
+			tot_freq_neighbor = 0
+		else: 
+			tot_freq_neighbor = tot_freq_neighbor / int(num_topics)
+			tot_freq_yesterday = tot_freq_yesterday / int(num_topics)
+
 
 
 		# if len(set_self) == 0 :

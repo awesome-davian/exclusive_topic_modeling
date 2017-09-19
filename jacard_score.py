@@ -91,49 +91,49 @@ elapsed_time = time.time() - start_time
 logging.info('read_voca(). Elapsed time: %.3fms', elapsed_time)
 
 
-start_time = time.time()
+# start_time = time.time()
 
-docs_file = open(constants.GLOBAL_DOC_FILE_PATH, 'r', encoding='UTF8')
+# docs_file = open(constants.GLOBAL_DOC_FILE_PATH, 'r', encoding='UTF8')
 
-map_idx_to_doc = collections.OrderedDict()
-docs = docs_file.readlines()
+# map_idx_to_doc = collections.OrderedDict()
+# docs = docs_file.readlines()
 
-for idx, doc in enumerate(docs):
+# for idx, doc in enumerate(docs):
 
-	v = doc.split('\t')
+# 	v = doc.split('\t')
 
-	# v[0]: index
-	# v[1]: date
-	# v[2]: lon
-	# v[3]: lat
-	# v[4]: author
-	# v[5]: text
+# 	# v[0]: index
+# 	# v[1]: date
+# 	# v[2]: lon
+# 	# v[3]: lat
+# 	# v[4]: author
+# 	# v[5]: text
 
-	# doc_time = getTwitterDate(v[1])
-	# #year = doc_time.timetuple().tm_year
-	# day_of_year = doc_time.timetuple().tm_yday
+# 	# doc_time = getTwitterDate(v[1])
+# 	# #year = doc_time.timetuple().tm_year
+# 	# day_of_year = doc_time.timetuple().tm_yday
 
-	map_idx_to_doc[idx+1] = collections.OrderedDict()
-	map_idx_to_doc[idx+1] = [v[1], v[2], v[3], v[4], v[5]]
+# 	map_idx_to_doc[idx+1] = collections.OrderedDict()
+# 	map_idx_to_doc[idx+1] = [v[1], v[2], v[3], v[4], v[5]]
 
-	# map_idx_to_doc[0]: date
-	# map_idx_to_doc[1]: lon
-	# map_idx_to_doc[2]: lat
-	# map_idx_to_doc[3]: author
-	# map_idx_to_doc[4]: text
+# 	# map_idx_to_doc[0]: date
+# 	# map_idx_to_doc[1]: lon
+# 	# map_idx_to_doc[2]: lat
+# 	# map_idx_to_doc[3]: author
+# 	# map_idx_to_doc[4]: text
 
-	# try:
-	# 	if len(map_idx_to_doc[idx][day_of_year]) == 0:
-	# 		map_idx_to_doc[idx][day_of_year] = []
-	# except KeyError:
-	# 	map_idx_to_doc[idx][day_of_year] = []
+# 	# try:
+# 	# 	if len(map_idx_to_doc[idx][day_of_year]) == 0:
+# 	# 		map_idx_to_doc[idx][day_of_year] = []
+# 	# except KeyError:
+# 	# 	map_idx_to_doc[idx][day_of_year] = []
 
-	# 	map_idx_to_doc[idx][day_of_year].append([v[2], v[3], v[4], v[5]])
+# 	# 	map_idx_to_doc[idx][day_of_year].append([v[2], v[3], v[4], v[5]])
 
-docs_file.close()
+# docs_file.close()
 
-elapsed_time = time.time() - start_time
-logging.info('read_docs(). Elapsed time: %.3fms', elapsed_time)
+# elapsed_time = time.time() - start_time
+# logging.info('read_docs(). Elapsed time: %.3fms', elapsed_time)
 
 
 
@@ -193,17 +193,18 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 	topic_file_name = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' + str(x) + '_' + str(y)
 
 	#logging.info(topic_file_name)
+	temp_name = 'topics_' + str(year) + '_' + str(yday) + '_' + str(level) + '_' 
 
-	# temp_name = 'topics_' + str(2013) + '_' + str(307) + '_' + str(12) + '_' 
+
+
+	for i in range(0,3):
+		temp_name1 = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
+		neighbor_names.append(temp_name1)
 
 	# neighbor_names.append(temp_name+str(x+1)+'_'+str(y+0))
 	# neighbor_names.append(temp_name+str(x+0)+'_'+str(y+1))
 	# neighbor_names.append(temp_name+str(x+0)+'_'+str(y-1))
 	# neighbor_names.append(temp_name+str(x-1)+'_'+str(y+0))
-
-	for i in range(1,4):
-		temp_name = 'topics_' + str(year) + '_' + str(yday - i) + '_' +str(level) + '_' + str(x) + '_' + str(y)
-		neighbor_names.append(temp_name)
 
 	topic_self = [] 
 	topic_neighbor = []
@@ -231,7 +232,7 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 						break
 
 					for i in range(0,len(v) - 1):
-						topic_self.append(v[i].strip())
+						topic_self.append(porter_stemmer.stem(v[i].strip()))
 
 	except KeyError as fe:
 		logging.error(fe)
@@ -247,6 +248,7 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 		each_path = mypath + each 
 
 		if os.path.exists(each_path) == False:
+			#logging.debug(each_path)
 			continue
 
 		try:
@@ -263,6 +265,7 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 						v = line.split('\t')
 
 						if is_first == True:
+							num_topics = int(v[0])
 							is_first = False
 							continue
 						topic_cnt += 1 
@@ -271,8 +274,9 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 
 						for i in range(0, len(v)-1):
 							if idx == 0 :
-								topic_yesterday.append(v[i].strip())
-							topic_neighbor.append(v[i].strip())
+								topic_yesterday.append(porter_stemmer.stem(v[i].strip()))
+							else:
+							    topic_neighbor.append(porter_stemmer.stem(v[i].strip()))
 
 		except FileNotFoundError as fe:
 			logging.error(fe)
@@ -338,6 +342,13 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 		temp_word_freq, _ = get_word_frequency(temp, level, x, y, year, yday)
 		tot_freq_yesterday += temp_word_freq
 
+	if int(num_topics) == 0:
+		tot_freq_yesterday = 0
+		tot_freq_neighbor = 0
+	else: 
+		tot_freq_neighbor = tot_freq_neighbor / int(num_topics)
+		tot_freq_yesterday = tot_freq_yesterday / int(num_topics)
+
 
 
 	if len(set_neighbor) == 0 or len(set_yesterday) ==0:
@@ -347,7 +358,7 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 	else : 
 		#jacard_score = len(set_neighbor.intersection(set_self)) / len(set_neighbor.union(set_self))
 		#jacard_score_yesterday = len(set_yesterday.intersection(set_self)) / len(set_yesterday.union(set_self))
-		jacard_score = len(set_self.difference(set_neighbor)) / len((set_self))
+		jacard_score = len(set_self.difference(set_neighbor)) / len((set_self)) 
 		jacard_score_yesterday = len(set_self.difference(set_yesterday)) / len((set_self))
 	
 	#print(jacard_score)
@@ -357,9 +368,10 @@ def compute_jacard_score(level, x, y, year, yday , datapath):
 	# print(tot_freq_neighbor)
 	# print('len')
 	# print(len(diff_set_with_neighbor))
-	print(math.log(tot_freq_neighbor,2.7) * len(diff_set_with_neighbor) / num_topics)
-	print(math.log(tot_freq_yesterday,2.7) * len(diff_set_with_yesterday) / num_topics)
-	#print(tot_freq_yesterday)
+	#print(math.log(tot_freq_neighbor,2.7) * len(diff_set_with_neighbor) / num_topics)
+	#print(math.log(tot_freq_yesterday,2.7) * len(diff_set_with_yesterday) / num_topics)
+	print(tot_freq_yesterday)
+	print(tot_freq_neighbor)
 
 
 	return jacard_score, jacard_score_yesterday
@@ -687,8 +699,8 @@ datapath = constants.TOPIC_DIR + 'alpha_0.8/'
 
 
 
-temp = get_related_docs(11, 603, 1277, 'marathon', 1383485320000)
-json.dumps(temp)
+#temp = get_related_docs(11, 603, 1277, 'marathon', 1383485320000)
+#json.dumps(temp)
 # temp= porter_stemmer.stem('someones')
 # print(map_word_to_idx[temp])
 #temp = get_tfidf_value('nycmarathon')
@@ -696,15 +708,15 @@ json.dumps(temp)
 #compute_jacard_score(12, 1206, 2554, 2013, 307, datapath)
 
 #get_week_freq('nycmarathon', 11, 603, 1278, 2013, 307)
-# compute_jacard_score(12, 1207, 2556, 2013, 307, datapath)
-# compute_jacard_score(11, 601, 1276, 2013, 306, datapath)
-# compute_jacard_score(11, 602, 1276, 2013, 306, datapath)
-# compute_jacard_score(11, 602, 1277, 2013, 306, datapath)
-# compute_jacard_score(11, 603, 1277, 2013, 306, datapath)
-# compute_jacard_score(11, 603, 1278, 2013, 306, datapath)
-# compute_jacard_score(11, 603, 1279, 2013, 306, datapath)
-# compute_jacard_score(11, 604, 1277, 2013, 306, datapath)
-# compute_jacard_score(11, 604, 1278, 2013, 306, datapath)
+# compute_jacard_score(12, 1207, 2556, 2013, 307, datapath)f
+compute_jacard_score(11, 601, 1276, 2013, 306, datapath)
+compute_jacard_score(11, 602, 1276, 2013, 306, datapath)
+compute_jacard_score(11, 602, 1277, 2013, 306, datapath)
+compute_jacard_score(11, 603, 1277, 2013, 306, datapath)
+compute_jacard_score(11, 603, 1278, 2013, 306, datapath)
+compute_jacard_score(11, 603, 1279, 2013, 306, datapath)
+compute_jacard_score(11, 604, 1277, 2013, 306, datapath)
+compute_jacard_score(11, 604, 1278, 2013, 306, datapath)
 
 # compute_jacard_score(12, 1203, 2553, 2013, 307, datapath)
 # compute_jacard_score(12, 1204, 2553, 2013, 307, datapath)
